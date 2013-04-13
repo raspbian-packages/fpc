@@ -186,7 +186,7 @@ begin
 
 {$ifdef arm}
 {$ifdef FPC_ARMHF}
-     defdynlinker:='/lib/arm-linux-gnueabihf/ld-linux.so.3';
+     defdynlinker:='/lib/ld-linux-armhf.so.3';
 {$else FPC_ARMHF}
 {$ifdef FPC_ARMEL}
      defdynlinker:='/lib/ld-linux.so.3';
