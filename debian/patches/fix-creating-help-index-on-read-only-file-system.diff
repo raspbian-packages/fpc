@@ -1,0 +1,110 @@
+This patch removes error thrown when trying to build help index if the
+documentation is installed on a read only file system and tries to store the
+index file in current directory. (Closes: bug#662814)
+
+diff --git fpcbuild~/fpcsrc/ide/fpmhelp.inc fpcbuild/fpcsrc/ide/fpmhelp.inc
+index 1823941..fcabddb 100644
+--- fpcbuild~/fpcsrc/ide/fpmhelp.inc
++++ fpcbuild/fpcsrc/ide/fpmhelp.inc
+@@ -132,13 +132,48 @@ begin
+ end;
+ 
+ procedure THelpFilesDialog.HandleEvent(var Event: TEvent);
++  function StoreHtmlIndexFile(const FileName: string; LS: PFPHTMLFileLinkScanner;var Re: Word; SilentFails: Boolean): Boolean;
++  var
++    BS: PBufStream;
++  begin
++    if ExistsFile(FileName) then
++      if ConfirmBox(FormatStrStr(msg_filealreadyexistsoverwrite,FileName),nil,true)<>cmYes then
++        Re:=cmCancel;
++    if Re<>cmCancel then
++    begin
++      PushStatus(FormatStrStr(msg_storinghtmlindexinfile,FileName));
++      New(BS, Init(FileName, stCreate, 4096));
++      if Assigned(BS)=false then
++        begin
++          if not SilentFails then
++          begin
++            ErrorBox(FormatStrStr(msg_cantcreatefile,FileName),nil);
++          end;
++          Re:=cmCancel;
++        end
++      else
++        begin
++          LS^.StoreDocuments(BS^);
++          if BS^.Status<>stOK then
++            begin
++              if not SilentFails then
++              begin
++                ErrorBox(FormatStrInt(msg_errorstoringindexdata,BS^.Status),nil);
++              end;
++              Re:=cmCancel;
++            end;
++          Dispose(BS, Done);
++        end;
++      PopStatus;
++    end;
++  StoreHtmlIndexFile := Re <> cmCancel;
++  end;
+ var I: integer;
+     D: PFileDialog;
+     FileName: string;
+     Re: word;
+     S: string;
+     LS: PFPHTMLFileLinkScanner;
+-    BS: PBufStream;
+ begin
+   case Event.What of
+     evKeyDown :
+@@ -193,30 +228,15 @@ begin
+                     else
+                       begin
+                         FileName:=DirAndNameOf(FileName)+HTMLIndexExt;
+-                        if ExistsFile(FileName) then
+-                          if ConfirmBox(FormatStrStr(msg_filealreadyexistsoverwrite,FileName),nil,true)<>cmYes then
+-                            Re:=cmCancel;
+-                        if Re<>cmCancel then
++                        if not StoreHtmlIndexFile(FileName, LS, Re, True) then
+                         begin
+-                          PushStatus(FormatStrStr(msg_storinghtmlindexinfile,FileName));
+-                          New(BS, Init(FileName, stCreate, 4096));
+-                          if Assigned(BS)=false then
+-                            begin
+-                              ErrorBox(FormatStrStr(msg_cantcreatefile,FileName),nil);
+-                              Re:=cmCancel;
+-                            end
+-                          else
+-                            begin
+-                              LS^.StoreDocuments(BS^);
+-                              if BS^.Status<>stOK then
+-                                begin
+-                                  ErrorBox(FormatStrInt(msg_errorstoringindexdata,BS^.Status),nil);
+-                                  Re:=cmCancel;
+-                                end;
+-                              Dispose(BS, Done);
+-                            end;
+-                          PopStatus;
+-                        end;
++                          Re:=ConfirmBox(FormatStrStr('Could not create "%s", try creating it in local dir?', FileName),nil,true);
++                          FileName := GetCurDir + NameAndExtOf(FileName);
++                          if Re = cmYes then
++                          begin
++                            StoreHtmlIndexFile(FileName, LS, Re, False);
++                          end;
++                        end
+                       end;
+                     Dispose(LS, Done);
+                     PopStatus;
+diff --git fpcbuild~/fpcsrc/ide/whtmlhlp.pas fpcbuild/fpcsrc/ide/whtmlhlp.pas
+index 7df67af..216a218 100644
+--- fpcbuild~/fpcsrc/ide/whtmlhlp.pas
++++ fpcbuild/fpcsrc/ide/whtmlhlp.pas
+@@ -1615,7 +1615,7 @@ begin
+     OK:=Assigned(LS);
+     if OK then
+     begin
+-      LS^.SetBaseDir(DirOf(IndexFileName));
++      {LS^.SetBaseDir(DirOf(IndexFileName)); already set by LoadDocuments to real base dire stored into htx file. This allows storing toc file in current dir in case doc installation dir is read only.}
+       for I:=0 to LS^.GetDocumentCount-1 do
+         begin
+           TLI:=TopicLinks^.AddItem(LS^.GetDocumentURL(I));

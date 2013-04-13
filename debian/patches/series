@@ -1,0 +1,7 @@
+version.diff
+armhf.diff
+regenerate_messages.diff
+fix-FPCDIR-in-fpcmake.diff
+armhf-linker-path.diff
+fix-vfp-exceptions.diff
+fix-creating-help-index-on-read-only-file-system.diff
