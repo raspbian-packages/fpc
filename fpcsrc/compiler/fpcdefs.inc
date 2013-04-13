@@ -111,12 +111,16 @@
   {$define cpuneedsdiv32helper}
   {$define cputargethasfixedstack}
   { inherit FPC_ARMEL? }
-  {$if defined(CPUARMEL) and not(defined(FPC_OARM)) and not(defined(FPC_ARMEB))}
+  {$if defined(CPUARMEL) and not(defined(FPC_OARM)) and not(defined(FPC_ARMEB)) and not(defined(FPC_ARMHF))}
     {$define FPC_ARMEL}
   {$endif}
   { inherit FPC_ARMEB? }
-  {$if defined(CPUARMEB) and not(defined(FPC_OARM)) and not(defined(FPC_ARMEL))}
+  {$if defined(CPUARMEB) and not(defined(FPC_OARM)) and not(defined(FPC_ARMEL)) and not(defined(FPC_ARMHF))}
     {$define FPC_ARMEB}
+  {$endif}
+  { inherit FPC_ARMHF? }
+  {$if defined(CPUARMHF) and not(defined(FPC_OARM)) and not(defined(FPC_ARMEL)) and not(defined(FPC_ARMEB))}
+    {$define FPC_ARMHF}
   {$endif}
 {$endif arm}
 

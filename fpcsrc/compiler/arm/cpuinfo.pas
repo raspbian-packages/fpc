@@ -55,7 +55,8 @@ Type
       fpu_fpa10,
       fpu_fpa11,
       fpu_vfpv2,
-      fpu_vfpv3
+      fpu_vfpv3,
+      fpu_vfpv3_d16
      );
 
    tcontrollertype =
@@ -115,14 +116,15 @@ Const
      'CORTEXM3'
    );
 
-   fputypestr : array[tfputype] of string[6] = ('',
+   fputypestr : array[tfputype] of string[9] = ('',
      'SOFT',
      'LIBGCC',
      'FPA',
      'FPA10',
      'FPA11',
      'VFPV2',
-     'VFPV3'
+     'VFPV3',
+     'VFPV3_D16'
    );
 
    controllertypestr : array[tcontrollertype] of string[20] =
@@ -164,7 +166,7 @@ Const
       12 { No model specified }
      );
 
-   vfp_scalar = [fpu_vfpv2,fpu_vfpv3];
+   vfp_scalar = [fpu_vfpv2,fpu_vfpv3,fpu_vfpv3_d16];
 
    { Supported optimizations, only used for information }
    supported_optimizerswitches = genericlevel1optimizerswitches+
