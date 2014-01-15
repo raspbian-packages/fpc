@@ -397,7 +397,7 @@ begin
    ExceptionExitCode:=1;
   try
   {$IFDEF Unix}
-    gettext.TranslateResourceStrings('/usr/local/share/locale/%s/LC_MESSAGES/fpdoc.mo');
+    gettext.TranslateResourceStrings('/usr/share/locale/%s/LC_MESSAGES/fpdoc-' + {$include %FPCVERSION%} + '.mo');
   {$ELSE}
     gettext.TranslateResourceStrings('intl/fpdoc.%s.mo');
   {$ENDIF}
