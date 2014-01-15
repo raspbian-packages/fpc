@@ -687,7 +687,7 @@ Function ParseCommandLine : Integer;
 
 Const
 {$IFDEF Unix}
-  MoFileTemplate = '/usr/local/share/locale/%s/LC_MESSAGES/makeskel.mo';
+  MoFileTemplate = '/usr/share/locale/%s/LC_MESSAGES/makeskel-' + {$include %FPCVERSION%} + '.mo';
 {$ELSE}
   MoFileTemplate ='intl/makeskel.%s.mo';
 {$ENDIF}
