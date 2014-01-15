@@ -1678,7 +1678,7 @@ procedure TranslateDocStrings(const Lang: String);
 
 Const
 {$ifdef unix}
-  DefDir = '/usr/local/share/locale';
+  DefDir = '/usr/share/locale';
 {$else}  
   DefDir = 'intl';
 {$endif}
@@ -1692,7 +1692,7 @@ begin
     Dir:=DefDir;
   Dir:=IncludeTrailingPathDelimiter(Dir);
 {$IFDEF Unix}
-  mo := TMOFile.Create(Format(Dir+'%s/LC_MESSAGES/dglobals.mo', [Lang]));
+  mo := TMOFile.Create(Format(Dir+'%s/LC_MESSAGES/dglobals-' + {$include %FPCVERSION%} + '.mo', [Lang]));
 {$ELSE}
   mo := TMOFile.Create(Format(Dir+'dglobals.%s.mo', [Lang]));
 {$ENDIF}
