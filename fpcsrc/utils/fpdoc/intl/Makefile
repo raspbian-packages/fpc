@@ -1,3 +1,5 @@
+FPC_VERSION=$(shell ${PP} -iV)
+
 all:	de
 
 clean:
@@ -16,8 +18,8 @@ pot:
 	rstconv -i ../makeskel.rst -o makeskel.pot
 	rstconv -i ../fpdocmk.rst -o fpdocmk.pot
 
-install:
-	install -D -m 0644 fpdoc.de.mo /usr/local/share/locale/de/LC_MESSAGES/fpdoc.mo
-	install -D -m 0644 dglobals.de.mo /usr/local/share/locale/de/LC_MESSAGES/dglobals.mo
-	install -D -m 0644 makeskel.de.mo /usr/local/share/locale/de/LC_MESSAGES/makeskel.mo
-	install -D -m 0644 fpdocmk.de.mo /usr/local/share/locale/de/LC_MESSAGES/fpdocmk.mo
+install: de
+	install -D -m 0644 fpdoc.de.mo ${INSTALL_PREFIX}/share/locale/de/LC_MESSAGES/fpdoc-${FPC_VERSION}.mo
+	install -D -m 0644 dglobals.de.mo ${INSTALL_PREFIX}/share/locale/de/LC_MESSAGES/dglobals-${FPC_VERSION}.mo
+	install -D -m 0644 makeskel.de.mo ${INSTALL_PREFIX}/share/locale/de/LC_MESSAGES/makeskel-${FPC_VERSION}.mo
+	install -D -m 0644 fpdocmk.de.mo ${INSTALL_PREFIX}/share/locale/de/LC_MESSAGES/fpdocmk-${FPC_VERSION}.mo
