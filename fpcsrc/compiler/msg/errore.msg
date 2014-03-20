@@ -2807,7 +2807,7 @@ unit_u_indirect_crc_changed=10062_U_Indirect interface (objects/classes) CRC cha
 #
 #  Options
 #
-# 11048 is the last used one
+# 11049 is the last used one
 #
 option_usage=11000_O_$1 [options] <inputfile> [options]
 # BeginOfTeX
@@ -2934,6 +2934,8 @@ option_debug_external_unsupported=11048_W_Disabling external debug information b
 % Not all debug formats can be stored in an external file on all platforms. In particular, on
 % Mac OS X only DWARF debug information can be stored externally.
 %\end{description}
+option_illegal_fpu_eabihf=11049_E_You must use a FPU type of VFPV2, VFPV3 or VFPV3_D16 when using the EABIHF ABI target
+% The EABIHF (VFP hardfloat) ABI target can only be used with VFP FPUs.
 # EndOfTeX
 
 #
