@@ -1,0 +1,45 @@
+Description: Change compiler defaults for raspbian
+ We need armv6 and vfpv2 rather than armv7 and vfpv3-d16
+Author: Peter Michael Green <plugwash@debian.org>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+Index: fpc-2.6.0-4+rpi1/fpcsrc/compiler/options.pas
+===================================================================
+--- fpc-2.6.0-4+rpi1.orig/fpcsrc/compiler/options.pas	2012-07-21 14:07:38.000000000 +0000
++++ fpc-2.6.0-4+rpi1/fpcsrc/compiler/options.pas	2012-07-21 14:09:14.000000000 +0000
+@@ -2832,7 +2832,8 @@
+     begin
+       if not(option.FPUSetExplicitly) then 
+         begin
+-          init_settings.fputype:=fpu_vfpv3_d16
++          //RPI -- reduce default fpu to vfpv2
++          init_settings.fputype:=fpu_vfpv2
+         end
+       else
+         begin
+@@ -2858,10 +2859,11 @@
+ { set default cpu type to ARMv7 for ARMHF unless specified otherwise }
+ if (target_info.abi = abi_eabihf) then 
+   begin
++    // RPI - reduce default CPU to armv6
+     if not option.CPUSetExplicitly then
+-      init_settings.cputype:=cpu_armv7;
++      init_settings.cputype:=cpu_armv6;
+     if not option.OptCPUSetExplicitly then
+-      init_settings.optimizecputype:=cpu_armv7;
++      init_settings.optimizecputype:=cpu_armv6;
+   end;
+ 
+ {$endif arm}
