@@ -1,0 +1,7 @@
+\begin{psyntax}{String Type}{stringtype}
+\synt{string\ type} 
+\lit*{string} 
+  \begin{stack}\\ 
+    \lit*[ \synt{unsigned\ integer} \lit*] 
+  \end{stack}
+\end{psyntax}

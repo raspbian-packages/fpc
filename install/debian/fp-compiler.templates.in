@@ -1,0 +1,59 @@
+# These templates have been reviewed by the debian-l10n-english
+# team
+#
+# If modifications/additions/rewording are needed, please ask
+# debian-l10n-english@lists.debian.org for advice.
+#
+# Even minor modifications require translation updates and such
+# changes should be coordinated with translators and reviewers.
+
+Template: fp-compiler/rename_cfg
+Type: boolean
+Default: true
+_Description: Rename "/etc/fpc.cfg" to "/etc/fpc.cfg.bak"?
+ FPC now supports having multiple versions installed on the same system.
+ The update-alternatives command can be used to set a default version for
+  * fpc (the compiler);
+  * fpc.cfg (the configuration file);
+  * fp-utils (the helper tools).
+ .
+ Whatever version you may choose as default, the configuration files are
+ always backward compatible, so it should always be safe to use the latest
+ version.
+ .
+ In order to use the alternatives system on the system wide FPC configuration
+ file you must accept renaming "/etc/fpc.cfg"; otherwise you will need to
+ manage this manually by yourself.
+
+Template: fp-compiler/windres-select
+Type: select
+Choices: ${choices}
+Default: Select manually
+Description: Choose a default MS Windows .rc resource compiler?
+ FPC supports compiling programs with enmbedded resource in .rc MS Windows
+ format on all plateforms where mingw windres tool is available.
+ .
+ In order to be able to compile projects using .rc files, you need first to
+ install mingw32-binutils package. This package is suggested by fp-compiler
+ package, will not be pulled automatiocally. You will need to install iti
+ manually.
+ .
+ If you want to enter a custom .rc files compiler that does not appear in this
+ list or if you simply want to disable this feature, please select
+ "Enter RC compiler name manually" and let the compiler name empty in the next
+ dialog box be empty.
+
+Template: fp-compiler/windres
+Type: string
+Default:
+Description: Choose a default MS Windows .rc resource compiler?
+ FPC supports compiling programs with enmbedded resource in .rc MS Windows
+ format on all plateforms where mingw windres tool is available.
+ .
+ In order to be able to compile projects using .rc files, you need first to
+ install mingw32-binutils package. This package is suggested by fp-compiler
+ package, will not be pulled automatiocally. You will need to install it
+ manually.
+ .
+ If you dont want to use a default .rc files compiler, please let this entry be
+ empty.
