@@ -78,6 +78,9 @@ function full_version_string:string;
 
 implementation
 
+const
+  FullVersionString={$INCLUDE version.inc};
+
 function version_string:string;
 begin
   version_string := version_nr+'.'+release_nr+'.'+patch_nr;
@@ -86,11 +89,7 @@ end;
 
 function full_version_string:string;
 begin
-  full_version_string := version_nr+'.'+release_nr+'.'+patch_nr+minorpatch
-{$ifdef REVINC}
-  +'-r'+{$i revision.inc}
-{$endif REVINC}
-  ;
+  full_version_string := FullVersionString;
 end;
 
 end.
