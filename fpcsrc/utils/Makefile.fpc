@@ -7,14 +7,14 @@ name=utils
 version=2.6.4
 
 [target]
-dirs=fppkg fpcm tply h2pas fprcp dxegen fpdoc fpcmkcfg pas2ut pas2fpm
+dirs=fpcm tply h2pas fprcp dxegen fpdoc fpcmkcfg pas2ut pas2fpm
 programs=ppdep ptop rstconv data2inc delp bin2obj postw32 rmcvsdir relpath
 programs_linux=grab_vcsa
 dirs_win32=fpmc fpcres rmwait instantfpc importtl
 dirs_win64=fpmc fpcres rmwait instantfpc importtl
 dirs_wince=fpcres rmwait instantfpc
 dirs_haiku=fpcres instantfpc
-dirs_linux=fpcres instantfpc
+dirs_linux=fpcres fppkg instantfpc
 dirs_freebsd=fpcres instantfpc
 dirs_openbsd=fpcres instantfpc
 dirs_netbsd=fpcres instantfpc
