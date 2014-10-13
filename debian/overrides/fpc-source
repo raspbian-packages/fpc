@@ -1,0 +1,2 @@
+# False positive, this is a Pascal header file
+fpc-source: extra-license-file
