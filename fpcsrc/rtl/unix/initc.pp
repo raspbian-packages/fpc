@@ -56,7 +56,7 @@ function geterrnolocation: pcint; cdecl;external clib name '__errno_location';
 {$endif}
 
 {$ifdef FreeBSD} // tested on x86
-function geterrnolocation: pcint; cdecl;external clib name '__error';
+function geterrnolocation: pcint; cdecl;external clib name '__errno_location';
 {$endif}
 
 {$ifdef OpenBSD} // tested on x86
