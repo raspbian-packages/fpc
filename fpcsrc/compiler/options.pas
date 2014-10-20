@@ -3036,7 +3036,8 @@ begin
     begin
       if not(option.FPUSetExplicitly) then
         begin
-          init_settings.fputype:=fpu_vfpv3_d16
+          //RPI -- reduce default fpu to vfpv2
+          init_settings.fputype:=fpu_vfpv2
         end
       else
         begin
@@ -3062,10 +3063,11 @@ if (target_info.system=system_arm_darwin) then
 { set default cpu type to ARMv7 for ARMHF unless specified otherwise }
 if (target_info.abi = abi_eabihf) then
   begin
+    // RPI - reduce default CPU to armv6
     if not option.CPUSetExplicitly then
-      init_settings.cputype:=cpu_armv7;
+      init_settings.cputype:=cpu_armv6;
     if not option.OptCPUSetExplicitly then
-      init_settings.optimizecputype:=cpu_armv7;
+      init_settings.optimizecputype:=cpu_armv6;
   end;
 
 {$endif arm}
