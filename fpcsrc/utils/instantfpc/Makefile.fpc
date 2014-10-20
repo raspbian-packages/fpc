@@ -3,7 +3,7 @@
 #
 
 [package]
-name=instantfpc
+name=ifpc
 version=2.6.4
 
 [install]
@@ -13,7 +13,7 @@ fpcpackage=y
 packages=fcl-process
 
 [target]
-programs=instantfpc
+programs=ifpc
 
 [compiler]
 options=-S2h
