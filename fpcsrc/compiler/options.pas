@@ -40,6 +40,7 @@ Type
     OptCPUSetExplicitly: boolean;
     FileLevel : longint;
     QuickInfo : string;
+	ParaIncludeCfgPath,
     ParaIncludePath,
     ParaUnitPath,
     ParaObjectPath,
@@ -2046,24 +2047,31 @@ var
   line,
   level : longint;
   option_read : boolean;
+  oldfilemode : byte;
+  ConfigFile: TPathStr;
 begin
 { avoid infinite loop }
   Inc(FileLevel);
   Option_read:=false;
   If FileLevel>MaxLevel then
    Message(option_too_many_cfg_files);
+  if not ParaIncludeCfgPath.FindFile(fileName,true,ConfigFile) then
+    ConfigFile := ExpandFileName(filename);
 { Maybe It's Directory ?}   //Jaro Change:
-  if PathExists(filename,false) then
+  if PathExists(ConfigFile,false) then
     begin
        Message1(option_config_is_dir,filename);
        exit;
     end;
 { open file }
   Message1(option_using_file,filename);
-  assign(f,ExpandFileName(filename));
+  oldfilemode:=filemode;
+  filemode:=0;
+  assign(f,ConfigFile);
   {$I-}
    reset(f);
   {$I+}
+  filemode:=oldfilemode;
   if ioresult<>0 then
    begin
      Message1(option_unable_open_file,filename);
@@ -2147,6 +2155,7 @@ begin
                   tmp:= GetName(opts);
                   if tmp <> '' then
                     def_system_macro(tmp);
+                  Option_read:=true;
                 end
               else
                if (s='UNDEF') then
@@ -2155,18 +2164,29 @@ begin
                   tmp:= GetName(opts);
                   if tmp <> '' then
                     undef_system_macro(tmp);
+                  Option_read:=true;
                 end
               else
                if (s='WRITE') then
                 begin
                   Delete(opts,1,1);
                   WriteLn(opts);
+                  Option_read:=true;
                 end
               else
                if (s='INCLUDE') then
                 begin
                   Delete(opts,1,1);
                   Interpret_file(opts);
+                  Option_read:=true;
+                end
+              else
+               if (s='CFGDIR') then
+                begin
+                  Delete(opts,1,1);
+                  DefaultReplacements(opts);
+                  ParaIncludeCfgPath.AddPath(opts,false);
+                  Option_read:=true;
                 end;
             end;
          end
@@ -2514,6 +2534,7 @@ begin
   OptCPUSetExplicitly:=false;
   FileLevel:=0;
   Quickinfo:='';
+  ParaIncludeCfgPath:=TSearchPathList.Create;
   ParaIncludePath:=TSearchPathList.Create;
   ParaObjectPath:=TSearchPathList.Create;
   ParaUnitPath:=TSearchPathList.Create;
@@ -2526,6 +2547,7 @@ end;
 
 destructor TOption.destroy;
 begin
+  ParaIncludeCfgPath.Free;
   ParaIncludePath.Free;
   ParaObjectPath.Free;
   ParaUnitPath.Free;
