@@ -1451,7 +1451,8 @@ unit cgcpu;
                       end;
                 end;
               fpu_vfpv2,
-              fpu_vfpv3:
+              fpu_vfpv3,
+              fpu_vfpv3_d16:
                 begin;
                   mmregs:=rg[R_MMREGISTER].used_in_proc-paramanager.get_volatile_registers_mm(pocall_stdcall);
                 end;
@@ -1522,7 +1523,7 @@ unit cgcpu;
              begin
                reference_reset(ref,4);
                if (tg.direction*tarmprocinfo(current_procinfo).floatregstart>=1023) or
-                  (current_settings.fputype in [fpu_vfpv2,fpu_vfpv3]) then
+                  (current_settings.fputype in [fpu_vfpv2,fpu_vfpv3,fpu_vfpv3_d16]) then
                  begin
                    if not is_shifter_const(tarmprocinfo(current_procinfo).floatregstart,shift) then
                      begin
@@ -1550,7 +1551,8 @@ unit cgcpu;
                        lastfloatreg-firstfloatreg+1,ref));
                    end;
                  fpu_vfpv2,
-                 fpu_vfpv3:
+                 fpu_vfpv3,
+                 fpu_vfpv3_d16:
                    begin
                      ref.index:=ref.base;
                      ref.base:=NR_NO;
@@ -1604,7 +1606,8 @@ unit cgcpu;
                       end;
                 end;
               fpu_vfpv2,
-              fpu_vfpv3:
+              fpu_vfpv3,
+              fpu_vfpv3_d16:
                 begin;
                   { restore vfp registers? }
                   mmregs:=rg[R_MMREGISTER].used_in_proc-paramanager.get_volatile_registers_mm(pocall_stdcall);
@@ -1616,7 +1619,7 @@ unit cgcpu;
               begin
                 reference_reset(ref,4);
                 if (tg.direction*tarmprocinfo(current_procinfo).floatregstart>=1023) or
-                   (current_settings.fputype in [fpu_vfpv2,fpu_vfpv3]) then
+                   (current_settings.fputype in [fpu_vfpv2,fpu_vfpv3,fpu_vfpv3_d16]) then
                   begin
                     if not is_shifter_const(tarmprocinfo(current_procinfo).floatregstart,shift) then
                       begin
@@ -1643,7 +1646,8 @@ unit cgcpu;
                         lastfloatreg-firstfloatreg+1,ref));
                     end;
                   fpu_vfpv2,
-                  fpu_vfpv3:
+                  fpu_vfpv3,
+                  fpu_vfpv3_d16:
                     begin
                       ref.index:=ref.base;
                       ref.base:=NR_NO;
