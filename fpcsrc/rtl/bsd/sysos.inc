@@ -23,7 +23,7 @@ type libcint=longint;
      plibcint=^libcint;
 
 {$ifdef FreeBSD} // tested on x86
-function geterrnolocation: Plibcint; cdecl;external clib name '__error';
+function geterrnolocation: Plibcint; cdecl;external clib name '__errno_location';
 {$else}
 {$ifdef NetBSD} // from a sparc dump.
 function geterrnolocation: Plibcint; cdecl;external clib name '__errno';

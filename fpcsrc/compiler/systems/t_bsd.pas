@@ -187,13 +187,8 @@ begin
        DllCmd[2]:='strip --strip-unneeded $EXE'
      else
        DllCmd[2]:='strip -x $EXE';
-     { OpenBSD seems to use a wrong dynamic linker by default }
-     if target_info.system in systems_openbsd then
-      DynamicLinker:='/usr/libexec/ld.so'
-     else if target_info.system in systems_netbsd then
-      DynamicLinker:='/usr/libexec/ld.elf_so'
-     else
-       DynamicLinker:='';
+     { On Debian systems it seems we have to set the dynamicLinker }
+     DynamicLinker:='/lib/ld-kfreebsd-x86-64.so.1';
    end;
 end;
 
