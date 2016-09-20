@@ -109,7 +109,7 @@ ifeq ($(HIDEPROTECTED),YES)
 FCLOPTS+= --hide-protected
 endif
 
-FPDOCHTMLOPTS=--footer-date="mmm dd yyyy"
+FPDOCHTMLOPTS=
 
 ifeq (chm,$(HTMLFMT))
   HTMLSUFFIX:=.chm
