@@ -3692,7 +3692,8 @@ begin
     begin
       if not(option.FPUSetExplicitly) then
         begin
-          init_settings.fputype:=fpu_vfpv3_d16
+          //RPI -- reduce default fpu to vfpv2
+          init_settings.fputype:=fpu_vfpv2
         end
       else
         begin
@@ -3729,10 +3730,9 @@ begin
       end;
   end;
 
-{ set default cpu type to ARMv7a for ARMHF unless specified otherwise }
+{ set default cpu type to ARMv6 for Raspbian unless specified otherwise }
 if (target_info.abi = abi_eabihf) then
   begin
-{$ifdef CPUARMV6}
     { if the compiler is built for armv6, then
       inherit this setting, e.g. Raspian is armhf but
       only armv6, this makes rebuilds of the compiler
@@ -3741,12 +3741,6 @@ if (target_info.abi = abi_eabihf) then
       init_settings.cputype:=cpu_armv6;
     if not option.OptCPUSetExplicitly then
       init_settings.optimizecputype:=cpu_armv6;
-{$else CPUARMV6}
-    if not option.CPUSetExplicitly then
-      init_settings.cputype:=cpu_armv7a;
-    if not option.OptCPUSetExplicitly then
-      init_settings.optimizecputype:=cpu_armv7a;
-{$endif CPUARMV6}
   end;
 
   if (init_settings.instructionset=is_thumb) and not(CPUARM_HAS_THUMB2 in cpu_capabilities[init_settings.cputype]) then
