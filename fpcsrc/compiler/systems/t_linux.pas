@@ -145,10 +145,26 @@ begin
     LibrarySearchPath.AddPath(sysrootpath,'/usr/lib/arm-linux-gnueabi',true);
 {$endif}
 {$endif arm}
+{$ifdef i386}
+  if not Dontlinkstdlibpath Then
+    LibrarySearchPath.AddPath(sysrootpath,'/usr/lib/i386-linux-gnu',true);
+{$endif i386}
 {$ifdef x86_64}
   if not Dontlinkstdlibpath Then
     LibrarySearchPath.AddPath(sysrootpath,'/usr/lib/x86_64-linux-gnu',true);
 {$endif x86_64}
+{$ifdef powerpc}
+  if not Dontlinkstdlibpath Then
+    LibrarySearchPath.AddPath(sysrootpath,'/usr/lib/powerpc-linux-gnu',true);
+{$endif powerpc}
+{$ifdef powerpc64}
+  if not Dontlinkstdlibpath Then
+    LibrarySearchPath.AddPath(sysrootpath,'/usr/lib/powerpc64-linux-gnu',true);
+{$endif powerpc64}
+{$ifdef aarch64}
+  if not Dontlinkstdlibpath Then
+    LibrarySearchPath.AddPath(sysrootpath,'/usr/lib/aarch64-linux-gnu',true);
+{$endif aarch64}
 end;
 
 {$ifdef m68k}
