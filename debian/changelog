@@ -1,9 +1,16 @@
-fpc (3.0.0+dfsg-10+rpi1) stretch-staging; urgency=medium
+fpc (3.0.0+dfsg-11+rpi1) stretch-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
 
- -- Raspbian forward porter <root@raspbian.org>  Sun, 25 Dec 2016 11:36:11 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Fri, 24 Feb 2017 21:12:43 +0000
+
+fpc (3.0.0+dfsg-11) unstable; urgency=medium
+
+  * Team upload
+  * Fix armhf vstr/vld offset (Closes: #852798)
+
+ -- Graham Inggs <ginggs@debian.org>  Wed, 08 Feb 2017 11:53:35 +0200
 
 fpc (3.0.0+dfsg-10) unstable; urgency=medium
 
