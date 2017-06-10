@@ -4,7 +4,7 @@
 #
 
 [target]
-dirs=hash pasjpeg paszlib fpmkunit fcl-xml fcl-base fcl-db fcl-image fcl-net fcl-passrc fcl-registry fcl-fpcunit fcl-json fcl-js fcl-process unzip regexpr chm fcl-res fcl-stl libgd symbolic bzip2 hermes fppkg
+dirs=hash pasjpeg paszlib fpmkunit fcl-xml fcl-base fcl-db fcl-image fcl-net fcl-passrc fcl-registry fcl-fpcunit fcl-json fcl-js fcl-process unzip regexpr chm fcl-res fcl-stl libgd symbolic bzip2 hermes
 dirs_linux_i386=libc unixutil graph pxlib bzip2
 dirs_i386_linux=graph
 dirs_x86_64_linux=graph
@@ -21,7 +21,7 @@ dirs_haiku=rtl-console rtl-unicode fv fcl-web fastcgi fcl-async ibase mysql ncur
                gdbint libpng x11 gdbm tcl syslog libcurl opengl cairo bfd aspell svgalib \
                imlib utmp  fpgtk xforms fftw pcap ggi sdl openssl graph gnome1 gtk1 gtk2 librsvg  httpd22 pxlib numlib \
                iconvenc
-dirs_freebsd=rtl-console rtl-unicode fv fcl-web fastcgi fcl-async ibase mysql ncurses zlib oracle odbc postgres sqlite pthreads imagemagick \
+dirs_freebsd=rtl-console rtl-unicode fv fcl-async ibase mysql ncurses zlib oracle odbc postgres sqlite pthreads imagemagick \
                gdbint libpng x11 gdbm tcl syslog libcurl opengl cairo  bfd aspell svgalib \
                imlib utmp  fpgtk xforms fftw pcap ggi sdl openssl graph gnome1 gtk1 gtk2 librsvg  httpd22 pxlib numlib \
                users iconvenc gmp fcl-extra libxml
@@ -52,7 +52,7 @@ dirs_linux=rtl-console rtl-unicode fv fcl-web fastcgi fcl-async ibase mysql ncur
                gdbint libpng x11 uuid ldap modplug dts mad  gdbm tcl syslog libcurl opengl opencl cairo gtk1 gtk2 librsvg \
                a52 bfd aspell svgalib newt cdrom users  iconvenc libxml proj4 fcl-extra zorba \
                imlib utmp  fpgtk openal lua oggvorbis xforms fftw pcap ggi sdl openssl gnome1  httpd22 \
-               pxlib numlib gmp libsee ptc
+               pxlib numlib gmp libsee ptc fppkg
 dirs_win32=rtl-console rtl-unicode fv winunits-base winunits-jedi fcl-web fastcgi ibase mysql zlib oracle odbc postgres sqlite imagemagick \
                gdbint libpng mad tcl opengl gtk1 gtk2 librsvg a52 cdrom fpgtk openal fftw lua fcl-extra zorba \
                oggvorbis sdl openssl graph pcap  httpd22 pxlib numlib winceunits cairo libxml \
