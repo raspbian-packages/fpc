@@ -1,9 +1,16 @@
-fpc (3.0.0+dfsg-11+rpi1) stretch-staging; urgency=medium
+fpc (3.0.0+dfsg-12+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
 
- -- Raspbian forward porter <root@raspbian.org>  Fri, 24 Feb 2017 21:12:43 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Fri, 30 Jun 2017 15:24:16 +0000
+
+fpc (3.0.0+dfsg-12) unstable; urgency=medium
+
+  * Fix "[fp-units-rtl-3.0.0] Incorrect conversion from local time to
+    UTC". Backported fix from 3.0.2 (Closes: #864148)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 10 Jun 2017 19:13:48 +0200
 
 fpc (3.0.0+dfsg-11) unstable; urgency=medium
 
