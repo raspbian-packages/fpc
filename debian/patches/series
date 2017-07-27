@@ -39,4 +39,5 @@ further-arm64-fixes.patch
 ppdep-fix-else-handling.patch
 fix-spelling-errors_more.patch
 armhf-fix-vstr-vld-offset.patch
+Correct-for-different-meaning-of-TZOffset.patch
 raspbian.diff

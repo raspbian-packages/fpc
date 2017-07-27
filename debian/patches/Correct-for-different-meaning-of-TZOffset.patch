@@ -1,0 +1,35 @@
+From 731f6175a3870c396a7ddaae774ea8a859b4512b Mon Sep 17 00:00:00 2001
+From: michael <michael@3ad0048d-3df7-0310-abae-a5850022a9f2>
+Date: Fri, 21 Aug 2015 10:36:30 +0000
+Subject: [PATCH] * Correct for different meaning of TZOffset
+
+git-svn-id: http://svn.freepascal.org/svn/fpc/trunk@31356 3ad0048d-3df7-0310-abae-a5850022a9f2
+---
+ packages/rtl-objpas/src/inc/dateutil.inc | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/fpcsrc/packages/rtl-objpas/src/inc/dateutil.inc b/fpcsrc/packages/rtl-objpas/src/inc/dateutil.inc
+index c90c83deff..fc7f87a13e 100644
+--- a/fpcsrc/packages/rtl-objpas/src/inc/dateutil.inc
++++ b/fpcsrc/packages/rtl-objpas/src/inc/dateutil.inc
+@@ -2532,7 +2532,7 @@ end;
+ function UniversalTimeToLocal(UT: TDateTime): TDateTime;
+ 
+ begin
+-  Result:=UniversalTimeToLocal(UT,GetLocalTimeOffset);
++  Result:=UniversalTimeToLocal(UT,-GetLocalTimeOffset);
+ end;
+ 
+ function UniversalTimeToLocal(UT: TDateTime; TZOffset : Integer): TDateTime;
+@@ -2549,7 +2549,7 @@ end;
+ Function LocalTimeToUniversal(LT: TDateTime): TDateTime;
+ 
+ begin
+-  Result:=LocalTimeToUniversal(LT,GetLocalTimeOffset);
++  Result:=LocalTimeToUniversal(LT,-GetLocalTimeOffset);
+ end;
+ 
+ Function LocalTimeToUniversal(LT: TDateTime;TZOffset: Integer): TDateTime;
+-- 
+2.11.0
+
