@@ -1,0 +1,29 @@
+Description: some more Lintian detection spelling misstakes
+Author: Paul Gevers <elbrus@debian.org>
+
+Index: fpc/fpcsrc/compiler/msg/errore.msg
+===================================================================
+--- fpc.orig/fpcsrc/compiler/msg/errore.msg
++++ fpc/fpcsrc/compiler/msg/errore.msg
+@@ -3064,7 +3064,7 @@ unit_u_check_time=10037_U_PPU Check file
+ #% the same conditionals are set for the recompiliation. The compiler has
+ #% found a conditional that was used the last time the unit was compiled, but
+ #% the conditional is currently not defined.
+-unit_w_cant_compile_unit_with_changed_incfile=10040_W_Can't recompile unit $1, but found modifed include files
++unit_w_cant_compile_unit_with_changed_incfile=10040_W_Can't recompile unit $1, but found modified include files
+ % A unit was found to have modified include files, but
+ % some source files were not found, so recompilation is impossible.
+ unit_u_source_modified=10041_U_File $1 is newer than the one used for creating PPU file $2
+Index: fpc/fpcsrc/utils/fpcm/fpcmake.ini
+===================================================================
+--- fpc.orig/fpcsrc/utils/fpcm/fpcmake.ini
++++ fpc/fpcsrc/utils/fpcm/fpcmake.ini
+@@ -109,7 +109,7 @@ ifdef inUnix
+ PATHSEP=/
+ else
+ PATHSEP:=$(subst /,\,/)
+-# cygwin bash or sh can not handle backslashs
++# cygwin bash or sh can not handle backslashes
+ ifdef inCygWin
+ PATHSEP=/
+ endif
