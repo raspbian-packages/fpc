@@ -3,7 +3,7 @@
 #
 
 [package]
-name=instantfpc
+name=ifpc
 version=3.0.2
 
 [require]
