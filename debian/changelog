@@ -1,9 +1,22 @@
-fpc (3.0.2+dfsg-5+rpi1) buster-staging; urgency=medium
+fpc (3.0.2+dfsg-6+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 24 Aug 2017 15:25:31 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Thu, 19 Oct 2017 19:52:00 +0000
+
+fpc (3.0.2+dfsg-6) unstable; urgency=medium
+
+  * Removed declaration of legacy ncursus variables. (Closes: #789091)
+    These variables are now internal and no more exported by new ncursus
+    libraries.
+  * Removed Muti-Arch: same from packages with Architecture: all.
+  * Set Muti-Arch: same for fp-units-* packages to allow installing on
+    a host sytem for cross compiling.
+  * Set Muti-Arch: foreign for fp-docs* and fpc-source* to allow satisfying
+    dependency of other architectures using host architecture (all) package.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 07 Oct 2017 16:12:36 +0200
 
 fpc (3.0.2+dfsg-5) unstable; urgency=medium
 

@@ -235,6 +235,7 @@ Description: Free Pascal - documentation
 
 Package: fp-units-rtl-3.0.2
 Architecture: any
+Multi-Arch: same
 Depends:
  ${misc:Depends},
  ${shlibs:Depends}
@@ -261,6 +262,7 @@ Description: Free Pascal - runtime libraries
 
 Package: fp-units-base-3.0.2
 Architecture: any
+Multi-Arch: same
 Depends:
  fp-units-rtl-3.0.2 (= ${binary:Version}),
  ${misc:Depends},
@@ -291,6 +293,7 @@ Description: Free Pascal - base units
 
 Package: fp-units-fcl-3.0.2
 Architecture: any
+Multi-Arch: same
 Depends:
  fp-units-base-3.0.2 (= ${binary:Version}),
  fp-units-rtl-3.0.2 (= ${binary:Version}),
@@ -315,6 +318,7 @@ Description: Free Pascal - Free Component Library
 
 Package: fp-units-fv-3.0.2
 Architecture: any
+Multi-Arch: same
 Depends:
  fp-units-rtl-3.0.2 (= ${binary:Version}),
  ${misc:Depends},
@@ -340,6 +344,7 @@ Description: Free Pascal - Free Vision units
 
 Package: fp-units-gtk2-3.0.2
 Architecture: any
+Multi-Arch: same
 Depends:
  fp-units-fcl-3.0.2 (= ${binary:Version}),
  fp-units-rtl-3.0.2 (= ${binary:Version}),
@@ -367,6 +372,7 @@ Description: Free Pascal - GTK+ 2.x units
 
 Package: fp-units-db-3.0.2
 Architecture: any
+Multi-Arch: same
 Depends:
  fp-units-rtl-3.0.2 (= ${binary:Version}),
  ${misc:Depends},
@@ -401,6 +407,7 @@ Description: Free Pascal - database-library units
 
 Package: fp-units-gfx-3.0.2
 Architecture: any
+Multi-Arch: same
 Depends:
  fp-units-base-3.0.2 (= ${binary:Version}),
  fp-units-rtl-3.0.2 (= ${binary:Version}),
@@ -440,6 +447,7 @@ Description: Free Pascal - graphics-library units
 
 Package: fp-units-net-3.0.2
 Architecture: any
+Multi-Arch: same
 Depends:
  fp-units-rtl-3.0.2 (= ${binary:Version}),
  ${misc:Depends},
@@ -466,6 +474,7 @@ Description: Free Pascal - networking units
 
 Package: fp-units-math-3.0.2
 Architecture: any
+Multi-Arch: same
 Depends:
  fp-units-rtl-3.0.2 (= ${binary:Version}),
  ${misc:Depends},
@@ -497,6 +506,7 @@ Description: Free Pascal - math units
 
 Package: fp-units-misc-3.0.2
 Architecture: any
+Multi-Arch: same
 Depends:
  fp-units-rtl-3.0.2 (= ${binary:Version}),
  ${misc:Depends},
@@ -522,6 +532,7 @@ Description: Free Pascal - miscellaneous units
 
 Package: fp-units-multimedia-3.0.2
 Architecture: any
+Multi-Arch: same
 Depends:
  fp-units-rtl-3.0.2 (= ${binary:Version}),
  ${misc:Depends},
@@ -557,6 +568,7 @@ Description: Free Pascal - multimedia units
 
 Package: fp-units-i386-3.0.2
 Architecture: i386
+Multi-Arch: same
 Depends:
  fp-units-rtl-3.0.2 (= ${binary:Version}),
  ${misc:Depends},
@@ -606,6 +618,7 @@ Description: Free Pascal - SDK suite dependency package
 
 Package: fpc-source
 Architecture: all
+Multi-Arch: foreign
 Depends:
  fpc-source-3.0.2 (= ${binary:Version}),
  ${misc:Depends}
@@ -694,6 +707,7 @@ Description: Free Pascal - utilities dependency package
 Package: fp-docs
 Section: doc
 Architecture: all
+Multi-Arch: foreign
 Depends:
  fp-docs-3.0.2 (= ${binary:Version}),
  ${misc:Depends}

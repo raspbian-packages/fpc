@@ -25,4 +25,5 @@ fix_source_location_for_documentation.patch
 fix-spelling-errors-3.patch
 fix_tests_for_make_print_directory.patch
 fix_mips_mipsel_lazarus_FTBFS.patch
+remove-depreciated-ncursus-variables-declaration.patch
 raspbian.diff
