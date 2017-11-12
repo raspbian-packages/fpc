@@ -268,6 +268,10 @@ implementation
         create_fpu_types;
         s64currencytype:=corddef.create(scurrency,low(int64),high(int64));
 {$endif arm}
+{$ifdef aarch64}
+        create_fpu_types;
+        s64currencytype:=corddef.create(scurrency,low(int64),high(int64));
+{$endif aarch64}
 {$ifdef avr}
         s32floattype:=cfloatdef.create(s32real);
         s64floattype:=cfloatdef.create(s64real);
@@ -734,7 +738,6 @@ implementation
 //        aiclass[ait_labeled_instruction]:=tai_labeled_instruction;
 {$endif SPARC}
 {$ifdef arm}
-        aiclass[ait_thumb_func]:=tai_thumb_func;
         aiclass[ait_thumb_set]:=tai_thumb_set;
 {$endif arm}
         aiclass[ait_set]:=tai_set;
