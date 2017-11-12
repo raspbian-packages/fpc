@@ -4565,6 +4565,9 @@ begin
   BinInstallDir:='';
   LibInstallDir:='';
   ExamplesInstallDir:='';
+  if GlobalUnitDir = '' then begin
+    GlobalUnitDir := FBaseInstallDir;
+  end;
 end;
 
 
@@ -4911,6 +4914,17 @@ end;
 ****************************************************************************}
 
 procedure TFPCDefaults.CompilerDefaults;
+const
+{$ifdef CPUARMHF}
+  gnu = 'gnueabihf';
+{$endif CPUARMHF}
+{$ifdef CPUARMEL}
+  gnu = 'gnueabi';
+{$endif CPUARMEL}
+{$ifndef CPUARM}
+  gnu = 'gnu';
+{$endif CPUARM}
+  FullTarget = {$I %FPCTARGETCPU%} + '-' + {$I %FPCTARGETOS%} + '-' + gnu;
 var
   BD : String;
 begin
@@ -4921,7 +4935,7 @@ begin
   BD:=FixPath(GetEnvironmentVariable('FPCDIR'), False);
   if BD='' then
     begin
-      BD:='/usr/local/lib/fpc/'+FCompilerVersion;
+      BD:='/usr/lib/' + LowerCase(FullTarget) + '/fpc/'+FCompilerVersion;
       if not DirectoryExists(BD) and
          DirectoryExists('/usr/lib/fpc/'+FCompilerVersion) then
         BD:='/usr/lib/fpc/'+FCompilerVersion;
