@@ -93,7 +93,7 @@ program install;
      WHTMLScn,insthelp;
 
   const
-     installerversion='3.0.2';
+     installerversion='3.0.4';
      installercopyright='Copyright (c) 1993-2017 Florian Klaempfl';
 
 
@@ -1331,6 +1331,9 @@ end;
               messagebox('Please, choose the directory for installation first.',nil,mferror+mfokbutton)
             else
              begin
+               Data.BasePath := FExpand (Data.BasePath);
+               if Data.BasePath [Length (Data.BasePath)] = DirSep then
+                 Dec (Data.BasePath [0]);
                found:=false;
                for j:=1 to cfg.packs do
                 if data.packmask[j]>0 then
@@ -1362,9 +1365,7 @@ end;
                     end;
                   WriteLog ('Diskspace needed: ' + DotStr (DSize) + ' Kb');
 
-                  S := FExpand (Data.BasePath);
-                  if S [Length (S)] = DirSep then
-                   Dec (S [0]);
+                  S := Data.BasePath;
                   Space := DiskFree (byte (Upcase(S [1])) - 64);
                   { -1 means that the drive is invalid }
                   if Space=-1 then

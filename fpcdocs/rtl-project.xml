@@ -18,7 +18,7 @@
         <unit file="../fpcsrc/rtl/objpas/objpas.pp" options="-dHASINTF"/>
         <unit file="../fpcsrc/rtl/objpas/types.pp" options="-Fi../fpcsrc/rtl/inc -S2"/>
         <unit file="../fpcsrc/packages/rtl-objpas/src/inc/strutils.pp" options=""/>
-        <unit file="../fpcsrc/rtl/unix/sysutils.pp" options="-Fi../fpcsrc/rtl/objpas/sysutils -Fi../fpcsrc/rtl/inc"/>
+        <unit file="../fpcsrc/rtl/unix/sysutils.pp" options="-dFPC_HAS_UNICODESTRING -dFPC_HAS_FEATURE_THREADING -dFPC_HAS_TYPE_EXTENDED -dFPC_HAS_TYPE_DOUBLE -dFPC_HAS_TYPE_SINGLE -Fi../fpcsrc/rtl/objpas/sysutils -Fi../fpcsrc/rtl/inc"/>
         <unit file="../fpcsrc/rtl/inc/strings.pp" options="-Fi../fpcsrc/rtl/i386 -Fi../fpcsrc/rtl/inc"/>
         <unit file="../fpcsrc/packages/rtl-console/src/unix/mouse.pp" options="-Fi../fpcsrc/packages/rtl-console/src/inc"/>
         <unit file="../fpcsrc/packages/rtl-console/src/unix/keyboard.pp" options="-Fi../fpcsrc/packages/rtl-console/src/inc"/>

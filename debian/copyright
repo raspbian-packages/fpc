@@ -3,12 +3,13 @@ Upstream-Name: lazarus
 Source:
  http://freepascal.org/
  .
- The upstream source has been repacked to remove a non-distributable file:
- fpcsrc/rtl/netwlibc/pre/libcpre.gcc.o . Because repacking needed to be done
- anyways, also other precompiled files and generated Makefiles were removed,
- in order to save considerable amounts of disk space. The Makefiles can be
- recreated by running the make-files target in debian/rules, i.e.:
- $ debian/rules make-files
+ The upstream source has been repacked to remove non-distributable files:
+ fpcsrc/rtl/netwlibc/pre/libcpre.gcc.o and
+ fpcsrc/packages/fcl-js/src/jsminifier.pp. Because repacking needed to be done
+ anyways, also other precompiled files and generated Makefiles were removed, in
+ order to save considerable amounts of disk space. The Makefiles can be
+ recreated by running the make-files target in debian/rules, i.e.: $
+ debian/rules make-files
 Comment:
  The original description of upstream's view on the licenses can be found in
  install/doc/readme.txt in the section called license. The text from there is
@@ -306,6 +307,7 @@ Files:
  fpcsrc/utils/fppkg/examples/testrep.pp
  fpcsrc/utils/grab_vcsa.pp
  fpcsrc/utils/mkinsadd.pp
+ fpcsrc/utils/pas2js/dist/rtl.js
  fpcsrc/utils/pas2js/pas2js.pp
  fpcsrc/utils/pas2ut/pas2ut.pp
  fpcsrc/utils/ppdep.pp
@@ -331,7 +333,7 @@ Copyright:
  1992 T.Schmid
  1992-1993 NeXT Computer, Inc
  1993-1997 Stefan Stuntz
- 1993-2015 Free Pascal team
+ 1993-2017 Free Pascal team
  1993-2014 Florian Klaempfl
  1994 BetaSoft
  1994-1997 Martin Blom
@@ -351,7 +353,7 @@ Copyright:
  1996-2000 Richard Koerber
  1996-2005 Peter Vreman
  1996-2009 Marco van de Voort <marco@freepascal.org>
- 1996-2015 Michael Van Canneyt
+ 1996-2017 Michael Van Canneyt
  1997 Balazs Scheidler
  1997-1998 Gertjan Schouten
  1997-2000 Daniel Mantione
@@ -394,7 +396,7 @@ Copyright:
  2001 Tramontana Co
  2001-2006 Stefan Heymann
  2001-2011 Armin Diehl
- 2001-2015 Nikolay Nikolov (nickysn@users.sourceforge.net)
+ 2001-2017 Nikolay Nikolov (nickysn@users.sourceforge.net)
  2002 Daniel Mantione
  2002 Grzegorz Kraszewski
  2002 Hewlett Packard, Inc
@@ -421,7 +423,7 @@ Copyright:
  2009-2010 Dmitry Boyarintsev
  2009-2012 Paul Ishenin
  2009-2012 Sven Barth
- 2010 Graeme Geldenhuys <graemeg@gmail.com>
+ 2010-2016 Graeme Geldenhuys <graemeg@gmail.com>
  2010 Jasper Lievisse Adriaanse <jasper@openbsd.org>
  2010 Olivier Coursière
  2011 Marcus Sackrow
@@ -433,6 +435,7 @@ Copyright:
  2015 Silvio Clecio
  2015 Ondrej Pokorny
  2015 Yury Sidorov
+ 2017 Mattias Gaertner
 License: LGPL-2.1+ with staticLink exception
 
 Files: fpcsrc/packages/libmicrohttpd/examples*
@@ -744,6 +747,10 @@ Copyright:
  2006 Ivo Steinmann
 License: LGPL-2.1+
 
+Files: fpcsrc/packages/hash/src/md5.pp
+Copyright: 1991-1992 RSA Data Security, Inc.
+License: RSA
+
 Files:
  fpcsrc/packages/sdl/src/jedi-sdl.inc
  fpcsrc/packages/sdl/src/logger.pas
@@ -810,6 +817,19 @@ Copyright:
 License: Zlib
 
 Files:
+ fpcsrc/packages/x11/src/deckeysym.pp
+ fpcsrc/packages/x11/src/hpkeysym.pp
+Copyright: 1988-1991 by Digital Equipment Corporation, Maynard, Massachusetts
+ 1988-1998 The Open Group
+License: DEC and Open
+
+Files:
+ fpcsrc/packages/x11/src/sunkeysym.pp
+Copyright: 1991 Oracle and/or its affiliates
+ 1991-1998 The Open Group
+License: Expat and Open
+
+Files:
  fpcsrc/rtl/i386/math.inc
  fpcsrc/rtl/x86_64/math.inc
 Copyright:
@@ -831,6 +851,7 @@ Files:
  fpcsrc/compiler/macho.pas
  fpcsrc/packages/httpd20/src/apriconv/apr_iconv.inc
  fpcsrc/packages/httpd22/src/apriconv/apr_iconv.inc
+ fpcsrc/packages/ptc/src/win32/directx/p_dinput.pp
  fpcsrc/packages/pthreads/src/pthrhaiku.inc
  fpcsrc/packages/pthreads/src/pthrbsd.inc
  fpcsrc/packages/pthreads/src/pthrbeos.inc
@@ -1235,6 +1256,23 @@ License: CDDL-1
  Contributors to distribute such responsibility on an equitable basis. Nothing
  herein is intended or shall be deemed to constitute any admission of liability.
  
+License: DEC
+ Permission to use, copy, modify, and distribute this software and its
+ documentation for any purpose and without fee is hereby granted,
+ provided that the above copyright notice appear in all copies and that
+ both that copyright notice and this permission notice appear in
+ supporting documentation, and that the name of Digital not be
+ used in advertising or publicity pertaining to distribution of the
+ software without specific, written prior permission.
+ .
+ DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+ ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+ DIGITAL BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+ ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+ WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ SOFTWARE.
+
 License: expat
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -1937,6 +1975,46 @@ License: MPL-1.1
      use the text of this Exhibit A rather than the text found in the
      Original Code Source Code for Your Modifications.]
 
+License: Open
+ Permission to use, copy, modify, distribute, and sell this software and its
+ documentation for any purpose is hereby granted without fee, provided that
+ the above copyright notice appear in all copies and that both that
+ copyright notice and this permission notice appear in supporting
+ documentation.
+ .
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ OPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ .
+ Except as contained in this notice, the name of The Open Group shall not be
+ used in advertising or otherwise to promote the sale, use or other dealings
+ in this Software without prior written authorization from The Open Group.
+
+License: RSA
+ License to copy and use this software is granted provided that it
+ is identified as the "RSA Data Security, Inc. MD5 Message-Digest
+ Algorithm" in all material mentioning or referencing this software
+ or this function.
+ .
+ License is also granted to make and use derivative works provided
+ that such works are identified as "derived from the RSA Data
+ Security, Inc. MD5 Message-Digest Algorithm" in all material
+ mentioning or referencing the derived work.
+ .
+ RSA Data Security, Inc. makes no representations concerning either
+ the merchantability of this software or the suitability of this
+ software for any particular purpose. It is provided "as is"
+ without express or implied warranty of any kind.
+ .
+ These notices must be retained in any copies of any part of this
+ documentation and/or software.
+
 License: SC
  Permission to use, copy, modify, and distribute this software and its
  documentation in source and binary forms for any purpose and without
@@ -1983,4 +2061,3 @@ License: Zlib
  .
     3. This notice may not be removed or altered from any source
     distribution.
-

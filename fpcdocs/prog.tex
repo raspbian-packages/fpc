@@ -43,7 +43,7 @@
 \begin{document}
 \title{Free Pascal \\ Programmer's Guide}
 \docdescription{Programmer's Guide for \fpc, Version \fpcversion}
-\docversion{3.0.2}
+\docversion{3.0.4}
 \input{date.inc}
 \author{Micha\"el Van Canneyt}
 \maketitle
@@ -150,14 +150,12 @@ in bytes. For these values, it has the same effect as the
 
 Thus, the following
 \begin{verbatim}
-{$A 8}
+{$ALIGN 8}
 \end{verbatim}
 is equivalent to 
 \begin{verbatim}
 {$PACKRECORDS 8}
 \end{verbatim}
-and specifies to the compiler that all data inside a record should be aligned on 
-8 byte boundaries.
 
 In MACPAS mode, additionally it can have the following values:
 \begin{description}
@@ -892,7 +890,7 @@ code.
 
 Here \var{XXX} can be one of the following:
 \begin{description}
-\item[DATE] Inserts the current date.
+\item[DATE] Inserts the current date. It will be formatted as YYYY/MM/DD.
 \item[FPCTARGET] Inserts the target CPU name. (deprecated, use
 \var{FPCTARGETCPU})
 \item[FPCTARGETCPU] Inserts the target CPU name.
@@ -902,7 +900,7 @@ Here \var{XXX} can be one of the following:
 \item[LINE] Line number on which the directive is found.
 \item[LINENUM] Line number on which the directive is found. In this case,
 the result is an integer, not a string.
-\item[TIME] Current time.
+\item[TIME] Current time, formatted as HH:MM:SS
 \end{description}
 If \var{XXX} is none of the above, then it is assumed to be the name of
 an environment variable. Its value will be fetched from the environment,
@@ -931,6 +929,13 @@ By michael
 Compiler version: 0.99.7
 Target CPU: i386
 \end{verbatim}
+
+\begin{remark}
+Note that the inclusion of DATE and TIME will not cause the compiler to
+recompile the unit every time it is used: the date and time will be the date
+and time when the unit was last compiled.
+\end{remark}
+
 % Assembler type
 
 %\subsection{\var{\protect\$I386\_XXX} : Specify assembler format (Intel 80x86 only)}
@@ -1365,8 +1370,7 @@ two that is equal to or larger than the element's size. The special value
 \var{C} is used to specify alignment as by the GNU CC compiler. It should 
 be used only when making import units for C routines.
 
-The default alignment (which can be selected with \var{DEFAULT}) is natural
-alignment, contrary to Turbo Pascal, where it is 1.
+The default alignment (which can be selected with \var{DEFAULT}) is natural alignment.
 
 More information on this and an example program can be found in the reference
 guide, in the section about record types.
@@ -5393,11 +5397,11 @@ the fast alignment is used to align the data (this is the default).
 \subsection{Structured types alignment}
 \label{se:StructuredAlignment}
 
-By default all elements in a structure are aligned to a 2 byte boundary,
+By default all elements in a structure are aligned using natural alignment.
 unless the \var{\$PACKRECORDS} directive or \var{packed} modifier is used
-to align the data in another way. For example a \var{record} or \var{object}
-having a 1 byte element, will have its size rounded up to 2, so the size of
-the structure will actually be 2 bytes.
+to align the data in another way. 
+
+For more information regarding alignment, \sees{Packrecords}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The heap

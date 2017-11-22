@@ -221,7 +221,7 @@ begin
 {$ifdef ALLPACKAGES}
     P.Directory:=ADirectory;
 {$endif ALLPACKAGES}
-    P.Version:='3.0.2';
+    P.Version:='3.0.4';
 
     P.Dependencies.Add('fcl-base');
 

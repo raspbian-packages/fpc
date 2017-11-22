@@ -1,7 +1,6 @@
 version.diff
 fix-FPCDIR-in-fpcmake.diff
 relpath.patch
-fix-spell-errors.patch
 rename-instantfpc-to-ifpc.patch
 use-bfd-explicitly.diff
 change-path-of-localization-files-to-fit-Debian-standar.patch
@@ -19,11 +18,13 @@ armhf-tags.patch
 fix_powerpc_ftbfs_with_new_glibc.patch
 further-arm64-fixes.patch
 ppdep-fix-else-handling.patch
-fix-spelling-errors_more.patch
 armhf-fix-vstr-vld-offset.patch
 fix_source_location_for_documentation.patch
 fix-spelling-errors-3.patch
 fix_tests_for_make_print_directory.patch
 fix_mips_mipsel_lazarus_FTBFS.patch
 remove-depreciated-ncursus-variables-declaration.patch
+drop-jsminifier-from-build-as-we-strip-it.patch
+create-directory-before-copy-in-Makefile.fpc.patch
+fix_texpfncase_test.patch
 raspbian.diff

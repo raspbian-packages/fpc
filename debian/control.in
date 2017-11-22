@@ -6,7 +6,7 @@ Uploaders:
  Abou Al Montacir <abou.almontacir@sfr.fr>,
  Paul Gevers <elbrus@debian.org>,
  Peter Michael Green <plugwash@debian.org>,
-Standards-Version: 3.9.8
+Standards-Version: 4.1.0
 Build-Depends:
  binutils,
  debhelper (>= 10~),
@@ -100,6 +100,7 @@ Description: Free Pascal - SDK source code
 
 Package: fp-compiler${PACKAGESUFFIX}
 Architecture: any
+Multi-Arch: same
 Depends:
  binutils,
  fp-units-rtl${PACKAGESUFFIX} (= ${binary:Version}),
@@ -136,6 +137,7 @@ Description: Free Pascal - compiler
 
 Package: fp-ide${PACKAGESUFFIX}
 Architecture: any
+Multi-Arch: foreign
 Depends:
  fp-units-rtl${PACKAGESUFFIX} (= ${binary:Version}),
  ${misc:Depends},
@@ -169,6 +171,7 @@ Description: Free Pascal - IDE
 
 Package: fp-utils${PACKAGESUFFIX}
 Architecture: any
+Multi-Arch: foreign
 Depends:
  fpc-source${PACKAGESUFFIX},
  ${misc:Depends},
@@ -657,7 +660,7 @@ Description: Free Pascal - compiler dependency package
 
 Package: fp-ide
 Architecture: any
-Multi-Arch: same
+Multi-Arch: foreign
 Depends:
  fp-ide${PACKAGESUFFIX} (= ${binary:Version}),
  ${misc:Depends}
@@ -679,7 +682,7 @@ Description: Free Pascal - IDE dependency package
 
 Package: fp-utils
 Architecture: any
-Multi-Arch: same
+Multi-Arch: foreign
 Depends:
  fp-utils${PACKAGESUFFIX} (= ${binary:Version}),
  ${misc:Depends}

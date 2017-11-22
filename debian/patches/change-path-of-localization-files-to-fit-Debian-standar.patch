@@ -7,7 +7,7 @@ Index: fpc/fpcsrc/utils/fpdoc/dglobals.pp
 ===================================================================
 --- fpc.orig/fpcsrc/utils/fpdoc/dglobals.pp
 +++ fpc/fpcsrc/utils/fpdoc/dglobals.pp
-@@ -1678,7 +1678,7 @@ procedure TranslateDocStrings(const Lang
+@@ -1677,7 +1677,7 @@ procedure TranslateDocStrings(const Lang
  
  Const
  {$ifdef unix}
@@ -16,7 +16,7 @@ Index: fpc/fpcsrc/utils/fpdoc/dglobals.pp
  {$else}  
    DefDir = 'intl';
  {$endif}
-@@ -1692,7 +1692,7 @@ begin
+@@ -1691,7 +1691,7 @@ begin
      Dir:=DefDir;
    Dir:=IncludeTrailingPathDelimiter(Dir);
  {$IFDEF Unix}
@@ -29,7 +29,7 @@ Index: fpc/fpcsrc/utils/fpdoc/fpclasschart.pp
 ===================================================================
 --- fpc.orig/fpcsrc/utils/fpdoc/fpclasschart.pp
 +++ fpc/fpcsrc/utils/fpdoc/fpclasschart.pp
-@@ -689,7 +689,7 @@ Function ParseCommandLine : Integer;
+@@ -687,7 +687,7 @@ Function ParseCommandLine : Integer;
  
  Const
  {$IFDEF Unix}
@@ -42,15 +42,15 @@ Index: fpc/fpcsrc/utils/fpdoc/fpdoc.pp
 ===================================================================
 --- fpc.orig/fpcsrc/utils/fpdoc/fpdoc.pp
 +++ fpc/fpcsrc/utils/fpdoc/fpdoc.pp
-@@ -379,7 +379,7 @@ Procedure TFPDocApplication.DoRun;
- 
+@@ -394,7 +394,7 @@ Procedure TFPDocApplication.DoRun;
  begin
- {$IFDEF Unix}
--  gettext.TranslateResourceStrings('/usr/local/share/locale/%s/LC_MESSAGES/fpdoc.mo');
-+  gettext.TranslateResourceStrings('/usr/share/locale/%s/LC_MESSAGES/fpdoc-' + {$include %FPCVERSION%} + '.mo');
- {$ELSE}
-   gettext.TranslateResourceStrings('intl/fpdoc.%s.mo');
- {$ENDIF}
+   try
+   {$IFDEF Unix}
+-    gettext.TranslateResourceStrings('/usr/local/share/locale/%s/LC_MESSAGES/fpdoc.mo');
++    gettext.TranslateResourceStrings('/usr/share/locale/%s/LC_MESSAGES/fpdoc-' + {$include %FPCVERSION%} + '.mo');
+   {$ELSE}
+     gettext.TranslateResourceStrings('intl/fpdoc.%s.mo');
+   {$ENDIF}
 Index: fpc/fpcsrc/utils/fpdoc/intl/Makefile
 ===================================================================
 --- fpc.orig/fpcsrc/utils/fpdoc/intl/Makefile
@@ -79,7 +79,7 @@ Index: fpc/fpcsrc/utils/fpdoc/makeskel.pp
 ===================================================================
 --- fpc.orig/fpcsrc/utils/fpdoc/makeskel.pp
 +++ fpc/fpcsrc/utils/fpdoc/makeskel.pp
-@@ -568,7 +568,7 @@ Function ParseCommandLine : Integer;
+@@ -584,7 +584,7 @@ Function ParseCommandLine : Integer;
  
  Const
  {$IFDEF Unix}

@@ -26,10 +26,12 @@ begin
 {$ifdef ALLPACKAGES}
     P.Directory:=ADirectory;
 {$endif ALLPACKAGES}
-    P.Version:='3.0.2';
+    P.Version:='3.0.4';
     P.SourcePath.Add('src');
 
     P.OSes:=AllAmigaLikeOSes;
+    if Defaults.CPU=powerpc then
+      P.OSes:=P.OSes-[amiga];
 
     T:=P.Targets.AddUnit('cliputils.pas');
 

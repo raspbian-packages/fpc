@@ -29,6 +29,9 @@ cd ${DEB_SRC_DIR}
 find -name Makefile.fpc -execdir sh -c 'rm $(basename {} .fpc)' ';'
 find -regex '.*\.\(a\|or?\|so\.*\|ppu\|compiled\|exe\|dll\|jar\)' -delete
 find -name '*.pp' -exec chmod a-x {} ';'
+# https://bugs.freepascal.org/view.php?id=32288 (the fact the bug is closed
+# doesn't mean the issue is resolved)
+rm fpcsrc/packages/fcl-js/src/jsminifier.pp
 cd ..
 tar -acf ${DEB_SRC_TAR} ${DEB_SRC_DIR}
 cd ${ORIG_PATH}

@@ -1,9 +1,52 @@
-fpc (3.0.2+dfsg-6+rpi1) buster-staging; urgency=medium
+fpc (3.0.4+dfsg-2+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 19 Oct 2017 19:52:00 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Wed, 22 Nov 2017 10:51:44 +0000
+
+fpc (3.0.4+dfsg-2) unstable; urgency=medium
+
+  [ Adam Conrad ]
+  * fix_texpfncase_test.patch: Cherrypick upstream fix to texpfncase test.
+    (Closes: 875838)
+
+  [ Abou Al Montacir ]
+  * Set Muti-Arch: foreign for fp-utils* and fp-ide*.
+  * Set Muti-Arch: same for fp-compiler*.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sun, 12 Nov 2017 17:13:55 +0100
+
+fpc (3.0.4+dfsg-1) unstable; urgency=medium
+
+  * New upstream version (Closes: #875838)
+  * Refresh patches
+  * Add create-directory-before-copy-in-Makefile.fpc.patch to prevent
+    FTBFS
+  * Merge experimental package into unstable
+
+ -- Paul Gevers <elbrus@debian.org>  Mon, 30 Oct 2017 20:32:33 +0100
+
+fpc (3.0.4~rc1+dfsg-1) experimental; urgency=medium
+
+  [ Abou Al Montacir ]
+  * Removed declaration of legacy ncursus variables. (Closes: #789091)
+    These variables are now internal and no more exported by new ncursus
+    libraries.
+  * Removed Multi-Arch: same from packages with Architecture: all.
+  * Set Multi-Arch: same for fp-units-* packages to allow installing on
+    a host system for cross compiling.
+
+  [ Paul Gevers ]
+  * New upstream release RC candidate
+  * Refresh patches and drop those applied upstream
+  * Refresh d/copyright for changes
+  * Add drop-jsminifier-from-build-as-we-strip-it.patch as we strip an
+    additional file now and we need to exclude that from building
+  * Bump standards version to 4.1.0 (no changes)
+  * Remove Multi-Arch: same from fp-utils, fp-compiler and fp-ide
+
+ -- Paul Gevers <elbrus@debian.org>  Thu, 24 Aug 2017 21:47:45 +0200
 
 fpc (3.0.2+dfsg-6) unstable; urgency=medium
 

@@ -141,7 +141,7 @@ Index: fpc/fpcsrc/utils/instantfpc/Makefile.fpc
  [package]
 -name=instantfpc
 +name=ifpc
- version=3.0.2
+ version=3.0.4
  
  [require]
 Index: fpc/fpcsrc/utils/instantfpc/ifpc.pas

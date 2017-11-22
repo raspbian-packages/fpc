@@ -570,7 +570,7 @@ The condition of the repetitive statement is NOT evaluated.
 This can be used with <var>For</var>, var{repeat} and <var>While</var> statements.
 </p>
 <p>
-Note that while this is a procedure, <var>Break</var> is a reserved word
+Note that while this is a procedure, <var>Break</var> is a compiler intrinsic (i.e. is treated specially)
 and hence cannot be redefined.
 </p>
 </descr>
@@ -847,7 +847,7 @@ checked again.
 This can be used with <var>For</var>, <var>repeat</var> and <var>While</var> statements.
 </p>
 <p>
-Note that while this is a procedure, <var>Continue</var> is a reserved word
+Note that while this is a procedure, <var>Continue</var> is a compiler intrinsic (i.e. is treated specially)
 and hence cannot be redefined.
 </p>
 </descr>
@@ -1437,9 +1437,15 @@ None.
 <element name="Halt">
 <short>Stop program execution.</short>
 <descr>
+<p>
 <var>Halt</var> stops program execution and returns control to the calling
 program. The optional argument <var>Errnum</var> specifies an exit value. If
 omitted, zero is returned.
+</p>
+<p>
+Note that this skips any try/finally (implicit or explicit) or try/except blocks, 
+thus may result in memory leaks. Finalization sections of units will be executed.
+</p>
 </descr>
 <errors>
 None.
@@ -2750,6 +2756,11 @@ In case the length is set to a larger length than the current one, the new
 elements are zeroed out for a dynamic array. For a string, the string is
 zero-terminated at the correct length.
 </p>
+<p>
+Note that <var>SetLength</var> is governed by the Copy-On-Write principle for strings
+and dynamic arrays: the reference count after a call to <var>SetLength</var>
+will be 1.
+</p>
 </descr>
 <errors>
 None.
@@ -3198,12 +3209,24 @@ undefined.
 <short>Write variable to a text file</short>
 <descr>
 <p>
-<var>Write</var> writes the contents of the variables <var>V1</var>, <var>V2</var> etc. to
+<var>Write</var> writes the contents of the variables <var>V1</var>, <var>V2</var>, <var>V3</var>  etc. to
 the file <var>F</var>. <var>F</var> can be a typed file, or a <var>Text</var> file.
 If <var>F</var> is a typed file, then the variables <var>V1</var>, <var>V2</var> etc. must
 be of the same type as the type in the declaration of <var>F</var>. Untyped files
 are not allowed.
 </p>
+<p>
+The <var>Write</var> command accepts an arbitrary number of arguments. 
+The <var>V1</var>, <var>V2</var>, <var>V3</var> in the declaration here are in fact just samples, the actual number may be much higher.
+The types of arguments (<var>Type1</var> etc.) are limited to the following types:
+</p>
+<ul>
+<li>Any character type.</li>
+<li>Any string type (including <var>pchar</var>).</li>
+<li>Any ordinal type (integer, enumerated).</li>
+<li>The Int64 and QWord type.</li>
+<li>Any floating-point type (such as double, single, extended).</li>
+</ul>
 <p>
 If the parameter <var>F</var> is omitted, standard output is assumed.
 If <var>F</var> is of type <var>Text</var>, then the necessary conversions are done
@@ -4574,10 +4597,17 @@ use the <link id="#rtl.sysutils.freeandnil">FreeAndNil</link> function.
 <element name="TObject.newinstance">
 <short>Allocate memory on the heap for a new instance</short>
 <descr>
+<p>
 <var>NewInstance</var> allocates memory on the heap for a new instance of
 the current class. If the memory was allocated, the class will be
 initialized by a call to <link id="TObject.InitInstance">InitInstance</link>.
 The function returns the newly initialized instance.
+</p>
+<p>
+This method can be overridden to implement e.g. object pooling. 
+Note that the method is responsible for correctly initializing 
+the object, i.e. zeroing out the new instance.
+</p>
 </descr>
 <errors>
 If not enough memory is available, a <var>Nil</var> pointer may be returned, 
@@ -15423,17 +15453,17 @@ platforms.
 </descr>
 <seealso>
 <link id="PtrInt"/>
-<link id="NativeUint"/>
+<link id="NativeUInt"/>
 </seealso>
 </element>
 
 <!-- alias type Visibility: default -->
-<element name="NativeUint">
-<short>Alias for <var>PtrUint</var></short>
+<element name="NativeUInt">
+<short>Alias for <var>PtrUInt</var></short>
 <descr>
-<var>NativeInt</var> is defined for Delphi compatibility. It is an unsigned integer  
+<var>NativeUInt</var> is defined for Delphi compatibility. It is an unsigned integer
 with the size of a pointer, so 32-bit on 32-bit platforms, 64-bit on 64-bit
-platforms. 
+platforms.
 </descr>
 <seealso>
 <link id="PtrInt"/>

@@ -74,7 +74,7 @@ Index: fpc/fpcsrc/compiler/Makefile.fpc
  
  # Do not define the default -d$(CPU_TARGET) because that
  # will conflict with our -d$(CPC_TARGET)
-@@ -397,7 +403,7 @@ endif
+@@ -400,7 +406,7 @@ endif
  # CPU targets
  #####################################################################
  
@@ -83,7 +83,7 @@ Index: fpc/fpcsrc/compiler/Makefile.fpc
  INSTALL_TARGETS=$(addsuffix _exe_install,$(sort $(CYCLETARGETS) $(PPC_TARGETS)))
  
  .PHONY: $(PPC_TARGETS) $(INSTALL_TARGETS)
-@@ -452,12 +458,12 @@ tempclean:
+@@ -455,12 +461,12 @@ tempclean:
          -$(DEL) $(PPCROSSNAME) $(TEMPNAME) $(TEMPNAME1) $(TEMPNAME2) $(TEMPNAME3) $(MSG2INC) pp1.wpo pp2.wpo
  
  execlean :
@@ -32840,7 +32840,7 @@ Index: fpc/fpcsrc/packages/fpmkunit/src/fpmkunit.pp
 ===================================================================
 --- fpc.orig/fpcsrc/packages/fpmkunit/src/fpmkunit.pp
 +++ fpc/fpcsrc/packages/fpmkunit/src/fpmkunit.pp
-@@ -106,7 +106,7 @@ Type
+@@ -110,7 +110,7 @@ Type
    // Please keep this order, see OSCPUSupported below
    TCpu=(cpuNone,
      i386,m68k,powerpc,sparc,x86_64,arm,powerpc64,avr,armeb,
@@ -32849,7 +32849,7 @@ Index: fpc/fpcsrc/packages/fpmkunit/src/fpmkunit.pp
    );
    TCPUS = Set of TCPU;
  
-@@ -180,45 +180,45 @@ Const
+@@ -184,45 +184,45 @@ Const
  
    { This table is kept OS,Cpu because it is easier to maintain (PFV) }
    OSCPUSupported : array[TOS,TCpu] of boolean = (
@@ -32934,7 +32934,7 @@ Index: fpc/fpcsrc/packages/fpmkunit/src/fpmkunit.pp
    );
  
    // Useful
-@@ -2641,6 +2641,7 @@ begin
+@@ -2645,6 +2645,7 @@ begin
        x86_64:   result := GetGccDirArch('cpux86_64','-m64');
        powerpc:  result := GetGccDirArch('cpupowerpc','-m32');
        powerpc64:result := GetGccDirArch('cpupowerpc64','-m64');
@@ -32942,7 +32942,7 @@ Index: fpc/fpcsrc/packages/fpmkunit/src/fpmkunit.pp
      end {case}
    else if OS = darwin then
      case CPU of
-@@ -2648,6 +2649,8 @@ begin
+@@ -2652,6 +2653,8 @@ begin
        x86_64:   result := GetGccDirArch('cpux86_64','-arch x86_64');
        powerpc:  result := GetGccDirArch('cpupowerpc','-arch ppc');
        powerpc64:result := GetGccDirArch('cpupowerpc64','-arch ppc64');
@@ -32956,7 +32956,7 @@ Index: fpc/fpcsrc/packages/iosxlocale/Makefile.fpc.fpcmake
 --- fpc.orig/fpcsrc/packages/iosxlocale/Makefile.fpc.fpcmake
 +++ fpc/fpcsrc/packages/iosxlocale/Makefile.fpc.fpcmake
 @@ -7,7 +7,7 @@ name=univint
- version=3.0.2
+ version=3.0.4
  
  [target]
 -units=iosxlocale
