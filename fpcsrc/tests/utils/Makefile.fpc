@@ -13,6 +13,7 @@ fpcdir=../..
 nortl=y
 
 [target]
+dirs=testsuite
 programs=dotest fptime fail testfail digest concat $(DBDIGEST) $(MSDOSPROG)
 programs_win32=prepup
 programs_win64=prepup
