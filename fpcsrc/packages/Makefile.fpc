@@ -2,6 +2,9 @@
 #
 #   Makefile.fpc for Free Pascal Packages
 #
+[target]
+dirs= paszlib fcl-process hash libtar fpmkunit
+
 [require]
 packages=rtl
 
