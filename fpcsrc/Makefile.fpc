@@ -7,7 +7,7 @@ name=fpc
 version=3.0.4
 
 [target]
-dirs=compiler rtl utils packages ide installer
+dirs=compiler rtl utils packages ide installer tests
 
 [require]
 nortl=y
