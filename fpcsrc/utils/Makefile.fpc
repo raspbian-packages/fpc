@@ -1,6 +1,9 @@
 #
 #   Makefile.fpc for running fpmake
 #
+[target]
+dirs=fpcm debugsvr dxegen fpcmkcfg fpcreslipo fpcres fpdoc fppkg fprcp h2pas importtl instantfpc mksymbian pas2fpm pas2jni pas2js pas2ut rmwait tply unicode json2pas
+
 [require]
 packages=rtl fpmkunit fcl-json
 

@@ -10,6 +10,7 @@ fpcdir=..
 rule=allexectests
 
 [target]
+dirs=tstunits utils
 programs=gparmake createlst
 
 [rules]

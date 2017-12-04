@@ -5,6 +5,9 @@
 name=ide
 version=3.2.2
 
+[target]
+dirs=fakegdb compiler
+
 [require]
 packages=rtl fpmkunit rtl-extra fv chm regexpr
 packages_go32v2=graph
