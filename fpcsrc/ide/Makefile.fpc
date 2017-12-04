@@ -1,6 +1,9 @@
 #
 #   Makefile.fpc for running fpmake
 #
+[target]
+dirs=fakegdb compiler
+
 [require]
 packages=rtl fpmkunit
 
