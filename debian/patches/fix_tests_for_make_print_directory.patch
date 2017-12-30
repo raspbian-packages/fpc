@@ -1,0 +1,18 @@
+Description: apparently the default Make incantation on Debian prints the
+ change of directory, which causes the test suite to fail on
+ "Error: Can't open make[1]:.pp"
+Author: Paul Gevers <elbrus@debian.org>
+
+Index: fpc/fpcsrc/tests/Makefile.fpc
+===================================================================
+--- fpc.orig/fpcsrc/tests/Makefile.fpc
++++ fpc/fpcsrc/tests/Makefile.fpc
+@@ -508,7 +508,7 @@ $(MAKEINC): $(GPARMAKE) $(TEST_OUTPUTDIR
+ # used subdirectory. Note also that the index must be increasing for each
+ # new call with a gap insuring that all the previous files have lower index
+ # even if CHUNKSIZE is equal to 1.
+-	$(MAKE) -s -f createlst.mak "TESTDIRS=$(TESTDIRS)" > testfilelist.lst
++	$(MAKE) --no-print-directory -s -f createlst.mak "TESTDIRS=$(TESTDIRS)" > testfilelist.lst
+ 	$(Q)$(GPARMAKE) $(MAKEINC) test 1 $(CHUNKSIZE) @testfilelist.lst
+ 	$(Q)$(GPARMAKE) -a $(MAKEINC) tbs 10000 $(CHUNKSIZE) $(sort $(wildcard tbs/t*.pp))
+ 	$(Q)$(GPARMAKE) -a $(MAKEINC) tbf 15000 $(CHUNKSIZE) $(sort $(wildcard tbf/t*.pp))
