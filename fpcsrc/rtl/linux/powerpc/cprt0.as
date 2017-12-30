@@ -88,12 +88,8 @@ main_stub:
     .globl  _haltproc
     .type   _haltproc, @function
 _haltproc:
-    lis     11, ___fpc_ret@ha
-    lwz     1, ___fpc_ret@l(11)
-    addi    1, 1, 16
-    lwz     0, 0(1)
-    mtlr    0
-    blr
+    bl     _exit
+    b      _haltproc
 
 #    li      0, 1       /* exit call */
 #    lis     3, operatingsystem_result@h
