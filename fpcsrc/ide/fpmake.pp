@@ -9,6 +9,7 @@ uses
 
 const
   NoGDBOption: boolean = false;
+  GDBMIOption: boolean = false;
 
 procedure ide_check_gdb_availability(Sender: TObject);
 
@@ -75,7 +76,15 @@ begin
   P := sender as TPackage;
   with installer do
     begin
-    if not (NoGDBOption) then
+    if GDBMIOption then
+      begin
+        BuildEngine.log(vlCommand, 'Compiling IDE with GDB/MI debugger support, LibGDB is not needed');
+        P.Options.Add('-dGDBMI');
+        { AIX also requires -CTsmalltoc for gdbmi }
+        if Defaults.OS=aix then
+          P.Options.Add('-CTsmalltoc');
+      end
+    else if not (NoGDBOption) then
       begin
         // Detection of GDB.
         GDBLibDir := DetectLibGDBDir;
@@ -141,11 +150,15 @@ Var
 begin
   AddCustomFpmakeCommandlineOption('CompilerTarget','Target CPU for the IDE''s compiler');
   AddCustomFpmakeCommandlineOption('NoGDB','If value=1 or ''Y'', no GDB support');
+  AddCustomFpmakeCommandlineOption('GDBMI','If value=1 or ''Y'', builds IDE with GDB/MI support (no need for LibGDB)');
   With Installer do
     begin
     s := GetCustomFpmakeCommandlineOptionValue('NoGDB');
     if (s='1') or (s='Y') then
      NoGDBOption := true;
+    s := GetCustomFpmakeCommandlineOptionValue('GDBMI');
+    if (s='1') or (s='Y') then
+     GDBMIOption := true;
     s :=GetCustomFpmakeCommandlineOptionValue('CompilerTarget');
     if s <> '' then
       CompilerTarget:=StringToCPU(s)
@@ -153,7 +166,7 @@ begin
       CompilerTarget:=Defaults.CPU;
 
     P:=AddPackage('ide');
-    P.Version:='3.0.4';
+    P.Version:='3.1.1';
 {$ifdef ALLPACKAGES}
     P.Directory:=ADirectory;
 {$endif ALLPACKAGES}
@@ -163,9 +176,12 @@ begin
     P.Dependencies.Add('chm');
     { This one is only needed if DEBUG is set }
     P.Dependencies.Add('regexpr');
-    if not (NoGDBOption) then
+    if not (NoGDBOption) and not (GDBMIOption) then
       P.Dependencies.Add('gdbint',AllOSes-AllAmigaLikeOSes);
+    if GDBMIOption then
+      P.Dependencies.Add('fcl-process');
     P.Dependencies.Add('graph',[go32v2]);
+    P.Dependencies.Add('ami-extra',AllAmigaLikeOSes);
 
     P.SupportBuildModes:=[bmOneByOne];
 
@@ -182,15 +198,27 @@ begin
     P.Options.Add('-Fi../compiler/'+CPUToString(CompilerTarget));
     P.Options.Add('-Fi../compiler');
 
-    if CompilerTarget in [x86_64, i386] then
+    if CompilerTarget in [x86_64, i386, i8086] then
       P.Options.Add('-Fu../compiler/x86');
     if CompilerTarget in [powerpc, powerpc64] then
       P.Options.Add('-Fu../compiler/ppcgen');
+    if CompilerTarget in [sparc] then
+      begin
+        P.Options.Add('-Fu../compiler/sparcgen');
+        P.Options.add('-Fi../compiler/sparcgen');
+      end;
     if CompilerTarget = x86_64 then
       P.Options.Add('-dNOOPT');
     if CompilerTarget = mipsel then
       P.Options.Add('-Fu../compiler/mips');
 
+    { powerpc64-aix compiled IDE needs -CTsmalltoc option }
+    if (Defaults.OS=aix) and (Defaults.CPU=powerpc64) then
+     P.Options.Add('-CTsmalltoc');
+    { Handle SPECIALLINK environment variable if available }
+    s:=GetEnvironmentVariable('SPECIALLINK');
+    if s<>'' then
+      P.Options.Add(s);
     P.Options.Add('-Sg');
     P.IncludePath.Add('compiler');
 
