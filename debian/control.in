@@ -6,7 +6,7 @@ Uploaders:
  Abou Al Montacir <abou.almontacir@sfr.fr>,
  Paul Gevers <elbrus@debian.org>,
  Peter Michael Green <plugwash@debian.org>,
-Standards-Version: 4.1.0
+Standards-Version: 4.1.2
 Build-Depends:
  binutils,
  debhelper (>= 10~),
@@ -181,12 +181,14 @@ Recommends:
 Provides:
  fp-utils
 Breaks:
+ fp-compiler${PACKAGESUFFIX} (<= 3.0.4+dfsg-10),
  fp-compiler (<= 2.4.0-3),
  fp-units-gfx (<= 2.4.2-2),
  fp-units-gfx-2.4.2 (<= 2.4.2-2),
  fp-utils (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Replaces:
+ fp-compiler${PACKAGESUFFIX} (<= 3.0.4+dfsg-10),
  fp-compiler (<= 2.4.0-3),
  fp-utils (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),

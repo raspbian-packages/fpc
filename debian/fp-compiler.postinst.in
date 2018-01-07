@@ -7,8 +7,9 @@ set -e
 
 CFG_PATH='/etc/fpc.cfg'
 PKG_CFG_PATH="/etc/fpc-${VERSION}.cfg"
-LIB_DIR="/usr/lib/fpc"
+LIB_DIR="/usr/lib/${DEB_HOST_MULTIARCH}/fpc"
 MAN_DIR="/usr/share/man/man1"
+MKCFG="/usr/bin/${DEB_HOST_MULTIARCH}-fpcmkcfg-${VERSION}"
 
 # Debhelper code
 #DEBHELPER#
@@ -25,7 +26,7 @@ then
 fi
 
 # Create new compiler configuration file
-fpcmkcfg-${VERSION} -0 -d "basepath=${LIB_DIR}/\$fpcversion" -o "${PKG_CFG_PATH}"
+${MKCFG} -0 -d "basepath=${LIB_DIR}/\$fpcversion" -o "${PKG_CFG_PATH}"
 # Add multiarch path to /etc/fpc.cfg so executables linked against libc can be corectly linked
 echo '# multiarch library search path' >> ${PKG_CFG_PATH}
 echo '-Fl/usr/lib/$fpctarget-*' >> ${PKG_CFG_PATH}
@@ -54,10 +55,10 @@ fi
 
 # add alternatives
 update-alternatives \
-    --install /usr/bin/fpc fpc /usr/bin/fpc-${VERSION} ${PRIORITY} \
+    --install /usr/bin/fpc fpc /usr/bin/${DEB_HOST_MULTIARCH}-fpc-${VERSION} ${PRIORITY} \
     --slave /usr/bin/${PPCBIN} ${PPCBIN} ${LIB_DIR}/${VERSION}/${PPCBIN} \
     --slave /usr/bin/fpc-depends fpc-depends /usr/bin/fpc-depends-${VERSION} \
-	--slave /usr/bin/fpcres fpcres /usr/bin/fpcres-${VERSION} \
+	--slave /usr/bin/fpcres fpcres /usr/bin/${DEB_HOST_MULTIARCH}-fpcres-${VERSION} \
     --slave ${MAN_DIR}/${PPCBIN}.1.gz ${PPCBIN}.1.gz ${MAN_DIR}/${PPCBIN}-${VERSION}.1.gz \
     --slave ${MAN_DIR}/fpc.1.gz fpc.1.gz ${MAN_DIR}/fpc-${VERSION}.1.gz \
     --slave ${MAN_DIR}/fpc-depends.1.gz fpc-depends.1.gz ${MAN_DIR}/fpc-depends-${VERSION}.1.gz \
@@ -71,5 +72,5 @@ then
 fi
 # Replace legacy/gnu pascal compilers
 update-alternatives \
-    --install /usr/bin/pc pc /usr/bin/fpc-${VERSION} 20 \
-    --slave ${MAN_DIR}/pc.1.gz pc.1.gz ${MAN_DIR}/fpc-${VERSION}.1.gz
+    --install /usr/bin/pc pc /usr/bin/fpc 20 \
+    --slave ${MAN_DIR}/pc.1.gz pc.1.gz ${MAN_DIR}/fpc.1.gz

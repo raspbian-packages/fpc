@@ -1,1 +1,1 @@
-/usr/lib/fpc/${VERSION}/${PPCBIN} /usr/bin/${PPCBIN}-${VERSION}
+/usr/lib/${DEB_HOST_MULTIARCH}/fpc/${VERSION}/${PPCBIN} /usr/bin/${PPCBIN}-${VERSION}

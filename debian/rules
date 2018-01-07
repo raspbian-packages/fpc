@@ -71,9 +71,11 @@ PPPRE=ppc
 endif
 
 PPNEW=$(PPPRE)$(PPSUF)
-
+# Take care that Debian uses kfreebsd while FPC prefers freebsd
 OS_TARGET=$(subst kfreebsd,freebsd,$(shell dpkg-architecture -qDEB_HOST_ARCH_OS))
-
+# FPC uses FPCTARGET to identify the target for which the binaries are
+# produced. This is generally a couple of target CPU and target OS names
+# separated by a dash.
 FPCTARGET=$(CPU_TARGET)-$(OS_TARGET)
 # Get version information from changelog file
 DEB_VERSION:=$(shell dpkg-parsechangelog --show-field Version)
@@ -87,12 +89,14 @@ endif
 # Get directories
 INSTALL_DIR=${CURDIR}/debian/tmp
 BIN_DIR=${INSTALL_DIR}/usr/bin
-LIB_DIR=${INSTALL_DIR}/usr/lib/${DEB_PACKAGE_NAME}/${DEB_UPSTREAM_MAIN_VERSION}
+# Debian policy is to install libraries that are multi-arch coinstallable in
+# /usr/lib/${DEB_HOST_MULTIARCH}
+LIB_DIR=${INSTALL_DIR}/usr/lib/${DEB_HOST_MULTIARCH}/${DEB_PACKAGE_NAME}/${DEB_UPSTREAM_MAIN_VERSION}
 DOC_DIR=${INSTALL_DIR}/usr/share/doc
 SRC_DIR=${INSTALL_DIR}/usr/share/fpcsrc/${DEB_UPSTREAM_MAIN_VERSION}
 EXAMPLE_TEMP=${INSTALL_DIR}/usr/share/doc/fpc-${DEB_UPSTREAM_MAIN_VERSION}
 STY_DIR=${INSTALL_DIR}/usr/share/texmf/tex/latex/fpc-${DEB_UPSTREAM_MAIN_VERSION}
-# Get utils
+# Override standard GNUE make variables
 ifndef MKDIR
 MKDIR=mkdir -p
 endif
@@ -103,11 +107,15 @@ ifndef MV
 MV=mv
 endif
 RM:=rm -rf
-# Get fpcmake from path if none is specified.
+# Build fpcmake from sources if none is specified.
 ifndef FPCMAKE
-# In 3.0.0rc1 building the new fpcmake doesn't work outside the full build
-#FPCMAKE=fpcsrc/utils/fpcm/fpcmake
-FPCMAKE=$(shell which fpcmake)
+# Upstream wants that one uses latest FPC make utility to produce make files
+# from FPC make files. This is required because, especially in old days, FPC
+# make utility used to evolve so that old tool versions were not able to
+# process new FPC make files. So it is always safe to start first by building
+# this tool from sources and then use it to build make files to build compiler,
+# RTL and packages.
+FPCMAKE=fpcsrc/utils/fpcm/bin/${FPCTARGET}/fpcmake
 endif
 # Undefine FPCDIR if it was set
 unexport FPCDIR
@@ -193,6 +201,20 @@ endif
 clean-all-but-makefiles: makefiles
 	dh_testdir
 
+	# Remove the gnome1, gtk1, fpgtk and imlib packages
+	# as they depend on libraries long go removed from Debian.
+	rm -rf fpcsrc/packages/gnome1
+	rm -rf fpcsrc/packages/gtk1
+	rm -rf fpcsrc/packages/imlib
+	rm -rf fpcsrc/packages/fpgtk
+	# The following packages depend on (at least) fpgtk and were
+	# not build in Debian anyways. The makefiles target fails to run
+	# if we remove the above, but not these because fpcmake checks
+	# for all Makefile.fpc files and notices that the dependency is
+	# not fullfilled.
+	rm -rf fpcsrc/utils/fpdoc/fpde
+	rm -rf fpcsrc/utils/fpmc
+
 	# Call upstream clean targets
 	[ ! -s fpcsrc/Makefile ]  || $(MAKE) -C fpcsrc compiler_distclean
 	[ ! -s fpcsrc/Makefile ]  || $(MAKE) -C fpcsrc rtl_distclean
@@ -214,31 +236,18 @@ clean-all-but-makefiles: makefiles
 	rm -f $(DEB_BUILD_FPC_OPT)
 	rm -f $(DEB_HOST_FPC_OPT)
 
-	# Remove the gnome1, gtk1, fpgtk and imlib packages
-	# as they depend on libraries long go removed from Debian.
-	rm -rf fpcsrc/packages/gnome1
-	rm -rf fpcsrc/packages/gtk1
-	rm -rf fpcsrc/packages/imlib
-	rm -rf fpcsrc/packages/fpgtk
-	# The following packages depend on (at least) fpgtk and were
-	# not build in Debian anyways. The makefiles target fails to run
-	# if we remove the above, but not these because fpcmake checks
-	# for all Makefile.fpc files and notices that the dependency is
-	# not fullfilled.
-	rm -rf fpcsrc/utils/fpdoc/fpde
-	rm -rf fpcsrc/utils/fpmc
-
 	dh_clean
 
+FPCMAKEFILES=fpcsrc/Makefile.fpc $(shell find demo fpcdocs -name Makefile.fpc)
 
 makefiles: makefiles-stamp
-makefiles-stamp: $(patsubst %.fpc,%,$(shell find demo fpcdocs fpcsrc -name Makefile.fpc))
+makefiles-stamp: $(patsubst %.fpc,%,${FPCMAKEFILES})
 	# Make files are now generated.
 	touch $@
 
 %Makefile:%Makefile.fpc ${FPCMAKE}
 	# Regenerate make files using fpcmake.
-	${FPCMAKE} -Tall -q $<
+	${FPCMAKE} -r -Tall -q $<
 
 clean-makefiles:
 	# Remove auto-generated Makefiles.
@@ -256,6 +265,7 @@ debian-files-stamp:debian/fixdeb debian/*.in
 	DEB_SUBST_PACKAGESUFFIX=${PACKAGESUFFIX} \
 	DEB_SUBST_PPCBIN=${PPNEW} \
 	DEB_SUBST_TARGET=${FPCTARGET} \
+	DEB_SUBST_DEB_HOST_MULTIARCH=${DEB_HOST_MULTIARCH} \
 	$< debian/*.in
 	# Because we use dh-exec to track units that don't need to install
 	# everywhere, we need the <package>.install files to be executable 
@@ -352,6 +362,10 @@ install-arch-stamp:
 	/bin/bash debian/moveexamples ${EXAMPLE_TEMP} ${DOC_DIR} ${DEB_UPSTREAM_MAIN_VERSION}
 	# Rename executables
 	for f in  ${BIN_DIR}/* ; do ${MV} $$f $${f}-${DEB_UPSTREAM_MAIN_VERSION} ; done
+	# Move fp-compiler executables to /usr/bin/<triplet>
+	for f in fpc fpcmkcfg fpcres ; do \
+		${MV} ${BIN_DIR}/$${f}-${DEB_UPSTREAM_MAIN_VERSION} ${BIN_DIR}/${DEB_HOST_MULTIARCH}-$${f}-${DEB_UPSTREAM_MAIN_VERSION} ; \
+	done
 	# Install RTL demos
 	$(MAKE) -C demo sourceinstall $(INSTALLOPTS) INSTALL_SOURCEDIR=$(DOC_DIR)/fp-compiler/${DEB_UPSTREAM_MAIN_VERSION}
 	# Install whatsnew and readme
@@ -494,22 +508,34 @@ binary-arch: arrange-arch
 	build-doc build-indep check-makefiles clean clean-all-but-makefiles	\
 	clean-makefiles debian-files get-orig-source install install-arch	\
 	install-doc install-indep install-man install-source makefiles		\
-	prepare-source
+	prepare-source get-orig-source gen-control run-tests
 
+# Package new upstream release
 get-orig-source:
 	-uscan --upstream-version=0 --rename --force-download
+
+# Generate debian.control file
+gen-control: debian/control.in
+
+# Run upstream test suite
+run-tests:
+	dpkg-source --before-build ${CURDIR}
+	debian/tests/run-upstream-testsuite
 
 debian/%:debian/fixdeb debian/changelog debian/%.in
 	DEB_SUBST_PACKAGESUFFIX=${PACKAGESUFFIX} \
 	DEB_SUBST_PPCBIN=${PPNEW} \
 	DEB_SUBST_TARGET=${FPCTARGET} \
+	DEB_SUBST_DEB_HOST_MULTIARCH=${DEB_HOST_MULTIARCH} \
 	$< --gen-control $@.in
 
-fpcsrc/utils/fpcm/fpcmake:fpcsrc/utils/fpcm/Makefile ${DEB_BUILD_FPC_OPT}
-	${MAKE} -C ${@D} OPT=@${CURDIR}/${DEB_BUILD_FPC_OPT}
+${FPCMAKE}:fpcsrc/utils/fpcm/Makefile ${DEB_BUILD_FPC_OPT}
+	${MAKE} -C fpcsrc/rtl OPT=@${CURDIR}/${DEB_BUILD_FPC_OPT}
+	${MAKE} -C fpcsrc/packages/fpmkunit bootstrap OPT=@${CURDIR}/${DEB_BUILD_FPC_OPT}
+	${MAKE} -C ${<D} OPT=@${CURDIR}/${DEB_BUILD_FPC_OPT}
 
-fpcsrc/utils/fpcm/Makefile:fpcsrc/utils/fpcm/Makefile.fpc
-	fpcmake -Tall -q $<
+fpcsrc/utils/fpcm/Makefile:fpcsrc/Makefile.fpc fpcsrc/utils/fpcm/Makefile.fpc
+	fpcmake -r -Tall -q $<
 
 ${DEB_BUILD_FPC_OPT}:
 	echo '# FPC configuration file for build system tools' > $@

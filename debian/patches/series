@@ -27,4 +27,6 @@ remove-depreciated-ncursus-variables-declaration.patch
 drop-jsminifier-from-build-as-we-strip-it.patch
 create-directory-before-copy-in-Makefile.fpc.patch
 fix_texpfncase_test.patch
+fix-units-path-to-be-multi-arch-safe.patch
+fix_make_files_generation.patch
 raspbian.diff

@@ -12,6 +12,7 @@ usr/bin/fpcsubst-*
 usr/bin/fpdoc-*
 usr/bin/fppkg-*
 usr/bin/fprcp-*
+usr/bin/grab_vcsa-*                 [!freebsd-any]
 usr/bin/h2pas-*
 usr/bin/h2paspp-*
 usr/bin/ifpc-*
@@ -31,7 +32,7 @@ usr/bin/relpath-*
 usr/bin/rmcvsdir-*
 usr/bin/rstconv-*
 usr/bin/unitdiff-*                  [!freebsd-any]
-usr/lib/fpc/*/lexyacc/*.cod
-usr/lib/fpc/*/*/*/utils-lexyacc*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/lexyacc/*.cod
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/utils-lexyacc*
 usr/share/locale
 usr/share/texmf/tex/latex/fpc-*

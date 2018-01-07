@@ -223,7 +223,7 @@ begin
 {$endif ALLPACKAGES}
     P.Version:='3.0.4';
 
-    P.Dependencies.Add('fcl-base');
+    //P.Dependencies.Add('fcl-base');
 
     T:=P.Targets.AddProgram('fpcmake.pp');
 

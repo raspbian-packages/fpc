@@ -6,10 +6,13 @@ set -e # Make sure the test fails if a command fails
 
 FULL_TARGET=`fpc -iSP`-`fpc -iSO` # x86_64-linux
 FPC_VER=`fpc -iV`
+DEB_HOST_MULTIARCH=`dpkg-architecture -qDEB_HOST_MULTIARCH`
 # Make sure we use the installed fpcmake
 export FPCMAKE=`which fpcmake`-${FPC_VER}
 TESTUNITDIRROOT=fpcsrc/tests/tstunits
 TESTUNITDIR=${TESTUNITDIRROOT}/${FULL_TARGET}
+LIBDIR=/usr/lib/${DEB_HOST_MULTIARCH}/fpc/${FPC_VER}
+UTESTS=fpcsrc/tests/utils/testsuite/utests
 if [ -f fpcsrc/tests/Makefile ] ; then
 	MAKEMAKEFILES=false
 else   
@@ -17,11 +20,13 @@ else
 fi
 
 [ "$MAKEMAKEFILES" = "true" ] && debian/rules makefiles
+# Generate missing configuration file for testsuite
+[ -f ${UTESTS}.cfg ] || grep '^  Def' ${UTESTS}.pp > ${UTESTS}.cfg
 
 # If the make target is run without intervention, the units target is build and
 # installed, while we want to test with the installed units.
 [ -d ${TESTUNITDIR} ] || mkdir ${TESTUNITDIR}
-for FILE in /usr/lib/fpc/${FPC_VER}/units/$FULL_TARGET/*/*.[op]* ; do
+for FILE in ${LIBDIR}/units/$FULL_TARGET/*/*.[op]* ; do
 	[ -h ${TESTUNITDIR}/${FILE##*/} ] || ln -s ${FILE} ${TESTUNITDIR}
 done
 echo Compiled > ${TESTUNITDIRROOT}/rtl-stamp.${FULL_TARGET}

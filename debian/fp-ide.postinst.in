@@ -5,7 +5,7 @@ set -e
 # Load debconf
 . /usr/share/debconf/confmodule
 
-LIB_DIR="/usr/lib/fpc"
+LIB_DIR="/usr/lib/${DEB_HOST_MULTIARCH}/fpc"
 MAN_DIR="/usr/share/man/man1"
 
 # Debhelper code
