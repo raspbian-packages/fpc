@@ -1076,7 +1076,7 @@ begin
      BMFScan := NotFoundValue;
      exit;
    end;
-  s2[0]:=chr(len);       { sets the length to that of the search String }
+  SetLength(s2,len);     { sets the length to that of the search String }
   found:=False;
   numb:=pred(len);
   While (not found) and (numb<size) do
@@ -1185,7 +1185,7 @@ begin
      BMBScan := NotFoundValue;
      exit;
    end;
-  s2[0]:=chr(len);       { sets the length to that of the search String }
+  SetLength(S2,len);      { sets the length to that of the search String }
   found:=False;
   numb:=size-len;
   While (not found) and (numb>=0) do
@@ -4802,8 +4802,13 @@ begin
 end;
 
 procedure TCustomCodeEditor.BreakLine;
+var
+  SCP: TPoint;
 begin
-  NotImplemented; Exit;
+  { Like insert new line, but leave current pos unchanged }
+  SCP:=CurPos;
+  InsertNewLine;
+  SetCurPtr(SCP.X,SCP.Y);
 end;
 
 procedure TCustomCodeEditor.BackSpace;
@@ -6800,8 +6805,7 @@ begin
     S:=GetLineText(Line);
     { Remove all traling spaces PM }
     if not Editor^.IsFlagSet(efKeepTrailingSpaces) then
-      While (Length(S)>0) and (S[Length(S)]=' ') do
-       Dec(S[0]);
+      s:=RTrim(S,False); // removes trailing #0 too
     { if FlagSet(efUseTabCharacters) then
       S:=CompressUsingTabs(S,TabSize);
       }

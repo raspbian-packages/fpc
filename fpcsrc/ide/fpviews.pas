@@ -26,6 +26,14 @@ uses
   WEditor,WCEdit,
   WUtils,WHelp,WHlpView,WViews,WANSI,
   Comphook,
+{$ifndef NODEBUG}
+  { Needed here for CORE_ADDR definition }
+  {$ifdef GDBMI}
+    gdbmiint,
+  {$else GDBMI}
+    gdbint,
+  {$endif GDBMI}
+{$endif NODEBUG}
   FPConst,FPUsrScr;
 
 type
@@ -224,7 +232,7 @@ type
 
     PDisasLine = ^TDisasLine;
     TDisasLine = object(TLine)
-      address : cardinal;{ should be target size of address for cross debuggers }
+      address : CORE_ADDR;{ should be target size of address for cross debuggers }
     end;
 
     PDisasLineCollection = ^TDisasLineCollection;
@@ -241,13 +249,13 @@ type
       procedure  ReleaseSource;
       destructor Done;virtual;
       procedure  AddSourceLine(const AFileName: string;line : longint); virtual;
-      procedure  AddAssemblyLine(const S: string;AAddress : cardinal); virtual;
-      function   GetCurrentLine(address : cardinal) : PDisasLine;
+      procedure  AddAssemblyLine(const S: string;AAddress : CORE_ADDR); virtual;
+      function   GetCurrentLine(address : CORE_ADDR) : PDisasLine;
       private
         Source : PSourceWindow;
         OwnsSource : Boolean;
         DisasLines : PDisasLineCollection;
-        MinAddress,MaxAddress : cardinal;
+        MinAddress,MaxAddress : CORE_ADDR;
         CurL : PDisasLine;
       end;
 
@@ -257,12 +265,12 @@ type
       Indicator : PIndicator;
       constructor Init(var Bounds: TRect);
       procedure   LoadFunction(Const FuncName : string);
-      procedure   LoadAddress(Addr : cardinal);
+      procedure   LoadAddress(Addr : CORE_ADDR);
       function    ProcessPChar(p : pchar) : boolean;
       procedure   HandleEvent(var Event: TEvent); virtual;
       procedure   WriteSourceString(Const S : string;line : longint);
-      procedure   WriteDisassemblyString(Const S : string;address : cardinal);
-      procedure   SetCurAddress(address : cardinal);
+      procedure   WriteDisassemblyString(Const S : string;address : CORE_ADDR);
+      procedure   SetCurAddress(address : CORE_ADDR);
       procedure   UpdateCommands; virtual;
       function    GetPalette: PPalette;virtual;
       destructor  Done; virtual;
@@ -556,9 +564,6 @@ uses
 {$ifdef USE_EXTERNAL_COMPILER}
    fpintf, { superseeds version_string of version unit }
 {$endif USE_EXTERNAL_COMPILER}
-{$ifndef NODEBUG}
-  gdbint,
-{$endif NODEBUG}
   {$ifdef VESA}Vesa,{$endif}
   FPSwitch,FPSymbol,FPDebug,FPVars,FPUtils,FPCompil,FPHelp,
   FPTools,FPIDE,FPCodTmp,FPCodCmp;
@@ -2490,8 +2495,10 @@ begin
     Editor^.AddLine('');
   Insert(Editor);
 {$ifndef NODEBUG}
+ {$ifndef GDBMI}
   if assigned(Debugger) then
-    Debugger^.SetWidth(Size.X-1);
+    Debugger^.SetCommand('width ' + IntToStr(Size.X-1));
+ {$endif GDBMI}
 {$endif NODEBUG}
   Editor^.silent:=false;
   Editor^.AutoRepeat:=true;
@@ -2575,7 +2582,10 @@ begin
   While assigned(p) and (p^<>#0) do
     begin
        pe:=strscan(p,#10);
-       if pe<>nil then
+       { if pe-p is more than High(s), discard for this round }
+       if (pe<>nil) and (pe-p > high(s)) then
+         pe:=nil;
+       if (pe<>nil)  then
          pe^:=#0;
        s:=strpas(p);
        If IsError then
@@ -2586,16 +2596,16 @@ begin
        if pe<>nil then
          pe^:=#10;
        if pe=nil then
-         p:=nil
+         begin
+           if strlen(p)<High(s) then
+             p:=nil
+           else
+             p:=p+High(s);
+         end
        else
          begin
-           if pe-p > High(s) then
-             p:=p+High(s)-1
-           else
-             begin
-               p:=pe;
-               inc(p);
-             end;
+           p:=pe;
+           inc(p);
          end;
     end;
   DeskTop^.Unlock;
@@ -2682,13 +2692,13 @@ begin
    LimitsChanged;
 end;
 
-procedure  TDisassemblyEditor.AddAssemblyLine(const S: string;AAddress : cardinal);
+procedure  TDisassemblyEditor.AddAssemblyLine(const S: string;AAddress : CORE_ADDR);
 var
   PL : PDisasLine;
   LI : PEditorLineInfo;
 begin
    if AAddress<>0 then
-     inherited AddLine('$'+hexstr(AAddress,sizeof(PtrUInt)*2)+S)
+     inherited AddLine('$'+hexstr(AAddress,sizeof(CORE_ADDR)*2)+S)
    else
      inherited AddLine(S);
    PL:=DisasLines^.At(DisasLines^.count-1);
@@ -2703,7 +2713,7 @@ begin
      MaxAddress:=AAddress;
 end;
 
-function   TDisassemblyEditor.GetCurrentLine(address : cardinal) : PDisasLine;
+function   TDisassemblyEditor.GetCurrentLine(address : CORE_ADDR) : PDisasLine;
 
   function IsCorrectLine(PL : PDisasLine) : boolean;
     begin
@@ -2757,9 +2767,9 @@ var
 begin
 {$ifndef NODEBUG}
   If not assigned(Debugger) then Exit;
-  Debugger^.Command('set print sym on');
-  Debugger^.Command('set width 0xffffffff');
-  Debugger^.Command('disas '+FuncName);
+  Debugger^.SetCommand('print symbol on');
+  Debugger^.SetCommand('width 0xffffffff');
+  Debugger^.Command('disas /m '+FuncName);
   p:=StrNew(Debugger^.GetOutput);
   ProcessPChar(p);
   if (Debugger^.IsRunning) and (FuncName='') then
@@ -2767,15 +2777,15 @@ begin
 {$endif NODEBUG}
 end;
 
-procedure   TDisassemblyWindow.LoadAddress(Addr : cardinal);
+procedure   TDisassemblyWindow.LoadAddress(Addr : CORE_ADDR);
 var
    p : pchar;
 begin
 {$ifndef NODEBUG}
   If not assigned(Debugger) then Exit;
-  Debugger^.Command('set print sym on');
-  Debugger^.Command('set width 0xffffffff');
-  Debugger^.Command('disas 0x'+HexStr(Addr,8));
+  Debugger^.SetCommand('print symbol on');
+  Debugger^.SetCommand('width 0xffffffff');
+  Debugger^.Command('disas /m 0x'+HexStr(Addr,sizeof(Addr)*2));
   p:=StrNew(Debugger^.GetOutput);
   ProcessPChar(p);
   if Debugger^.IsRunning and
@@ -2791,7 +2801,7 @@ var
   p1: pchar;
   pline : pchar;
   pos1, pos2, CurLine, PrevLine : longint;
-  CurAddr : cardinal;
+  CurAddr : CORE_ADDR;
   err : word;
   curaddress, cursymofs, CurFile,
   PrevFile, line : string;
@@ -2812,7 +2822,7 @@ begin
       pline:=strscan(p,#10);
       if assigned(pline) then
         pline^:=#0;
-      line:=strpas(p);
+      line:=trim(strpas(p));
       CurAddr:=0;
       if assigned(pline) then
         begin
@@ -2822,11 +2832,17 @@ begin
       else
         p:=nil;
       { now process the line }
+      { Remove current position marker }
+      if copy(line,1,3)='=> ' then
+        begin
+          system.delete(line,1,3);
+        end;
+
       { line is hexaddr <symbol+sym_offset at filename:line> assembly }
       pos1:=pos('<',line);
       if pos1>0 then
         begin
-          curaddress:=copy(line,1,pos1-1);
+          curaddress:=trim(copy(line,1,pos1-1));
           if copy(curaddress,1,2)='0x' then
             curaddress:='$'+copy(curaddress,3,length(curaddress)-2);
           val(curaddress,CurAddr,err);
@@ -2883,12 +2899,12 @@ begin
   Editor^.AddSourceLine(S,line);
 end;
 
-procedure   TDisassemblyWindow.WriteDisassemblyString(Const S : string;address : cardinal);
+procedure   TDisassemblyWindow.WriteDisassemblyString(Const S : string;address : CORE_ADDR);
 begin
   Editor^.AddAssemblyLine(S,address);
 end;
 
-procedure   TDisassemblyWindow.SetCurAddress(address : cardinal);
+procedure   TDisassemblyWindow.SetCurAddress(address : CORE_ADDR);
 begin
   if (address<Editor^.MinAddress) or (address>Editor^.MaxAddress) then
     LoadAddress(address);
@@ -4229,7 +4245,7 @@ end;
 constructor TFPAboutDialog.Init;
 var R,R2: TRect;
     C: PUnsortedStringCollection;
-    I: integer;
+    I,nblines: integer;
     OSStr: string;
 procedure AddLine(S: string);
 begin
@@ -4256,13 +4272,28 @@ begin
   if pos('Fake',GDBVersion)=0 then
     begin
       R2.Move(0,1);
+      nblines:=1;
+      for i:=1 to length(GDBVersion) do
+        if GDBVersion[i]=#13 then
+          inc(nblines);
+      R2.B.Y:=R2.A.Y+nblines;
+      if nblines>1 then
+        GrowTo(Size.X,Size.Y+nblines-1);
+      {$ifdef GDBMI}
+      if GDBVersionOK then
+        Insert(New(PStaticText, Init(R2, FormatStrStr2(^C'(%s %s, using MI interface)',label_about_debugger,GDBVersion))))
+      else
+        Insert(New(PStaticText, Init(R2, FormatStrStr(^C'%s',GDBVersion))));
+      {$else}
       Insert(New(PStaticText, Init(R2, FormatStrStr2(^C'(%s %s)',label_about_debugger,GDBVersion))));
-      R2.Move(0,1);
+      {$endif}
+      R2.Move(0,nblines);
+      R2.B.Y:=R2.A.Y+1;
     end
   else
 {$endif NODEBUG}
     R2.Move(0,2);
-  Insert(New(PStaticText, Init(R2, ^C'Copyright (C) 1998-2016 by')));
+  Insert(New(PStaticText, Init(R2, ^C'Copyright (C) 1998-2017 by')));
   R2.Move(0,2);
   Insert(New(PStaticText, Init(R2, ^C'B‚rczi G bor')));
   R2.Move(0,1);
@@ -4290,6 +4321,9 @@ begin
   AddLine(^C'B‚rczi G bor');
   AddLine(^C'Peter Vreman');
   AddLine(^C'Pierre Muller');
+  AddLine('');
+  AddLine(^C'< GDBMI development >');
+  AddLine(^C'Nikolay Nikolov');
   AddLine('');
 
   GetExtent(R);
@@ -4386,7 +4420,7 @@ begin
               Message(W,evCommand,cmAddChar,pointer(ptrint(ord(Report^.AsciiChar))));
             ClearEvent(Event);
           end;
-        
+
         cmSearchWindow+1..cmSearchWindow+99 :
           if (Event.Command-cmSearchWindow=Number) then
               ClearEvent(Event);
