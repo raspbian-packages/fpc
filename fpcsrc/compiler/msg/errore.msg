@@ -3064,7 +3064,7 @@ unit_u_check_time=10037_U_PPU Check file $1 time $2
 #% the same conditionals are set for the recompiliation. The compiler has
 #% found a conditional that was used the last time the unit was compiled, but
 #% the conditional is currently not defined.
-unit_w_cant_compile_unit_with_changed_incfile=10040_W_Can't recompile unit $1, but found modifed include files
+unit_w_cant_compile_unit_with_changed_incfile=10040_W_Can't recompile unit $1, but found modified include files
 % A unit was found to have modified include files, but
 % some source files were not found, so recompilation is impossible.
 unit_u_source_modified=10041_U_File $1 is newer than the one used for creating PPU file $2
