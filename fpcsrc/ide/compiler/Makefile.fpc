@@ -5,6 +5,9 @@
 [package]
 main=ide
 
+[require]
+packages=rtl-extra
+
 [target]
 units=compunit
 
@@ -51,6 +54,9 @@ endif
 ifeq ($(PPC_TARGET),x86_64)
 override FPCOPT+= -Fu$(COMPILERDIR)/x86 -dNOOPT
 endif
+ifeq ($(PPC_TARGET),i8086)
+override FPCOPT+= -Fu$(COMPILERDIR)/x86
+endif
 ifeq ($(PPC_TARGET),powerpc)
 override FPCOPT+= -Fu$(COMPILERDIR)/ppcgen
 endif
@@ -60,6 +66,14 @@ endif
 # mipsel specific
 ifeq ($(PPC_TARGET),mipsel)
 override FPCOPT+= -Fu$(COMPILERDIR)/mips
+endif
+# sparc specific
+ifeq ($(PPC_TARGET),sparc)
+override FPCOPT+= -Fu$(COMPILERDIR)/sparcgen -Fi$(COMPILERDIR)/sparcgen
+endif
+# sparc64 specific
+ifeq ($(PPC_TARGET),sparc64)
+override FPCOPT+= -Fu$(COMPILERDIR)/sparcgen -Fi$(COMPILERDIR)/sparcgen
 endif
 
 

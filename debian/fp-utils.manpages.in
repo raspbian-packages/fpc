@@ -11,6 +11,7 @@ debian/tmp/usr/man/man1/fpcsubst-${VERSION}.1
 debian/tmp/usr/man/man1/fpdoc-${VERSION}.1
 debian/tmp/usr/man/man1/fppkg-${VERSION}.1
 debian/tmp/usr/man/man1/fprcp-${VERSION}.1
+debian/tmp/usr/man/man1/grab_vcsa-${VERSION}.1
 debian/tmp/usr/man/man1/h2pas-${VERSION}.1
 debian/tmp/usr/man/man1/h2paspp-${VERSION}.1
 debian/tmp/usr/man/man1/ifpc-${VERSION}.1

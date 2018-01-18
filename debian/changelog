@@ -1,9 +1,32 @@
-fpc (3.0.4+dfsg-11+rpi1) buster-staging; urgency=medium
+fpc (3.0.4+dfsg-13+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
 
- -- Raspbian forward porter <root@raspbian.org>  Sun, 07 Jan 2018 17:43:42 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Thu, 18 Jan 2018 02:39:12 +0000
+
+fpc (3.0.4+dfsg-13) unstable; urgency=medium
+
+  * Fixed typo in change log file.
+  * Bumped standard version to 4.1.3. Use https in URLS.
+  * Fixed fp-utils_${VERSION} package dependencies to fix upgrade issues.
+    (Closes: Bug#886859)
+  * Fixed alternatives removal for package fp-compiler_${VERSION}.
+    (Closes: Bug#886926)
+  * Added missing man file of fp-fix-timestamp in package fp-utils.
+    Removes a lintian warning.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Fri, 12 Jan 2018 09:54:33 +0100
+
+fpc (3.0.4+dfsg-12) unstable; urgency=medium
+
+  * Changed fp-ide and fp-utils packages to be arch:all as suggested by
+    Multiarch hinter tool.
+  * Fixed man pages after executables renaming required by MA changes.
+  * Fix IDE GDB support by importing MI supoort from upstream trunk.
+    (Closes: Bug#528855)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sun, 07 Jan 2018 13:37:01 +0100
 
 fpc (3.0.4+dfsg-11) unstable; urgency=medium
 

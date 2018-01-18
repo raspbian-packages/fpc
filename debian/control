@@ -6,7 +6,7 @@ Uploaders:
  Abou Al Montacir <abou.almontacir@sfr.fr>,
  Paul Gevers <elbrus@debian.org>,
  Peter Michael Green <plugwash@debian.org>,
-Standards-Version: 4.1.2
+Standards-Version: 4.1.3
 Build-Depends:
  binutils,
  debhelper (>= 10~),
@@ -26,7 +26,7 @@ Build-Depends-Indep:
  symlinks
 Vcs-Git: https://anonscm.debian.org/git/pkg-pascal/fpc.git
 Vcs-Browser: https://anonscm.debian.org/cgit/pkg-pascal/fpc.git
-Homepage: http://www.freepascal.org/
+Homepage: https://www.freepascal.org/
 
 Package: fpc-3.0.4
 Architecture: all
@@ -181,14 +181,14 @@ Recommends:
 Provides:
  fp-utils
 Breaks:
- fp-compiler-3.0.4 (<= 3.0.4+dfsg-10),
+ fp-compiler-3.0.4 (<= 3.0.4+dfsg-11),
  fp-compiler (<= 2.4.0-3),
  fp-units-gfx (<= 2.4.2-2),
  fp-units-gfx-2.4.2 (<= 2.4.2-2),
  fp-utils (<= 2.4.0-3),
  fpc (<= 3.0.4+dfsg-0),
 Replaces:
- fp-compiler-3.0.4 (<= 3.0.4+dfsg-10),
+ fp-compiler-3.0.4 (<= 3.0.4+dfsg-11),
  fp-compiler (<= 2.4.0-3),
  fp-utils (<= 2.4.0-3),
  fpc (<= 3.0.4+dfsg-0),
@@ -661,10 +661,10 @@ Description: Free Pascal - compiler dependency package
  the package containing the command line compiler.
 
 Package: fp-ide
-Architecture: any
+Architecture: all
 Multi-Arch: foreign
 Depends:
- fp-ide-3.0.4 (= ${binary:Version}),
+ fp-ide-3.0.4 (>= ${binary:Version}),
  ${misc:Depends}
 Description: Free Pascal - IDE dependency package
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
@@ -683,10 +683,10 @@ Description: Free Pascal - IDE dependency package
  has an internal compiler.
 
 Package: fp-utils
-Architecture: any
+Architecture: all
 Multi-Arch: foreign
 Depends:
- fp-utils-3.0.4 (= ${binary:Version}),
+ fp-utils-3.0.4 (>= ${binary:Version}),
  ${misc:Depends}
 Description: Free Pascal - utilities dependency package
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi

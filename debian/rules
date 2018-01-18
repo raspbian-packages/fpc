@@ -415,7 +415,7 @@ install-man-stamp:
 	pod2man -c 'Free pascal for Debian GNU/Linux' -d ${DEB_DATE} debian/fpc-depends > \
 		debian/fpc-depends-${DEB_UPSTREAM_MAIN_VERSION}.1
 	txt2man -s1 debian/fp-fix-timestamps.txt > debian/fp-fix-timestamps.1
-	dh_installman -s
+	dh_installman
 	${RM} ${INSTALL_DIR}/usr/man
 	touch install-man-stamp
 
