@@ -1,0 +1,111 @@
+From: Abou Al Montacir <abou.almontacir@sfr.fr>
+Date: Sun, 12 Nov 2017 22:24:15 +0100
+Description: Change path of unit files to make it support MA co-installation.
+ (Closes: Bug#73368)
+Bug-Debian: http://bugs.debian.org/73368
+
+diff --git fpc.orig/fpcsrc/compiler/systems.pas fpc/fpcsrc/compiler/systems.pas
+index 79339cc7..5a9ded18 100644
+--- fpc.orig/fpcsrc/compiler/systems.pas
++++ fpc/fpcsrc/compiler/systems.pas
+@@ -357,7 +357,7 @@ interface
+              'aarch64');
+ 
+        abiinfo : array[tabi] of tabiinfo = (
+-         (name: 'DEFAULT'; supported: true),
++         (name: 'BASE'; supported: true),
+          (name: 'SYSV'   ; supported:{$if defined(powerpc) or defined(powerpc64)}true{$else}false{$endif}),
+          (name: 'AIX'    ; supported:{$if defined(powerpc) or defined(powerpc64)}true{$else}false{$endif}),
+          (name: 'EABI'   ; supported:{$ifdef FPC_ARMEL}true{$else}false{$endif}),
+diff --git a/fpcsrc/utils/fpcm/fpcmake.ini b/fpcsrc/utils/fpcm/fpcmake.ini
+index 313b2807..2f27ade3 100644
+--- a/fpcsrc/utils/fpcm/fpcmake.ini
++++ b/fpcsrc/utils/fpcm/fpcmake.ini
+@@ -330,6 +330,11 @@ endif
+ 
+ export OS_TARGET OS_SOURCE ARCH CPU_TARGET CPU_SOURCE FULL_TARGET FULL_SOURCE TARGETSUFFIX SOURCESUFFIX CROSSCOMPILE
+ 
++ifndef DEB_HOST_MULTIARCH
++DEB_HOST_MULTIARCH=$(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
++endif
++export DEB_HOST_MULTIARCH
++
+ [fpmakefpcdetect]
+ #####################################################################
+ # FPC Binary and Version Detection
+@@ -407,7 +412,7 @@ ifeq ($(FPCDIR),wrong)
+ ifdef inUnix
+ override FPCDIR=/usr/local/lib/fpc/$(FPC_VERSION)
+ ifeq ($(wildcard $(FPCDIR)/units),)
+-override FPCDIR=/usr/lib/fpc/$(FPC_VERSION)
++override FPCDIR=/usr/lib/${DEB_HOST_MULTIARCH}/fpc/$(FPC_VERSION)
+ endif
+ else
+ override FPCDIR:=$(subst /$(FPC),,$(firstword $(strip $(wildcard $(addsuffix /$(FPC),$(SEARCHPATH))))))
+@@ -635,7 +640,7 @@ endif
+ ifndef INSTALL_BASEDIR
+ ifdef UNIXHier
+ ifdef INSTALL_FPCPACKAGE
+-INSTALL_BASEDIR:=$(INSTALL_PREFIX)/lib/fpc/$(FPC_VERSION)
++INSTALL_BASEDIR:=$(INSTALL_PREFIX)/lib/${DEB_HOST_MULTIARCH}/fpc/$(FPC_VERSION)
+ else
+ INSTALL_BASEDIR:=$(INSTALL_PREFIX)/lib/$(PACKAGE_NAME)
+ endif
+@@ -678,7 +683,7 @@ endif
+ # Where to install shared libraries
+ ifndef INSTALL_LIBDIR
+ ifdef UNIXHier
+-INSTALL_LIBDIR:=$(INSTALL_PREFIX)/lib
++INSTALL_LIBDIR:=$(INSTALL_PREFIX)/lib/${DEB_HOST_MULTIARCH}
+ else
+ INSTALL_LIBDIR:=$(INSTALL_UNITDIR)
+ endif
+@@ -788,7 +793,7 @@ INSTALL_DATADIR=$(INSTALL_BASEDIR)
+ endif
+ 
+ ifndef INSTALL_SHAREDDIR
+-INSTALL_SHAREDDIR=$(INSTALL_PREFIX)/lib
++INSTALL_SHAREDDIR=$(INSTALL_PREFIX)/lib/${DEB_HOST_MULTIARCH}
+ endif
+ 
+ #####################################################################
+diff --git a/fpcsrc/packages/fpmkunit/src/fpmkunit.pp b/fpcsrc/packages/fpmkunit/src/fpmkunit.pp
+index 1938f2aa..d4125163 100644
+--- a/fpcsrc/packages/fpmkunit/src/fpmkunit.pp
++++ b/fpcsrc/packages/fpmkunit/src/fpmkunit.pp
+@@ -4410,6 +4410,17 @@ end;
+ ****************************************************************************}
+ 
+ procedure TFPCDefaults.CompilerDefaults;
++const
++{$ifdef FPC_ARMHF}
++  gnu = 'gnueabihf';
++{$endif FPC_ARMHF}
++{$ifdef FPC_ARMEL}
++  gnu = 'gnueabi';
++{$endif FPC_ARMEL}
++{$ifndef FPC_ARM}
++  gnu = 'gnu';
++{$endif FPC_ARM}
++  FullTarget = {$I %FPCTARGETCPU%} + '-' + {$I %FPCTARGETOS%} + '-' + gnu;
+ var
+   BD : String;
+ begin
+@@ -4420,7 +4431,7 @@ begin
+   BD:=FixPath(GetEnvironmentVariable('FPCDIR'), False);
+   if BD='' then
+     begin
+-      BD:='/usr/local/lib/fpc/'+FCompilerVersion;
++      BD:='/usr/lib/' + LowerCase(FullTarget) + '/fpc/'+FCompilerVersion;
+       if not DirectoryExists(BD) and
+          DirectoryExists('/usr/lib/fpc/'+FCompilerVersion) then
+         BD:='/usr/lib/fpc/'+FCompilerVersion;
+@@ -4442,7 +4453,7 @@ begin
+ 
+   // Where to find the units by default
+   if (FGlobalUnitDir='') then
+-    GlobalUnitDir:=IncludeTrailingPathDelimiter(BD)+'units'+PathDelim+Target;
++    GlobalUnitDir:=IncludeTrailingPathDelimiter(BD);
+ end;
+ 
+ 
