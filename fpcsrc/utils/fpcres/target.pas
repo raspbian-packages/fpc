@@ -100,7 +100,7 @@ var
     (name : 'elf';      ext : '.or';     machines : [mti386,mtx86_64,mtppc,
                                                      mtppc64,mtarm,mtarmeb,
                                                      mtm68k,mtsparc,mtalpha,
-                                                     mtaarch64]),
+                                                     mtaarch64,mtmips,mtmipsel]),
     (name : 'coff';     ext : '.o';      machines : [mti386,mtx86_64,mtarm,
                                                      mtppc,mtppc64]),
     (name : 'xcoff';    ext : '.o';      machines : [mtppc{,mtppc64}]),
