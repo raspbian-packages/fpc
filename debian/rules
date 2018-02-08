@@ -132,14 +132,14 @@ INSTALLOPTS=INSTALL_PREFIX=$(INSTALL_DIR)/usr PP=$(NEWPP)
 
 export GDBLIBDIR=/usr/lib
 
+DEB_HOST_ARCH:=$(shell dpkg-architecture -qDEB_HOST_ARCH)
 ifeq ($(CPU_TARGET),arm)
-  DEBIANARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
   # Disable optimization for the first runs as there may be bugs associated
   # with that, preventing proper building new versions (cf bug 800811)
   #
   # Unsure if the -d option is still needed, this code was originally used to
   # bootstrap other arm flavors
-  CYCLEOPTS:=OPT='@${CURDIR}/${DEB_HOST_FPC_OPT} -dFPC_$(DEBIANARCH)' OPTLEVEL1=-O-
+  CYCLEOPTS:=OPT='@${CURDIR}/${DEB_HOST_FPC_OPT} -dFPC_$(DEB_HOST_ARCH)' OPTLEVEL1=-O-
 else
   CYCLEOPTS:=OPT='@${CURDIR}/${DEB_HOST_FPC_OPT}'
 endif
@@ -546,3 +546,6 @@ ${DEB_HOST_FPC_OPT}:
 	echo '# FPC configuration file for host system applications' > $@
 	echo '-k${LDFLAGS}' >> $@
 	echo '-Fl/usr/lib/${DEB_HOST_MULTIARCH}' >> $@
+
+lintian:
+	lintian -I -i ../fpc_${DEB_VERSION}_${DEB_HOST_ARCH}.changes

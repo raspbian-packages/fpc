@@ -1,9 +1,23 @@
-fpc (3.0.4+dfsg-13+rpi1) buster-staging; urgency=medium
+fpc (3.0.4+dfsg-15+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 18 Jan 2018 02:39:12 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Thu, 08 Feb 2018 14:37:59 +0000
+
+fpc (3.0.4+dfsg-15) unstable; urgency=medium
+
+  * Fixed FpMkUnit for ARM based architectures. (Closes: Bug#888697)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 03 Feb 2018 10:30:21 +0100
+
+fpc (3.0.4+dfsg-14) unstable; urgency=medium
+
+  * Fixed fpmkunit to use new MA compatible unit paths.
+    Thanks to Michalis Kamburelis for the hints.
+    (Closes: Bug#636088, Bug#887967, Bug#887575)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Mon, 22 Jan 2018 10:28:53 +0100
 
 fpc (3.0.4+dfsg-13) unstable; urgency=medium
 
