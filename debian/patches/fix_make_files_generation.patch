@@ -1,0 +1,96 @@
+From: Abou Al Montacir <abou.almontacir@sfr.fr>
+Date: Sun, 04 Dec 2017 23:55:22 +0100
+Description: Fix sub directories in Makefile.fpc to allor recursive generation.
+
+diff --git a/fpcsrc/Makefile.fpc b/fpcsrc/Makefile.fpc
+index 1435e4da..2878c9ab 100644
+--- a/fpcsrc/Makefile.fpc
++++ b/fpcsrc/Makefile.fpc
+@@ -7,7 +7,7 @@ name=fpc
+ version=3.0.4
+ 
+ [target]
+-dirs=compiler rtl utils packages ide installer
++dirs=compiler rtl utils packages ide installer tests
+ 
+ [require]
+ nortl=y
+diff --git a/fpcsrc/ide/Makefile.fpc b/fpcsrc/ide/Makefile.fpc
+index 2be4d0d4..00d72705 100644
+--- a/fpcsrc/ide/Makefile.fpc
++++ b/fpcsrc/ide/Makefile.fpc
+@@ -1,6 +1,9 @@
+ #
+ #   Makefile.fpc for running fpmake
+ #
++[target]
++dirs=fakegdb compiler
++
+ [require]
+ packages=rtl fpmkunit
+ 
+diff --git a/fpcsrc/packages/Makefile.fpc b/fpcsrc/packages/Makefile.fpc
+index 3174426c..9a9fc3ad 100644
+--- a/fpcsrc/packages/Makefile.fpc
++++ b/fpcsrc/packages/Makefile.fpc
+@@ -2,6 +2,9 @@
+ #
+ #   Makefile.fpc for Free Pascal Packages
+ #
++[target]
++dirs= paszlib fcl-process hash libtar fpmkunit
++
+ [require]
+ packages=rtl
+ 
+diff --git a/fpcsrc/utils/Makefile.fpc b/fpcsrc/utils/Makefile.fpc
+index a24242b9..575cefb6 100644
+--- a/fpcsrc/utils/Makefile.fpc
++++ b/fpcsrc/utils/Makefile.fpc
+@@ -1,6 +1,9 @@
+ #
+ #   Makefile.fpc for running fpmake
+ #
++[target]
++dirs=fpcm debugsvr dxegen fpcmkcfg fpcreslipo fpcres fpdoc fppkg fprcp h2pas importtl instantfpc mksymbian pas2fpm pas2jni pas2js pas2ut rmwait tply unicode
++
+ [require]
+ packages=rtl fpmkunit fcl-json
+ 
+diff --git a/fpcsrc/utils/fpcm/fpmake.pp b/fpcsrc/utils/fpcm/fpmake.pp
+index 7a7b0ba4..639d8040 100644
+--- a/fpcsrc/utils/fpcm/fpmake.pp
++++ b/fpcsrc/utils/fpcm/fpmake.pp
+@@ -223,7 +223,7 @@ begin
+ {$endif ALLPACKAGES}
+     P.Version:='3.0.4';
+ 
+-    P.Dependencies.Add('fcl-base');
++    //P.Dependencies.Add('fcl-base');
+ 
+     T:=P.Targets.AddProgram('fpcmake.pp');
+ 
+diff --git a/fpcsrc/tests/Makefile.fpc b/fpcsrc/tests/Makefile.fpc
+index 949dbc8d..b98444d8 100644
+--- a/fpcsrc/tests/Makefile.fpc
++++ b/fpcsrc/tests/Makefile.fpc
+@@ -10,6 +10,7 @@ fpcdir=..
+ rule=allexectests
+ 
+ [target]
++dirs=tstunits utils
+ programs=gparmake
+ 
+ [rules]
+diff --git a/fpcsrc/tests/utils/Makefile.fpc b/fpcsrc/tests/utils/Makefile.fpc
+index 89d39c75..f5592172 100644
+--- a/fpcsrc/tests/utils/Makefile.fpc
++++ b/fpcsrc/tests/utils/Makefile.fpc
+@@ -13,6 +13,7 @@ fpcdir=../..
+ nortl=y
+ 
+ [target]
++dirs=testsuite
+ programs=dotest fptime fail testfail digest concat $(DBDIGEST) $(MSDOSPROG)
+ programs_win32=prepup
+ programs_win64=prepup
