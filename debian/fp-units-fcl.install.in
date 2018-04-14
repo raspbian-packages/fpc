@@ -1,0 +1,21 @@
+#! /usr/bin/dh-exec
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-async*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-base*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-db*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-extra*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-fpcunit*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-image*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-js*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-json*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-net*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-passrc*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-pdf*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-process*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-registry*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-res*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-sdo*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-sound*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-stl*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-web*          [!freebsd-any]
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fcl-xml*
+usr/share/doc/fp-units-fcl          [!freebsd-any]
