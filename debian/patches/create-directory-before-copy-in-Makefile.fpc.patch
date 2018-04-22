@@ -1,0 +1,31 @@
+Description: Prevent FTBFS by creating directories when required
+Author: Paul Gevers <elbrus@debian.org>
+Index: fpc/fpcdocs/Makefile.fpc
+===================================================================
+--- fpc.orig/fpcdocs/Makefile.fpc
++++ fpc/fpcdocs/Makefile.fpc
+@@ -927,6 +927,7 @@ endif  # USEHEVEA
+ fcl.chk: $(FCLXML) fcl-project.xml
+         $(FPDOC) $(FPDOCOPTS) --project=fcl-project.xml --format=$(HTMLFMT) --output=fcl$(HTMLSUFFIX) $(FPDOCHTMLOPTS) $(FCLCHMOPTS)
+ ifndef CSSFILE
++        mkdir -p fcl
+         cp fpdoc.cst fcl/fpdoc.css
+ endif
+         @$(ECHO) '' > fcl.chk
+@@ -934,6 +935,7 @@ endif
+ fclres.chk: $(FCLRESXML)
+         $(FPDOC) $(FPDOCOPTS) $(FCLRESOPTS) --format=$(HTMLFMT) --output=fclres$(HTMLSUFFIX) $(FPDOCHTMLOPTS) $(FCLRESCHMOPTS) 
+ ifndef CSSFILE
++        mkdir -p fclres
+         cp fpdoc.cst fclres/fpdoc.css
+ endif
+         @$(ECHO) '' > fclres.chk
+@@ -941,7 +943,8 @@ endif
+ rtl.chk: $(RTLXML) rtl-project.xml
+         $(FPDOC) $(FPDOCOPTS) --project=rtl-project.xml --format=$(HTMLFMT) --output=rtl$(HTMLSUFFIX) $(FPDOCHTMLOPTS) $(RTLCHMOPTS)
+ ifndef CSSFILE
++        mkdir -p rtl
+         cp fpdoc.cst rtl/fpdoc.css
+ endif
+         @$(ECHO) '' > rtl.chk
+ 
