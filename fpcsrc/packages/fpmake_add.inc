@@ -32,7 +32,6 @@
   add_fcl_web(ADirectory+IncludeTrailingPathDelimiter('fcl-web'));
   add_fcl_xml(ADirectory+IncludeTrailingPathDelimiter('fcl-xml'));
   add_fftw(ADirectory+IncludeTrailingPathDelimiter('fftw'));
-  add_fpgtk(ADirectory+IncludeTrailingPathDelimiter('fpgtk'));
   add_fpindexer(ADirectory+IncludeTrailingPathDelimiter('fpindexer'));
   add_fpmkunit(ADirectory+IncludeTrailingPathDelimiter('fpmkunit'));
   add_fppkg(ADirectory+IncludeTrailingPathDelimiter('fppkg'));
@@ -41,9 +40,7 @@
   add_gdbm(ADirectory+IncludeTrailingPathDelimiter('gdbm'));
   add_ggi(ADirectory+IncludeTrailingPathDelimiter('ggi'));
   add_gmp(ADirectory+IncludeTrailingPathDelimiter('gmp'));
-  add_gnome1(ADirectory+IncludeTrailingPathDelimiter('gnome1'));
   add_graph(ADirectory+IncludeTrailingPathDelimiter('graph'));
-  add_gtk1(ADirectory+IncludeTrailingPathDelimiter('gtk1'));
   add_gtk2(ADirectory+IncludeTrailingPathDelimiter('gtk2'));
   add_hash(ADirectory+IncludeTrailingPathDelimiter('hash'));
   add_hermes(ADirectory+IncludeTrailingPathDelimiter('hermes'));
@@ -54,7 +51,6 @@
   add_ibase(ADirectory+IncludeTrailingPathDelimiter('ibase'));
   add_iconvenc(ADirectory+IncludeTrailingPathDelimiter('iconvenc'));
   add_imagemagick(ADirectory+IncludeTrailingPathDelimiter('imagemagick'));
-  add_imlib(ADirectory+IncludeTrailingPathDelimiter('imlib'));
   add_iosxlocale(ADirectory+IncludeTrailingPathDelimiter('iosxlocale'));
   add_jni(ADirectory+IncludeTrailingPathDelimiter('jni'));
   add_ldap(ADirectory+IncludeTrailingPathDelimiter('ldap'));
