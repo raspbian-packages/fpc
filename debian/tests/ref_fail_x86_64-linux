@@ -23,6 +23,7 @@ tbs/tb0528
 # Next line fails on autopkgtest.u.c but not on my laptop or ci.d.n
 # code comment: This test needs C libraries
 webtbs/tw0876
+Note: This test needs C libraries
 webtbs/tw16161
 webtbs/tw17236
 webtbs/tw24197

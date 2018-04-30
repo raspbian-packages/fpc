@@ -60,12 +60,26 @@ Index: fpc/fpcsrc/utils/fpcm/fpcmmain.pp
                if s<>'' then
                 begin
                   if s[length(s)]='/' then
-@@ -1227,7 +1267,7 @@ implementation
+@@ -1227,7 +1268,21 @@ implementation
              begin
                if FileExists('/usr/bin/ppc' + ppcSuffix[cpu]) then
                 begin
 -                 s:=ExtractFilePath({$ifdef ver1_0}ReadLink{$else}fpReadLink{$endif}('/usr/bin/ppc' + ppcSuffix[cpu]));
 +                 s:=ExtractFilePath(ReadLink('/usr/bin/ppc' + ppcSuffix[cpu], 255));
++                 if s<>'' then
++                  begin
++                    if s[length(s)]='/' then
++                     delete(s,length(s),1);
++                    hs:=SubstVariables('$(wildcard $(addprefix '+s+'/,Makefile.fpc))');
++                  end;
++               end;
++            end;
++           if hs='' then
++            begin
++              s:=ExtractFileName(s);
++              if FileExists('/usr/share/fpcsrc/' + s) then
++               begin
++                 s:=ReadLink('/usr/share/fpcsrc/' + s, 255);
                   if s<>'' then
                    begin
                      if s[length(s)]='/' then

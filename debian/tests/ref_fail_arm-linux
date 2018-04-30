@@ -19,6 +19,8 @@ test/units/math/tmask
 test/units/math/tmask2
 tbs/tb0262
 tbs/tb0621
+webtbs/tw0876
+Note: This test needs C libraries
 webtbs/tw11563
 webtbs/tw16161
 webtbs/tw22744

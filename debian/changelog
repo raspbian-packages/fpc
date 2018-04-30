@@ -1,9 +1,25 @@
-fpc (3.0.4+dfsg-15+rpi1) buster-staging; urgency=medium
+fpc (3.0.4+dfsg-17+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 08 Feb 2018 14:37:59 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Mon, 30 Apr 2018 00:12:05 +0000
+
+fpc (3.0.4+dfsg-17) unstable; urgency=medium
+
+  * Fixed ppc suffix in fpcmake to be compatible with ppc executable name.
+    For x86_64 architecture, FPC make files build compiler as ppcx64 while
+    fpcmake looks for ppcx86_64 to set default FPCDIR value.
+  * Patched fpcmake to look for FPCDIR in Debian FPC sources location.
+    (Closes: Bug#892285)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 14 Apr 2018 18:08:39 +0200
+
+fpc (3.0.4+dfsg-16) unstable; urgency=medium
+
+  * [tests] Update autopkgtest reference files
+
+ -- Paul Gevers <elbrus@debian.org>  Fri, 02 Mar 2018 09:13:21 +0100
 
 fpc (3.0.4+dfsg-15) unstable; urgency=medium
 

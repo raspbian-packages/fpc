@@ -90,7 +90,7 @@ interface
       );
 
       ppcSuffix : array[TCpu] of string=(
-        '386','m68k','ppc','sparc','x86_64','arm','ppc64','avr','armeb', 'armel', 'mips', 'mipsel', 'mips64', 'mips64el', 'jvm','8086','aarch64'
+        '386','m68k','ppc','sparc','x64','arm','ppc64','avr','armeb', 'armel', 'mips', 'mipsel', 'mips64', 'mips64el', 'jvm','8086','aarch64'
       );
 
       OSStr : array[TOS] of string=(
@@ -1268,6 +1268,20 @@ implementation
               if FileExists('/usr/bin/ppc' + ppcSuffix[cpu]) then
                begin
                  s:=ExtractFilePath(ReadLink('/usr/bin/ppc' + ppcSuffix[cpu], 255));
+                 if s<>'' then
+                  begin
+                    if s[length(s)]='/' then
+                     delete(s,length(s),1);
+                    hs:=SubstVariables('$(wildcard $(addprefix '+s+'/,Makefile.fpc))');
+                  end;
+               end;
+            end;
+           if hs='' then
+            begin
+              s:=ExtractFileName(s);
+              if FileExists('/usr/share/fpcsrc/' + s) then
+               begin
+                 s:=ReadLink('/usr/share/fpcsrc/' + s, 255);
                  if s<>'' then
                   begin
                     if s[length(s)]='/' then
