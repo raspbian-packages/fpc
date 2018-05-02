@@ -15,11 +15,13 @@ else
 DOCTYPE=${DEBDOCTYPE}
 CONVERTER=${DOCTYPE}
 endif
+# Include standard dpkg-buildpackage variables
+include /usr/share/dpkg/architecture.mk
 # Undefine FPC if it was set
 unexport FPC
 # Build new compiler name
-CPU_SOURCE=$(shell dpkg-architecture -qDEB_BUILD_ARCH_CPU)
-CPU_TARGET=$(shell dpkg-architecture -qDEB_HOST_ARCH_CPU)
+CPU_SOURCE=${DEB_BUILD_ARCH_CPU}
+CPU_TARGET=${DEB_HOST_ARCH_CPU}
 # Take care that Debian uses amd64 while FPC perfers x86_64 instead
 CPU_SOURCE := $(subst amd64,x86_64,${CPU_SOURCE})
 CPU_TARGET := $(subst amd64,x86_64,${CPU_TARGET})
@@ -72,7 +74,7 @@ endif
 
 PPNEW=$(PPPRE)$(PPSUF)
 # Take care that Debian uses kfreebsd while FPC prefers freebsd
-OS_TARGET=$(subst kfreebsd,freebsd,$(shell dpkg-architecture -qDEB_HOST_ARCH_OS))
+OS_TARGET=$(subst kfreebsd,freebsd,${DEB_HOST_ARCH_OS})
 # FPC uses FPCTARGET to identify the target for which the binaries are
 # produced. This is generally a couple of target CPU and target OS names
 # separated by a dash.
@@ -132,7 +134,6 @@ INSTALLOPTS=INSTALL_PREFIX=$(INSTALL_DIR)/usr PP=$(NEWPP)
 
 export GDBLIBDIR=/usr/lib
 
-DEB_HOST_ARCH:=$(shell dpkg-architecture -qDEB_HOST_ARCH)
 ifeq ($(CPU_TARGET),arm)
   # Disable optimization for the first runs as there may be bugs associated
   # with that, preventing proper building new versions (cf bug 800811)
@@ -145,9 +146,6 @@ else
 endif
 
 # Set default compilation options
-DEB_HOST_MULTIARCH ?=$(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
-DEB_BUILD_MULTIARCH ?=$(shell dpkg-architecture -qDEB_BUILD_MULTIARCH)
-
 FPMAKE_BUILDOPTS=FPMAKE_SKIP_CONFIG='-n @${CURDIR}/${DEB_BUILD_FPC_OPT}'
 
 LDFLAGS=$(strip $(shell DEB_BUILD_MAINT_OPTIONS=$(DEB_BUILD_MAINT_OPTIONS) \

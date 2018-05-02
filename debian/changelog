@@ -1,9 +1,22 @@
-fpc (3.0.4+dfsg-17+rpi1) buster-staging; urgency=medium
+fpc (3.0.4+dfsg-18+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
 
- -- Raspbian forward porter <root@raspbian.org>  Mon, 30 Apr 2018 00:12:05 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Wed, 02 May 2018 04:16:09 +0000
+
+fpc (3.0.4+dfsg-18) unstable; urgency=medium
+
+  * Remove dpkg-architecture calls to reduce build time and lintian warnings
+  * Changed Vcs-Git and Vcs-Browser to point to salsa.debian.org.
+    This removes lintian warnings about old repository links.
+  * Cleaned man page for fpcjres tool to be lintian warnings free.
+  * Fixed ppc suffix in fpcmake to be compatible with ppc executable name.
+    For arm64 architecture, FPC make files build compiler as ppca64 while
+    fpcmake looks for ppcxaarch64 to set default FPCDIR value.
+    Thanks to Graham Inggs (Closes: Bug#892285)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sun, 22 Apr 2018 16:10:23 +0200
 
 fpc (3.0.4+dfsg-17) unstable; urgency=medium
 

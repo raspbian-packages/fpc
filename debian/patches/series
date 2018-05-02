@@ -30,4 +30,5 @@ fix_texpfncase_test.patch
 fix-units-path-to-be-multi-arch-safe.patch
 fix_make_files_generation.patch
 fix-IDE-GDB-support.patch
+clean_man_pages.patch
 raspbian.diff
