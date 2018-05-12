@@ -10,8 +10,6 @@
 
 {$include fpdoc/fpmake.pp}
 
-{$include fpmc/fpmake.pp}
-
 {$include fppkg/fpmake.pp}
 
 {$include fprcp/fpmake.pp}
