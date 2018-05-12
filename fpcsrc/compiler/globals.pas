@@ -510,6 +510,7 @@ interface
       starttime  : real;
 
     function getdatestr:string;
+    Function UnixToDateTime(const AValue: Int64): TDateTime;
     function gettimestr:string;
     function filetimestring( t : longint) : string;
     function getrealtime : real;
@@ -766,11 +767,29 @@ implementation
    }
       var
         Year,Month,Day: Word;
+        SourceDateEpoch: string;
       begin
-        DecodeDate(Date,year,month,day);
+        SourceDateEpoch := GetEnvironmentVariable('SOURCE_DATE_EPOCH');
+        if Length(SourceDateEpoch)>0 then
+           DecodeDate(UnixToDateTime(StrToInt64(SourceDateEpoch)),year,month,day)
+        else
+          DecodeDate(Date,year,month,day);
         getdatestr:=L0(Year)+'/'+L0(Month)+'/'+L0(Day);
       end;
 
+   Function UnixToDateTime(const AValue: Int64): TDateTime;
+   { Code copied from fpcsrc/packages/rtl-objpas/src/inc/dateutil.inc and
+   fpcsrc/rtl/objpas/sysutils/datih.inc }
+   const
+      TDateTimeEpsilon = 2.2204460493e-16 ;
+      UnixEpoch = TDateTime(-2415018.5) + TDateTime(2440587.5) ;
+   begin
+      Result:=UnixEpoch + AValue/SecsPerDay;
+      if (UnixEpoch>=0) and (Result<-TDateTimeEpsilon) then
+         Result:=int(Result-1.0+TDateTimeEpsilon)-frac(1.0+frac(Result))
+      else if (UnixEpoch<=-1.0) and (Result>-1.0+TDateTimeEpsilon) then
+         Result:=int(Result+1.0-TDateTimeEpsilon)+frac(1.0-abs(frac(1.0+Result)));
+   end;
 
    function  filetimestring( t : longint) : string;
    {
