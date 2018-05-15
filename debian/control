@@ -509,6 +509,8 @@ Description: Free Pascal - math units
   * proj4 (cartographic projections);
   * symbolic (symbolic computing).
 
+#note: when backporting to stretch or earlier disable ncurses6.patch
+#and then change the libncursesw5-dev breaks to >= 6.1+20180210
 Package: fp-units-misc-3.0.4
 Architecture: any
 Multi-Arch: same
@@ -521,6 +523,7 @@ Provides:
 Breaks:
  fp-units-misc (<= 2.4.0-3),
  fpc (<= 3.0.4+dfsg-0),
+ libncursesw5-dev (<< 6.1+20180210)
 Replaces:
  fp-units-misc (<= 2.4.0-3),
  fpc (<= 3.0.4+dfsg-0),

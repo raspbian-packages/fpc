@@ -1,9 +1,26 @@
-fpc (3.0.4+dfsg-18+rpi1) buster-staging; urgency=medium
+fpc (3.0.4+dfsg-19+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
 
- -- Raspbian forward porter <root@raspbian.org>  Wed, 02 May 2018 04:16:09 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Tue, 15 May 2018 03:47:39 +0000
+
+fpc (3.0.4+dfsg-19) unstable; urgency=medium
+
+  [Graham Inggs]
+  * Fixed ppc suffix in fpcmake to be compatible with ppc executable name
+    On Motorola 68000, FPC builds compiler named ppc68k while
+    fpcmake looks for ppcm68k to set default FPCDIR value
+    See #892285
+
+  [Peter Michael Green]
+  * Move Grahams fpcmake m68k change into it's own patch fpcmake-m68k.patch
+  * Apply Sven Joachim's patch for ncurses6 (Closes: 898017)
+  * Add breaks libncursesw5-dev (<< 6.1+20180210) to fp-units-base
+  * Add note to debian/control about ncurses adjustments needed when
+    backporting.
+
+ -- Peter Michael Green <plugwash@debian.org>  Sat, 12 May 2018 01:36:01 +0100
 
 fpc (3.0.4+dfsg-18) unstable; urgency=medium
 

@@ -31,4 +31,6 @@ fix-units-path-to-be-multi-arch-safe.patch
 fix_make_files_generation.patch
 fix-IDE-GDB-support.patch
 clean_man_pages.patch
+fpcmake-m68k.patch
+ncurses6.patch
 raspbian.diff
