@@ -1,0 +1,18 @@
+Description: Off-by one error
+Author: Michalis Kamburelis <michalis.kambi@gmail.com>
+Bug: http://bugs.freepascal.org/view.php?id=31007
+Bug-Debian: https://bugs.debian.org/845504
+
+Index: fpc/fpcsrc/utils/ppdep.pp
+===================================================================
+--- fpc.orig/fpcsrc/utils/ppdep.pp
++++ fpc/fpcsrc/utils/ppdep.pp
+@@ -344,7 +344,7 @@ begin
+                         hs^:='';
+                       end
+                     else
+-                     if (Copy(hs^,2,6)='$ELSE') then
++                     if (Copy(hs^,2,5)='$ELSE') then
+                       begin
+                         skip[level]:=skip[level-1] or (not skip[level]);
+                         hs^:='';
