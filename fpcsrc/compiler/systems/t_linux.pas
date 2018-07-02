@@ -151,6 +151,15 @@ begin
 {$ifdef i386}
     LibrarySearchPath.AddPath(sysrootpath,'/usr/lib/i386-linux-gnu',true);
 {$endif i386}
+{$ifdef powerpc}
+    LibrarySearchPath.AddPath(sysrootpath,'/usr/lib/powerpc-linux-gnu',true);
+{$endif powerpc}
+{$ifdef powerpc64}
+    LibrarySearchPath.AddPath(sysrootpath,'/usr/lib/powerpc64-linux-gnu',true);
+{$endif powerpc64}
+{$ifdef aarch64}
+    LibrarySearchPath.AddPath(sysrootpath,'/usr/lib/aarch64-linux-gnu',true);
+{$endif aarch64}
 end;
 
 {$ifdef m68k}
