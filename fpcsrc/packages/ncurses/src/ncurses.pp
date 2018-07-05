@@ -69,13 +69,13 @@ const
    NCURSES_VERSION_MINOR = 6;
    NCURSES_VERSION_PATCH = 20061217;
    NCURSES_VERSION = '5.6';
-   NCURSES_MOUSE_VERSION = 1;
+   NCURSES_MOUSE_VERSION = 2;
 
 type
    pchtype = ^chtype;
-   chtype  = culong;
+   chtype  = cuint;
    pmmask_t = ^mmask_t;
-   mmask_t  = culong;
+   mmask_t  = cuint;
 
 { colors  }
 var
