@@ -1,0 +1,26 @@
+From 2c185394f13c44992c7348b64b3514030781668b Mon Sep 17 00:00:00 2001
+From: pierre <pierre@freepascal.org>
+Date: Mon, 2 Feb 2015 21:49:36 +0000
+Subject: [PATCH]  Fix for failures on FileNameCaseSensitive systems
+
+git-svn-id: http://svn.freepascal.org/svn/fpc/trunk@29609 3ad0048d-3df7-0310-abae-a5850022a9f2
+---
+ tests/test/units/sysutils/texpfncase.pp | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/tests/test/units/sysutils/texpfncase.pp b/tests/test/units/sysutils/texpfncase.pp
+index 3a6e1cac73..a4adf805e7 100644
+--- a/fpcsrc/tests/test/units/sysutils/texpfncase.pp
++++ b/fpcsrc/tests/test/units/sysutils/texpfncase.pp
+@@ -57,8 +57,9 @@ procedure TestExpFNC (const FN1, ExpReturn: string; ExpMatch: TFilenameCaseMatch
+   Match: TFilenameCaseMatch;
+ begin
+   FN2 := ExpandFileNameCase (FN1, Match);
+-  if ((ExpReturn <> '') and (FN2 <> ExpReturn) or (Match <> ExpMatch)) and
+-     not(FileNameCaseSensitive and (Match=mkAmbiguous) and (UpperCase(FN2)<>UpperCase(ExpReturn)))  then
++  if (Match <> ExpMatch) or ((ExpReturn <> '') and (FN2 <> ExpReturn) and
++     ((Match <> mkAmbiguous) or not (FileNameCaseSensitive) or
++                               (UpperCase (FN2) <> UpperCase (ExpReturn)))) then
+    begin
+     Inc (Failed);
+     WriteLn ('Error: Input = ', FN1, ', Output = ', FN2, ' (expected ', ExpReturn, '), MatchFound = ',
