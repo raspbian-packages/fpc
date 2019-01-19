@@ -1,9 +1,23 @@
-fpc (3.0.4+dfsg-20+rpi1) buster-staging; urgency=medium
+fpc (3.0.4+dfsg-21+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 05 Jul 2018 13:29:50 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Sat, 19 Jan 2019 11:47:16 +0000
+
+fpc (3.0.4+dfsg-21) unstable; urgency=medium
+
+  [ Paul Gevers ]
+  * Drop Recommends: libggi2-dev as it was removed from Debian in 2012.
+    We should probably remove ggigraphs unit as well as it is useless
+  * Drop ancient Breaks/Replaces, add one missing
+
+  [ Abou Al Montacir ]
+  * Moved compiler messages files to location expected by Lazarus.
+    The files are anyway architecture independent and it does not hurt
+    to have them in /usr/share. (Closes: Bug#892285)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Wed, 16 Jan 2019 10:14:10 +0100
 
 fpc (3.0.4+dfsg-20) unstable; urgency=medium
 

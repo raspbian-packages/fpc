@@ -4,6 +4,6 @@ usr/bin/${DEB_HOST_MULTIARCH}-fpc-${VERSION}
 usr/bin/${DEB_HOST_MULTIARCH}-fpcmkcfg-${VERSION}
 usr/bin/${DEB_HOST_MULTIARCH}-fpcres-${VERSION}
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/${PPCBIN}
-usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/msg
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/samplecfg
 usr/share/doc/fp-compiler   [!freebsd-any]
+usr/share/fpcsrc/${VERSION}/compiler/msg

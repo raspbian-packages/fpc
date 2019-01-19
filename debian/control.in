@@ -82,10 +82,8 @@ Depends:
 Provides:
  fpc-source
 Breaks:
- fpc-source (<= 2.4.0-3),
  fpc-src
 Replaces:
- fpc-source (<= 2.4.0-3),
  fpc-src
 Description: Free Pascal - SDK source code
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
@@ -113,13 +111,8 @@ Suggests:
 Provides:
  fp-compiler
 Breaks:
- fp-compiler (<= 2.4.0-3),
- fp-utils-2.4.2 (<= 2.4.2-3),
- fp-utils-2.4.4 (<= 2.4.4-2),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Replaces:
- fp-compiler (<= 2.4.0-3),
- fp-utils-2.4.4 (<= 2.4.4-1),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Description: Free Pascal - compiler
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
@@ -149,10 +142,8 @@ Suggests:
 Provides:
  fp-ide
 Breaks:
- fp-ide (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Replaces:
- fp-ide (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Description: Free Pascal - IDE
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
@@ -182,15 +173,9 @@ Provides:
  fp-utils
 Breaks:
  fp-compiler${PACKAGESUFFIX} (<= 3.0.4+dfsg-11),
- fp-compiler (<= 2.4.0-3),
- fp-units-gfx (<= 2.4.2-2),
- fp-units-gfx-2.4.2 (<= 2.4.2-2),
- fp-utils (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Replaces:
  fp-compiler${PACKAGESUFFIX} (<= 3.0.4+dfsg-11),
- fp-compiler (<= 2.4.0-3),
- fp-utils (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Description: Free Pascal - utilities
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
@@ -222,10 +207,8 @@ Depends:
 Provides:
  fp-docs
 Breaks:
- fp-docs (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Replaces:
- fp-docs (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Description: Free Pascal - documentation
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
@@ -250,10 +233,8 @@ Provides:
  fp-units-rtl,
  fpc-abi${PACKAGESUFFIX}
 Breaks:
- fp-units-rtl (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Replaces:
- fp-units-rtl (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Description: Free Pascal - runtime libraries
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
@@ -277,13 +258,9 @@ Suggests:
 Provides:
  fp-units-base
 Breaks:
- fp-units-base (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
- fp-units-misc-3.0.0 (<= 3.0.0+dfsg-2),
 Replaces:
- fp-units-base (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
- fp-units-misc-3.0.0 (<= 3.0.0+dfsg-2),
 Description: Free Pascal - base units
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
  and Turbo Pascal 7.0 dialects, as well as Mac Pascal dialects. It provides a
@@ -307,10 +284,9 @@ Depends:
 Provides:
  fp-units-fcl
 Breaks:
- fp-units-fcl (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Replaces:
- fp-units-fcl (<= 2.4.0-3)
+ fpc (<= ${UPSTREAM_VERSION}-0),
 Description: Free Pascal - Free Component Library
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
  and Turbo Pascal 7.0 dialects, as well as Mac Pascal dialects. It provides a
@@ -331,10 +307,8 @@ Depends:
 Provides:
  fp-units-fv
 Breaks:
- fp-units-fv (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Replaces:
- fp-units-fv (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Description: Free Pascal - Free Vision units
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
@@ -359,10 +333,8 @@ Depends:
 Provides:
  fp-units-gtk2
 Breaks:
- fp-units-gtk2 (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Replaces:
- fp-units-gtk2 (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Description: Free Pascal - GTK+ 2.x units
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
@@ -394,10 +366,8 @@ Suggests:
 Provides:
  fp-units-db
 Breaks:
- fp-units-db (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Replaces:
- fp-units-db (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Description: Free Pascal - database-library units
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
@@ -424,17 +394,14 @@ Recommends:
  libcairo2-dev,
  libforms-dev,
  libgd-dev,
- libggi2-dev,
  libgl1-mesa-dev,
  libgraphviz-dev,
  libpng-dev,
  libxxf86dga-dev,
  libxxf86vm-dev
 Breaks:
- fp-units-gfx (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Replaces:
- fp-units-gfx (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Description: Free Pascal - graphics-library units
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
@@ -460,10 +427,8 @@ Depends:
 Provides:
  fp-units-net
 Breaks:
- fp-units-net (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Replaces:
- fp-units-net (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Description: Free Pascal - networking units
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
@@ -489,11 +454,8 @@ Recommends:
 Provides:
  fp-units-math
 Breaks:
- fp-units-math (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Replaces:
- fp-units-math (<= 2.4.0-3),
- fp-units-misc (<= 2.2.4-4),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Description: Free Pascal - math units
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
@@ -521,11 +483,9 @@ Depends:
 Provides:
  fp-units-misc
 Breaks:
- fp-units-misc (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
  libncursesw5-dev (<< 6.1+20180210)
 Replaces:
- fp-units-misc (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Description: Free Pascal - miscellaneous units
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
@@ -557,11 +517,8 @@ Recommends:
 Provides:
  fp-units-multimedia
 Breaks:
- fp-units-multimedia (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Replaces:
- fp-units-gfx (<= 2.2.4-3),
- fp-units-multimedia (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Description: Free Pascal - multimedia units
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
@@ -584,10 +541,8 @@ Depends:
 Provides:
  fp-units-i386
 Breaks:
- fp-units-i386 (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Replaces:
- fp-units-i386 (<= 2.4.0-3),
  fpc (<= ${UPSTREAM_VERSION}-0),
 Description: Free Pascal - Kylix compatibility units
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
