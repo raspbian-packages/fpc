@@ -1,9 +1,21 @@
-fpc (3.0.4+dfsg-21+rpi1) buster-staging; urgency=medium
+fpc (3.0.4+dfsg-22+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
 
- -- Raspbian forward porter <root@raspbian.org>  Sat, 19 Jan 2019 11:47:16 +0000
+ -- Peter Michael Green <plugwash@raspbian.org>  Mon, 04 Feb 2019 04:47:04 +0000
+
+fpc (3.0.4+dfsg-22) unstable; urgency=medium
+
+  * debian/patches/arm64-select.patch
+    - Fix fpSelect with nil timestamp on aarch64 (closes: 888782)
+  * debian/patches/arm64-subsetreg-32.patch
+    - when optimising subsetreg moves for aarch64, take into account the fact
+      that the subsetreg itself can be 32 or 64 bit
+    - fixes "Incorrect record member value when returned from a function". 
+      (closes: 895693)
+
+ -- Peter Michael Green <plugwash@debian.org>  Thu, 24 Jan 2019 23:27:02 +0000
 
 fpc (3.0.4+dfsg-21) unstable; urgency=medium
 
@@ -15,7 +27,7 @@ fpc (3.0.4+dfsg-21) unstable; urgency=medium
   [ Abou Al Montacir ]
   * Moved compiler messages files to location expected by Lazarus.
     The files are anyway architecture independent and it does not hurt
-    to have them in /usr/share. (Closes: Bug#892285)
+    to have them in /usr/share. (Closes: Bug##902888)
 
  -- Abou Al Montacir <abou.almontacir@sfr.fr>  Wed, 16 Jan 2019 10:14:10 +0100
 

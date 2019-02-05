@@ -34,4 +34,6 @@ clean_man_pages.patch
 fpcmake-m68k.patch
 ncurses6.patch
 fpc-r38400.patch
+arm64-select.patch
+arm64-subsetreg-32.patch
 raspbian.diff
