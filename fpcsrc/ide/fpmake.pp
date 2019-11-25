@@ -204,16 +204,16 @@ begin
     T.Directory:='compiler';
     T.Install:=false;
 
-    P.InstallFiles.Add('fp.ans','$(bininstalldir)');
-    P.InstallFiles.Add('gplprog.pt','$(bininstalldir)');
-    P.InstallFiles.Add('gplunit.pt','$(bininstalldir)');
-    P.InstallFiles.Add('program.pt','$(bininstalldir)');
-    P.InstallFiles.Add('unit.pt','$(bininstalldir)');
-    P.InstallFiles.Add('cvsco.tdf','$(bininstalldir)');
-    P.InstallFiles.Add('cvsdiff.tdf','$(bininstalldir)');
-    P.InstallFiles.Add('cvsup.tdf','$(bininstalldir)');
-    P.InstallFiles.Add('grep.tdf','$(bininstalldir)');
-    P.InstallFiles.Add('tpgrep.tdf','$(bininstalldir)');
+    P.InstallFiles.Add('fp.ans','$(baseinstalldir)/ide');
+    P.InstallFiles.Add('gplprog.pt','$(baseinstalldir)/ide');
+    P.InstallFiles.Add('gplunit.pt','$(baseinstalldir)/ide');
+    P.InstallFiles.Add('program.pt','$(baseinstalldir)/ide');
+    P.InstallFiles.Add('unit.pt','$(baseinstalldir)/ide');
+    P.InstallFiles.Add('cvsco.tdf','$(baseinstalldir)/ide');
+    P.InstallFiles.Add('cvsdiff.tdf','$(baseinstalldir)/ide');
+    P.InstallFiles.Add('cvsup.tdf','$(baseinstalldir)/ide');
+    P.InstallFiles.Add('grep.tdf','$(baseinstalldir)/ide');
+    P.InstallFiles.Add('tpgrep.tdf','$(baseinstalldir)/ide');
     P.InstallFiles.Add('fp32.ico', [win32, win64], '$(bininstalldir)');
 
     with P.Sources do
