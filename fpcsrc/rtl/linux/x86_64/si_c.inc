@@ -158,6 +158,7 @@ procedure _FPC_libc_haltproc; assembler; nostackframe; public name '_haltproc';
     movq      ExitCode@GOTPCREL(%rip),%rax
     movzwq    (%rax),%rax { load and save exitcode }
 
+    popq    %rdx                    { keep stack aligned }
     movq fpc_ret(%rip),%rdx         { return to libc }
     movq fpc_ret_rbp(%rip),%rbp
     pushq %rdx
