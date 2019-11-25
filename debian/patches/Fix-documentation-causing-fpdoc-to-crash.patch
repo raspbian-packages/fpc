@@ -1,0 +1,15 @@
+Description: Fixed a bug causing fpdoc to crahs when building documentation.
+Author: Abou Al Montacir <abou.almontacir@sfr.fr>
+Bug-Debian: http://bugs.debian.org/939414
+diff --git a/fpcdocs/linux.xml b/fpcdocs/linux.xml
+index 8a5ebe4a..8927e3d3 100644
+--- a/fpcdocs/linux.xml
++++ b/fpcdocs/linux.xml
+@@ -225,7 +225,6 @@ On error, -1 is returned to the parent, and no child is created.
+ <seealso>
+ <link id="#rtl.baseunix.FpFork"/>
+ </seealso>
+-<example file="linuxex/ex71"/>
+ </element>
+ 
+ <!-- unresolved type reference Visibility: default -->

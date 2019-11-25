@@ -1,0 +1,37 @@
+This patch is based on the commit detailed below with paths adjusted
+to match the Debian fpc package --plugwash
+commit e8335a145bfe3af52eed8d0d74ae3a461bbe9d1e
+Author: Marco van de Voort <marcov@stack.nl>
+Date:   Wed Mar 30 19:21:05 2016 +0000
+
+     * fix timespec=nil for -dgeneric_linux_syscalls (aarch64) case.
+    
+    
+    git-svn-id: http://svn.freepascal.org/svn/fpc/trunk@33392 3ad0048d-3df7-0310-abae-a5850022a9f2
+
+diff --git a/rtl/linux/bunxsysc.inc b/rtl/linux/bunxsysc.inc
+index c8d7849672..c6d18be4e9 100644
+--- a/fpcsrc/rtl/linux/bunxsysc.inc
++++ b/fpcsrc/rtl/linux/bunxsysc.inc
+@@ -463,12 +463,18 @@ Function fpSelect(N:cint;readfds,writefds,exceptfds:pfdSet;TimeOut:PTimeVal):cin
+ {$if defined(generic_linux_syscalls)}
+ 
+ var ts : timespec;
++    pts : PTimeSpec;
+ begin
+-  ts.tv_sec := timeout^.tv_sec;
+-  ts.tv_nsec := timeout^.tv_usec * 1000;
++  pts:=nil;
++  if assigned(timeout) then
++    begin
++      pts:=@ts;
++      ts.tv_sec := timeout^.tv_sec;
++      ts.tv_nsec := timeout^.tv_usec * 1000;
++    end;
+   fpSelect:=do_syscall(syscall_nr_pselect6,n,
+                        tsysparam(readfds),tsysparam(writefds),
+-                       tsysparam(exceptfds),tsysparam(@ts),0);
++                       tsysparam(exceptfds),tsysparam(pts),0);
+ end;
+ 
+ {$else}
