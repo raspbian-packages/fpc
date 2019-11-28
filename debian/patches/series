@@ -36,4 +36,6 @@ ncurses6.patch
 fpc-r38400.patch
 arm64-select.patch
 arm64-subsetreg-32.patch
+Fix-exit-code-on-fpdoc.patch
+Fix-documentation-causing-fpdoc-to-crash.patch
 raspbian.diff
