@@ -14,6 +14,7 @@
  **********************************************************************}
 
 
+{$ifndef VER3_0}
 {$ifndef FPC_SYSTEM_HAS_MUL_LONGINT_TO_INT64}
 {$define FPC_SYSTEM_HAS_MUL_LONGINT_TO_INT64}
 function fpc_mul_longint_to_int64(f1,f2 : longint) : int64;[public,alias: 'FPC_MUL_LONGINT_TO_INT64']; assembler; nostackframe; compilerproc;
@@ -124,3 +125,4 @@ asm
     clr.l    d1
 end;
 {$endif FPC_SYSTEM_HAS_MUL_LONGINT_TO_INT64}
+{$endif VER3_0}
