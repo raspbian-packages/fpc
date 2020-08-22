@@ -178,12 +178,12 @@ begin
    end;
 {$endif WINDOWS}
 {$else}
-  SystemIDEDir:=FExpand(DirOf(system.paramstr(0))+'../lib/fpc/'+version_string+'/ide/text');
+  SystemIDEDir:=FExpand(DirOf(system.paramstr(0))+'../lib/fpc/'+version_string+'/ide');
   If Not ExistsDir(SystemIDEdir) Then
     begin
-    SystemIDEDir:=FExpand(DirOf(system.paramstr(0))+'../lib64/fpc/'+version_string+'/ide/text');
+    SystemIDEDir:=FExpand(DirOf(system.paramstr(0))+'../lib64/fpc/'+version_string+'/ide');
     If Not ExistsDir(SystemIDEdir) Then
-      SystemIDEDir:='/usr/lib/fpc/'+version_string+'/ide/text';
+      SystemIDEDir:='/usr/lib/fpc/'+version_string+'/ide';
     end;
   IDEdir:=CompleteDir(FExpand('~/.fp'));
   If Not ExistsDir(IDEdir) Then
