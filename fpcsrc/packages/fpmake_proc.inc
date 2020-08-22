@@ -196,12 +196,6 @@ begin
 {$include fftw/fpmake.pp}
 end;
 
-procedure add_fpgtk(const ADirectory: string);
-begin
-  with Installer do
-{$include fpgtk/fpmake.pp}
-end;
-
 {$include fpindexer/fpmake.pp}
 
 procedure add_fpmkunit(const ADirectory: string);
@@ -238,22 +232,10 @@ begin
 {$include gmp/fpmake.pp}
 end;
 
-procedure add_gnome1(const ADirectory: string);
-begin
-  with Installer do
-{$include gnome1/fpmake.pp}
-end;
-
 procedure add_graph(const ADirectory: string);
 begin
   with Installer do
 {$include graph/fpmake.pp}
-end;
-
-procedure add_gtk1(const ADirectory: string);
-begin
-  with Installer do
-{$include gtk1/fpmake.pp}
 end;
 
 procedure add_gtk2(const ADirectory: string);
@@ -314,12 +296,6 @@ procedure add_imagemagick(const ADirectory: string);
 begin
   with Installer do
 {$include imagemagick/fpmake.pp}
-end;
-
-procedure add_imlib(const ADirectory: string);
-begin
-  with Installer do
-{$include imlib/fpmake.pp}
 end;
 
 procedure add_iosxlocale(const ADirectory: string);
