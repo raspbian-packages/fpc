@@ -28,39 +28,40 @@ const
   Version = '1.3';
   // 1.3 compile in a separate directory, so that parallel invocations do not overwrite link.res files
 
+var
+  BinPath, BinName: string;
 
 Procedure Usage(Err : string);
-
 begin
   if (Err<>'') then
     Writeln('Error : ',Err);
-  writeln('instantfpc '+Version);
+  writeln(BinName, ' ', Version);
   writeln;
   writeln('Run pascal source files as scripts.');
   writeln('Normal usage is to add to a program source file a first line');
-  writeln('("shebang") "#!/usr/bin/instantfpc".');
+  writeln('("shebang") "#!', BinPath, BinName, '".');
   writeln('Then you can execute the source directly in the terminal/console.');
   writeln;
-  writeln('instantfpc -h');
+  writeln(BinName, ' -h');
   writeln('      Print this help message and exit.');
   writeln;
-  writeln('instantfpc -v');
+  writeln(BinName, ' -v');
   writeln('      Print version and exit.');
   writeln;
-  writeln('instantfpc [compiler options] <source file> [program parameters]');
+  writeln(BinName, ' [compiler options] <source file> [program parameters]');
   writeln('      Compiles source and runs program.');
   writeln('      Source is compared with the cache. If cache is not valid then');
   writeln('      source is copied to cache with the shebang line commented and');
   writeln('      cached source is compiled.');
   writeln('      If compilation fails the fpc output is written to stdout and');
-  writeln('      instantfpc exits with error code 1.');
+  writeln('      ', BinName, ' exits with error code 1.');
   writeln('      If compilation was successful the program is executed.');
   writeln('      If the compiler options contains -B the program is always');
   writeln('      compiled.');
   writeln('      If the environment option INSTANTFPCOPTIONS is set it is');
   writeln('      passed to the compiler as first parameters.');
   writeln;
-  writeln('instantfpc --get-cache');
+  writeln(BinName, ' --get-cache');
   writeln('      Prints current cache directory and exit.');
   writeln;
   writeln('Options:');
@@ -109,7 +110,7 @@ begin
   if (P='') then exit;
   if p='-v' then 
     begin
-    writeln('instantfpc '+Version);
+    writeln(BinName, ' ', Version);
     Halt(1);
     end
   else if p='-h' then 
@@ -147,6 +148,8 @@ begin
   { For example:
       /usr/bin/instantfpc -MObjFpc -Sh ./envvars.pas param1
   }
+  BinPath := ExtractFilePath(ParamStr(0));
+  BinName := 'ifpc';
   for i:=1 to Paramcount do 
     begin
     p:=ParamStr(i);
