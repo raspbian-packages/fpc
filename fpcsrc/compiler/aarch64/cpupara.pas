@@ -33,10 +33,12 @@ unit cpupara;
        symconst,symbase,symtype,symdef,parabase,paramgr;
 
     type
-       taarch64paramanager = class(tparamanager)
+       tcpuparamanager = class(tparamanager)
           function get_volatile_registers_int(calloption: tproccalloption): tcpuregisterset; override;
           function get_volatile_registers_fpu(calloption: tproccalloption): tcpuregisterset; override;
           function get_volatile_registers_mm(calloption: tproccalloption): tcpuregisterset; override;
+          function get_saved_registers_int(calloption: tproccalloption): tcpuregisterarray; override;
+          function get_saved_registers_mm(calloption: tproccalloption): tcpuregisterarray; override;
           function push_addr_param(varspez: tvarspez; def: tdef; calloption: tproccalloption): boolean; override;
           function ret_in_param(def: tdef; pd: tabstractprocdef):boolean;override;
           function create_paraloc_info(p: tabstractprocdef; side: tcallercallee):longint;override;
@@ -69,21 +71,38 @@ unit cpupara;
       RS_LAST_MM_PARAM_SUPREG = RS_D7;
 
 
-    function taarch64paramanager.get_volatile_registers_int(calloption : tproccalloption):tcpuregisterset;
+    function tcpuparamanager.get_volatile_registers_int(calloption : tproccalloption):tcpuregisterset;
       begin
         result:=VOLATILE_INTREGISTERS
       end;
 
 
-    function taarch64paramanager.get_volatile_registers_fpu(calloption : tproccalloption):tcpuregisterset;
+    function tcpuparamanager.get_volatile_registers_fpu(calloption : tproccalloption):tcpuregisterset;
       begin
         result:=[];
       end;
 
 
-    function taarch64paramanager.get_volatile_registers_mm(calloption: tproccalloption): tcpuregisterset;
+    function tcpuparamanager.get_volatile_registers_mm(calloption: tproccalloption): tcpuregisterset;
       begin
         result:=VOLATILE_MMREGISTERS;
+      end;
+
+
+    function tcpuparamanager.get_saved_registers_int(calloption: tproccalloption): tcpuregisterarray;
+      const
+        saved_regs : array[0..9] of tsuperregister =
+          (RS_X19,RS_X20,RS_X21,RS_X22,RS_X23,RS_X24,RS_X25,RS_X26,RS_X27,RS_X28);
+      begin
+        result:=saved_regs;
+      end;
+
+
+    function tcpuparamanager.get_saved_registers_mm(calloption: tproccalloption): tcpuregisterarray;
+      const
+        saved_mm_regs : array[0..7] of tsuperregister = (RS_D8,RS_D9,RS_D10,RS_D11,RS_D12,RS_D13,RS_D14,RS_D15);
+      begin
+        result:=saved_mm_regs;
       end;
 
 
@@ -99,29 +118,23 @@ unit cpupara;
             begin
               if is_special_array(p) then
                 exit;
-              case tarraydef(p).elementdef.typ of
-                floatdef:
-                  begin
-                    { an array of empty records has no influence }
-                    if tarraydef(p).elementdef.size=0 then
-                      begin
-                        result:=true;
-                        exit
-                      end;
-                    tmpelecount:=0;
-                    if not is_hfa_internal(tarraydef(p).elementdef,basedef,tmpelecount) then
-                      exit;
-                    { tmpelecount now contains the number of hfa elements in a
-                      single array element (e.g. 2 if it's an array of a record
-                      containing two singles) -> multiply by number of elements
-                      in the array }
-                    inc(elecount,tarraydef(p).elecount*tmpelecount);
-                    if elecount>4 then
-                      exit;
-                  end;
-                else
-                  result:=is_hfa_internal(tarraydef(p).elementdef,basedef,elecount);
+              { an array of empty records has no influence }
+              if tarraydef(p).elementdef.size=0 then
+                begin
+                  result:=true;
+                  exit
                 end;
+              tmpelecount:=0;
+              if not is_hfa_internal(tarraydef(p).elementdef,basedef,tmpelecount) then
+                exit;
+              { tmpelecount now contains the number of hfa elements in a
+                single array element (e.g. 2 if it's an array of a record
+                containing two singles) -> multiply by number of elements
+                in the array }
+              inc(elecount,tarraydef(p).elecount*tmpelecount);
+              if elecount>4 then
+                exit;
+              result:=true;
             end;
           floatdef:
             begin
@@ -223,7 +236,7 @@ unit cpupara;
       end;
 
 
-    function taarch64paramanager.push_addr_param(varspez: tvarspez; def :tdef; calloption: tproccalloption): boolean;
+    function tcpuparamanager.push_addr_param(varspez: tvarspez; def :tdef; calloption: tproccalloption): boolean;
       var
         hfabasedef: tdef;
       begin
@@ -257,7 +270,8 @@ unit cpupara;
               then indexed beyond its bounds) }
           arraydef:
             result:=
-              (calloption in cdecl_pocalls) or
+              ((calloption in cdecl_pocalls) and
+               not is_dynamic_array(def)) or
               is_open_array(def) or
               is_array_of_const(def) or
               is_array_constructor(def) or
@@ -273,7 +287,7 @@ unit cpupara;
       end;
 
 
-    function taarch64paramanager.ret_in_param(def: tdef; pd: tabstractprocdef): boolean;
+    function tcpuparamanager.ret_in_param(def: tdef; pd: tabstractprocdef): boolean;
       begin
         if handle_common_ret_in_param(def,pd,result) then
           exit;
@@ -283,7 +297,7 @@ unit cpupara;
       end;
 
 
-    procedure taarch64paramanager.create_paraloc_info_intern(p : tabstractprocdef; side: tcallercallee; paras: tparalist; isvariadic: boolean);
+    procedure tcpuparamanager.create_paraloc_info_intern(p : tabstractprocdef; side: tcallercallee; paras: tparalist; isvariadic: boolean);
       var
         hp: tparavarsym;
         i: longint;
@@ -318,7 +332,7 @@ unit cpupara;
                 hp.paraloc[side].size:=OS_ADDR;
                 hp.paraloc[side].alignment:=voidpointertype.alignment;
                 hp.paraloc[side].intsize:=voidpointertype.size;
-                hp.paraloc[side].def:=getpointerdef(hp.vardef);
+                hp.paraloc[side].def:=cpointerdef.getreusable_no_free(hp.vardef);
                 with hp.paraloc[side].add_location^ do
                   begin
                     size:=OS_ADDR;
@@ -335,7 +349,7 @@ unit cpupara;
       end;
 
 
-    function  taarch64paramanager.get_funcretloc(p : tabstractprocdef; side: tcallercallee; forcetempdef: tdef): tcgpara;
+    function  tcpuparamanager.get_funcretloc(p : tabstractprocdef; side: tcallercallee; forcetempdef: tdef): tcgpara;
       var
         retcgsize: tcgsize;
       begin
@@ -350,9 +364,28 @@ unit cpupara;
          if not assigned(result.location) or
             not(result.location^.loc in [LOC_REGISTER,LOC_MMREGISTER,LOC_VOID]) then
            internalerror(2014113001);
+         {
+           According to ARM64 ABI: "If the size of the argument is less than 8 bytes then
+           the size of the argument is set to 8 bytes. The effect is as if the argument
+           was copied to the least significant bits of a 64-bit register and the remaining
+           bits filled with unspecified values."
+
+           Therefore at caller side force the ordinal result to be always 64-bit, so it
+           will be stripped to the required size and uneeded bits are discarded.
+
+           This is not required for iOS, where the result is zero/sign extended.
+         }
+         if (target_info.abi<>abi_aarch64_darwin) and
+            (side=callerside) and (result.location^.loc = LOC_REGISTER) and
+            (result.def.size<8) and is_ordinal(result.def) then
+           begin
+             result.location^.size:=OS_64;
+             result.location^.def:=u64inttype;
+           end;
       end;
 
-    function taarch64paramanager.param_use_paraloc(const cgpara: tcgpara): boolean;
+
+    function tcpuparamanager.param_use_paraloc(const cgpara: tcgpara): boolean;
       begin
         { we always set up a stack frame -> we can always access the parameters
           this way }
@@ -362,7 +395,7 @@ unit cpupara;
       end;
 
 
-    procedure taarch64paramanager.init_para_alloc_values;
+    procedure tcpuparamanager.init_para_alloc_values;
       begin
         curintreg:=RS_FIRST_INT_PARAM_SUPREG;
         curmmreg:=RS_FIRST_MM_PARAM_SUPREG;
@@ -370,7 +403,7 @@ unit cpupara;
       end;
 
 
-    procedure taarch64paramanager.alloc_para(out result: tcgpara; p: tabstractprocdef; varspez: tvarspez; side: tcallercallee; paradef: tdef; isvariadic, isdelphinestedcc: boolean);
+    procedure tcpuparamanager.alloc_para(out result: tcgpara; p: tabstractprocdef; varspez: tvarspez; side: tcallercallee; paradef: tdef; isvariadic, isdelphinestedcc: boolean);
       var
         hfabasedef, locdef: tdef;
         paraloc: pcgparalocation;
@@ -396,7 +429,7 @@ unit cpupara;
 
         if push_addr_param(varspez,paradef,p.proccalloption) then
           begin
-            paradef:=getpointerdef(paradef);
+            paradef:=cpointerdef.getreusable_no_free(paradef);
             loc:=LOC_REGISTER;
             paracgsize:=OS_ADDR;
             paralen:=tcgsize2size[OS_ADDR];
@@ -467,7 +500,7 @@ unit cpupara;
              begin;
                { every hfa element must be passed in a separate register }
                if (assigned(hfabasedef) and
-                   (curmmreg+(paralen div hfabasedef.size)>RS_LAST_MM_PARAM_SUPREG)) or
+                   (curmmreg+((paralen-1) div hfabasedef.size)>RS_LAST_MM_PARAM_SUPREG)) or
                   (curmmreg+((paralen-1) shr 3)>RS_LAST_MM_PARAM_SUPREG) then
                  begin
                    { not enough mm registers left -> no more register
@@ -537,12 +570,29 @@ unit cpupara;
                     responsibility to sign or zero-extend arguments having fewer
                     than 32 bits, and that unused bits in a register are
                     unspecified. In iOS, however, the caller must perform such
-                    extensions, up to 32 bits." }
-                 if (target_info.abi=abi_aarch64_darwin) and
-                    (side=callerside) and
-                    is_ordinal(paradef) and
-                    (paradef.size<4) then
-                   paraloc^.size:=OS_32;
+                    extensions, up to 32 bits."
+                    Zero extend an argument at caller side for iOS and
+                    ignore the argument's unspecified high bits at callee side for
+                    all other platforms. }
+                 if (paradef.size<4) and is_ordinal(paradef) then
+                   begin
+                     if target_info.abi=abi_aarch64_darwin then
+                       begin
+                         if side=callerside then
+                           begin
+                             paraloc^.size:=OS_32;
+                             paraloc^.def:=u32inttype;
+                           end;
+                       end
+                     else
+                       begin
+                         if side=calleeside then
+                           begin
+                             paraloc^.size:=OS_32;
+                             paraloc^.def:=u32inttype;
+                           end;
+                       end;
+                   end;
 
                  { in case it's a composite, "The argument is passed as though
                    it had been loaded into the registers from a double-word-
@@ -553,7 +603,7 @@ unit cpupara;
                  if (target_info.endian=endian_big) and
                     not(paraloc^.size in [OS_64,OS_S64]) and
                     (paradef.typ in [setdef,recorddef,arraydef,objectdef]) then
-                   paraloc^.shiftval:=-(8-tcgsize2size[paraloc^.size]);
+                   paraloc^.shiftval:=-(8-tcgsize2size[paraloc^.size])*8;
                end;
              LOC_MMREGISTER:
                begin
@@ -567,7 +617,7 @@ unit cpupara;
                   paraloc^.loc:=LOC_REFERENCE;
 
                   { the current stack offset may not be properly aligned in
-                    case we're on Darwin have allocated a non-variadic argument
+                    case we're on Darwin and have allocated a non-variadic argument
                     < 8 bytes previously }
                   if target_info.abi=abi_aarch64_darwin then
                     curstackoffset:=align(curstackoffset,paraloc^.def.alignment);
@@ -608,7 +658,7 @@ unit cpupara;
       end;
 
 
-    function taarch64paramanager.create_paraloc_info(p: tabstractprocdef; side: tcallercallee):longint;
+    function tcpuparamanager.create_paraloc_info(p: tabstractprocdef; side: tcallercallee):longint;
       begin
         init_para_alloc_values;
 
@@ -619,7 +669,7 @@ unit cpupara;
      end;
 
 
-    function taarch64paramanager.create_varargs_paraloc_info(p: tabstractprocdef; varargspara: tvarargsparalist):longint;
+    function tcpuparamanager.create_varargs_paraloc_info(p: tabstractprocdef; varargspara: tvarargsparalist):longint;
       begin
         init_para_alloc_values;
 
@@ -642,5 +692,5 @@ unit cpupara;
       end;
 
 begin
-   paramanager:=taarch64paramanager.create;
+   paramanager:=tcpuparamanager.create;
 end.

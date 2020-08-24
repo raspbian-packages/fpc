@@ -12,8 +12,6 @@ uses
 var
   Application: TTestRunner;
 
-{$IFDEF WINDOWS}{$R testjs.rc}{$ENDIF}
-
 begin
   DefaultFormat:=fplain;
   DefaultRunAllTests:=True;

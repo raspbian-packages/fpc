@@ -29,14 +29,14 @@ unit agarmgas;
   interface
 
     uses
-       globtype,
+       globtype,systems,
        aasmtai,
-       aggas,
+       assemble,aggas,
        cpubase,cpuinfo;
 
     type
       TARMGNUAssembler=class(TGNUassembler)
-        constructor create(smart: boolean); override;
+        constructor CreateWithWriter(info: pasminfo; wr: TExternalAssemblerOutputFile; freewriter, smart: boolean); override;
         function MakeCmdLine: TCmdStr; override;
         procedure WriteExtraHeader; override;
       end;
@@ -48,7 +48,7 @@ unit agarmgas;
       end;
 
       TArmAppleGNUAssembler=class(TAppleGNUassembler)
-        constructor create(smart: boolean); override;
+        constructor CreateWithWriter(info: pasminfo; wr: TExternalAssemblerOutputFile; freewriter, smart: boolean); override;
         procedure WriteExtraHeader; override;
       end;
 
@@ -82,8 +82,6 @@ unit agarmgas;
 
     uses
        cutils,globals,verbose,
-       systems,
-       assemble,
        aasmcpu,
        itcpugas,
        cgbase,cgutils;
@@ -92,9 +90,9 @@ unit agarmgas;
 {                         GNU Arm Assembler writer                           }
 {****************************************************************************}
 
-    constructor TArmGNUAssembler.create(smart: boolean);
+    constructor TArmGNUAssembler.CreateWithWriter(info: pasminfo; wr: TExternalAssemblerOutputFile; freewriter, smart: boolean);
       begin
-        inherited create(smart);
+        inherited;
         InstrWriter := TArmInstrWriter.create(self);
         if GenerateThumb2Code then
           TArmInstrWriter(InstrWriter).unified_syntax:=true;
@@ -121,8 +119,7 @@ unit agarmgas;
           result:='-march='+cputype_to_gas_march[current_settings.cputype]+' -mthumb -mthumb-interwork '+result
         else if GenerateThumbCode then
           result:='-march='+cputype_to_gas_march[current_settings.cputype]+' -mthumb -mthumb-interwork '+result
-        // EDSP instructions in RTL require armv5te at least to not generate error
-        else if current_settings.cputype >= cpu_armv5te then
+        else
           result:='-march='+cputype_to_gas_march[current_settings.cputype]+' '+result;
 
         if target_info.abi = abi_eabihf then
@@ -134,18 +131,18 @@ unit agarmgas;
       begin
         inherited WriteExtraHeader;
         if TArmInstrWriter(InstrWriter).unified_syntax then
-          AsmWriteLn(#9'.syntax unified');
+          writer.AsmWriteLn(#9'.syntax unified');
         if target_info.abi = abi_eabihf then
-          AsmWriteLn(#9'.eabi_attribute 28, 1 @Tag_ABI_VFP_args');
+          writer.AsmWriteLn(#9'.eabi_attribute 28, 1 @Tag_ABI_VFP_args');
       end;
 
 {****************************************************************************}
 {                      GNU/Apple ARM Assembler writer                        }
 {****************************************************************************}
 
-    constructor TArmAppleGNUAssembler.create(smart: boolean);
+    constructor TArmAppleGNUAssembler.CreateWithWriter(info: pasminfo; wr: TExternalAssemblerOutputFile; freewriter, smart: boolean);
       begin
-        inherited create(smart);
+        inherited;
         InstrWriter := TArmInstrWriter.create(self);
         TArmInstrWriter(InstrWriter).unified_syntax:=true;
       end;
@@ -155,7 +152,7 @@ unit agarmgas;
       begin
         inherited WriteExtraHeader;
         if TArmInstrWriter(InstrWriter).unified_syntax then
-          AsmWriteLn(#9'.syntax unified');
+          writer.AsmWriteLn(#9'.syntax unified');
       end;
 
 
@@ -323,6 +320,11 @@ unit agarmgas;
                   if srF in o.specialflags then getopstr:=getopstr+'f';
                   if srS in o.specialflags then getopstr:=getopstr+'s';
                 end;
+            end;
+          top_realconst:
+            begin
+              str(o.val_real,Result);
+              Result:='#'+Result;
             end
           else
             internalerror(2002070604);
@@ -364,7 +366,7 @@ unit agarmgas;
                // writeln(taicpu(hp).fileinfo.line);
 
                { LDM and STM use references as first operand but they are written like a register }
-               if (i=0) and (op in [A_LDM,A_STM,A_FSTM,A_FLDM,A_VSTM,A_VLDM]) then
+               if (i=0) and (op in [A_LDM,A_STM,A_FSTM,A_FLDM,A_VSTM,A_VLDM,A_SRS,A_RFE]) then
                  begin
                    case taicpu(hp).oper[0]^.typ of
                      top_ref:
@@ -395,7 +397,7 @@ unit agarmgas;
                sep:=',';
             end;
         end;
-      owner.AsmWriteLn(s);
+      owner.writer.AsmWriteLn(s);
     end;
 
 
@@ -407,8 +409,8 @@ unit agarmgas;
             idtxt  : 'AS';
             asmbin : 'as';
             asmcmd : '-o $OBJ $EXTRAOPT $ASM';
-            supported_targets : [system_arm_linux,system_arm_wince,system_arm_gba,system_arm_palmos,system_arm_nds,
-                                 system_arm_embedded,system_arm_symbian,system_arm_android];
+            supported_targets : [system_arm_linux,system_arm_netbsd,system_arm_wince,system_arm_gba,system_arm_palmos,system_arm_nds,
+                                 system_arm_embedded,system_arm_symbian,system_arm_android,system_arm_aros];
             flags : [af_needar,af_smartlink_sections];
             labelprefix : '.L';
             comment : '# ';

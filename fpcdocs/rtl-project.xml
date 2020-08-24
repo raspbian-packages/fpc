@@ -4,7 +4,7 @@
     <option name="ostarget" value="Linux"/>
     <option name="cputarget" value="x86_64"/>
     <option name="hide-protected" value="true"/>
-    <option name="warn-no-node" value="true"/>
+    <option name="warn-no-node" value="false"/>
     <option name="show-private" value="false"/>
     <option name="stop-on-parser-error" value="false"/>
     <option name="parse-impl" value="false"/>
@@ -14,11 +14,11 @@
   <packages>
     <package name="rtl" output="" content="rtl.xct">
       <units>
-        <unit file="../fpcsrc/rtl/linux/system.pp" options="-Sd -dfpdocsystem -dHASGETHEAPSTATUS -dSUPPORT_DOUBLE -Fi../fpcsrc/rtl/linux -Fi../fpcsrc/rtl/unix -Fi../fpcsrc/rtl/inc -Fi../fpcsrc/rtl/i386 -dCPU32 -dHASVARIANT -dFPC_HAS_TYPE_EXTENDED -dHASWIDECHAR"/>
+        <unit file="../fpcsrc/rtl/linux/system.pp" options="-Sd -dfpdocsystem -dHASGETHEAPSTATUS -dSUPPORT_DOUBLE -Fi../fpcsrc/rtl/linux -Fi../fpcsrc/rtl/unix -Fi../fpcsrc/rtl/inc -Fi../fpcsrc/rtl/i386 -dCPU32 -dHASVARIANT -dFPC_HAS_TYPE_EXTENDED -dHASWIDECHAR -dSUPPORT_SINGLE -dFPC_HAS_FEATURE_RTTI"/>
         <unit file="../fpcsrc/rtl/objpas/objpas.pp" options="-dHASINTF"/>
         <unit file="../fpcsrc/rtl/objpas/types.pp" options="-Fi../fpcsrc/rtl/inc -S2"/>
         <unit file="../fpcsrc/packages/rtl-objpas/src/inc/strutils.pp" options=""/>
-        <unit file="../fpcsrc/rtl/unix/sysutils.pp" options="-dFPC_HAS_UNICODESTRING -dFPC_HAS_FEATURE_THREADING -dFPC_HAS_TYPE_EXTENDED -dFPC_HAS_TYPE_DOUBLE -dFPC_HAS_TYPE_SINGLE -Fi../fpcsrc/rtl/objpas/sysutils -Fi../fpcsrc/rtl/inc"/>
+        <unit file="../fpcsrc/rtl/unix/sysutils.pp" options="-dVER3_0 -dFPC_HAS_UNICODESTRING -dFPC_HAS_FEATURE_THREADING -dFPC_HAS_TYPE_EXTENDED -dFPC_HAS_TYPE_DOUBLE -dFPC_HAS_TYPE_SINGLE -S2h -Fi../fpcsrc/rtl/objpas/sysutils -Fi../fpcsrc/rtl/inc"/>
         <unit file="../fpcsrc/rtl/inc/strings.pp" options="-Fi../fpcsrc/rtl/i386 -Fi../fpcsrc/rtl/inc"/>
         <unit file="../fpcsrc/packages/rtl-console/src/unix/mouse.pp" options="-Fi../fpcsrc/packages/rtl-console/src/inc"/>
         <unit file="../fpcsrc/packages/rtl-console/src/unix/keyboard.pp" options="-Fi../fpcsrc/packages/rtl-console/src/inc"/>
@@ -32,7 +32,7 @@
         <unit file="../fpcsrc/packages/rtl-extra/src/unix/ipc.pp" options="-Fi../fpcsrc/rtl/linux"/>
         <unit file="../fpcsrc/packages/rtl-extra/src/unix/printer.pp" options="-Fi../fpcsrc/packages/rtl-extra/src/linux -Fi../fpcsrc/packages/rtl-extra/src/inc"/>
         <unit file="../fpcsrc/rtl/objpas/typinfo.pp" options="-Fi../fpcsrc/rtl/linux"/>
-        <unit file="../fpcsrc/rtl/unix/ports.pp" options="-Fi../fpcsrc/rtl/linux"/>
+        <unit file="../fpcsrc/rtl/unix/ports.pp" options="-Fi../fpcsrc/rtl/linux -Fi../fpcsrc/rtl/i386"/>
         <unit file="../fpcsrc/rtl/inc/getopts.pp" options="-Fi../fpcsrc/rtl/linux"/>
         <unit file="../fpcsrc/rtl/go32v2/emu387.pp" options="-Fi../fpcsrc/rtl/i386"/>
         <unit file="../fpcsrc/rtl/go32v2/dxeload.pp" options="-Fi../fpcsrc/rtl/i386"/>
@@ -49,7 +49,8 @@
         <unit file="../fpcsrc/rtl/linux/linux.pp" options="-dclone_implemented -Fi../fpcsrc/rtl/linux -Fi../fpcsrc/rtl/unix"/>
         <unit file="../fpcsrc/rtl/objpas/math.pp" options="-dFPDOC_MATH -Fi../fpcsrc/rtl/i386 -dFPC_HAS_TYPE_EXTENDED"/>
         <unit file="../fpcsrc/packages/rtl-extra/src/inc/matrix.pp" options="-Fi../fpcsrc/packages/rtl-extra/src/inc"/>
-        <unit file="../fpcsrc/packages/rtl-objpas/src/inc/dateutils.pp" options="-Fi../fpcsrc/rtl/objpas"/>
+        <unit file="../fpcsrc/packages/rtl-objpas/src/inc/dateutils.pp" options="-Fi../fpcsrc/packages/rtl-objpas/src/inc"/>
+        <unit file="../fpcsrc/packages/rtl-objpas/src/inc/variants.pp" options="-Fi../fpcsrc/packages/rtl-objpas/src/inc"/>
         <unit file="../fpcsrc/packages/graph/src/win32/wincrt.pp" options=""/>
         <unit file="../fpcsrc/packages/rtl-extra/src/unix/clocale.pp" options=""/>
         <unit file="../fpcsrc/rtl/unix/cthreads.pp" options=""/>
@@ -195,6 +196,7 @@
         <description file="collation_sv.xml"/>
         <description file="collation_zh.xml"/>
         <description file="windirs.xml"/>
+        <description file="variants.xml"/>
       </descriptions>
       <imports/>
     </package>

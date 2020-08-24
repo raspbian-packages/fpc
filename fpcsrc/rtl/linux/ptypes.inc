@@ -30,7 +30,7 @@ and all three 32-bit systems returned completely identical types too
 introduction)
 }
 
-{$if defined(CPUMIPS) or defined(cpuaarch64)}
+{$if defined(CPUMIPS) or defined(cpuaarch64) or defined(cpusparc64)}
 {$define USE_PTHREAD_SIZEOF}
 {$if defined(cpuaarch64)}
 const
@@ -155,8 +155,11 @@ Type
     TGid     = gid_t;
     pGid     = ^gid_t;
 
+{$ifdef cpusparc64}
+    TIOCtlRequest = culong;
+{$else cpusparc64}
     TIOCtlRequest = cInt;
-
+{$endif cpusparc64}
 
     socklen_t= cuint32;
     TSockLen = socklen_t;
@@ -164,7 +167,11 @@ Type
 
   timeval     = record
                  tv_sec:time_t;
+{$ifdef CPUSPARC64}
+                 tv_usec:cint;
+{$else CPUSPARC64}
                  tv_usec:clong;
+{$endif CPUSPARC64}
                 end;
   ptimeval    = ^timeval;
   TTimeVal    = timeval;
@@ -224,17 +231,6 @@ Type
   sched_param = record
     __sched_priority: cint;
   end;
-
-  { MIPS32 size of unions
-  __SIZEOF_PTHREAD_ATTR_T = 36;
-  __SIZEOF_PTHREAD_MUTEX_T = 24;
-  __SIZEOF_PTHREAD_MUTEXATTR_T = 4;
-  __SIZEOF_PTHREAD_COND_T = 48;
-  __SIZEOF_PTHREAD_CONDATTR_T = 4;
-  __SIZEOF_PTHREAD_RWLOCK_T = 32;
-  __SIZEOF_PTHREAD_RWLOCKATTR_T = 8;
-  __SIZEOF_PTHREAD_BARRIER_T = 20;
-  __SIZEOF_PTHREAD_BARRIERATTR_T = 4; }
 
   pthread_attr_t = record
   {$ifdef USE_PTHREAD_SIZEOF}

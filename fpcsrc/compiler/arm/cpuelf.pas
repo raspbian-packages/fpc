@@ -327,10 +327,14 @@ implementation
           result:=R_ARM_REL32;
         RELOC_RELATIVE_24:
           result:=R_ARM_JUMP24;
+        RELOC_RELATIVE_CALL:
+          result:=R_ARM_CALL;
         RELOC_RELATIVE_24_THUMB:
           result:=R_ARM_CALL;
         RELOC_RELATIVE_CALL_THUMB:
           result:=R_ARM_THM_CALL;
+        RELOC_GOT32:
+          result:=R_ARM_GOT_BREL;
       else
         result:=0;
         writeln(objrel.typ);
@@ -951,8 +955,9 @@ implementation
          asmbin : '';
          asmcmd : '';
          supported_targets : [system_arm_embedded,system_arm_darwin,
-                              system_arm_linux,system_arm_gba,
-                              system_arm_nds];
+                              system_arm_linux,system_arm_netbsd,
+                              system_arm_gba,system_arm_nds,
+                              system_arm_aros];
          flags : [af_outputbinary,af_smartlink_sections,af_supports_dwarf];
          labelprefix : '.L';
          comment : '';

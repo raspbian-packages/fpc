@@ -11,16 +11,14 @@ do
 			shift
 			VERSION=$1
 			;;
-		*)
-			ORIG_SRC_TAR=$(readlink -m $1)
-			;;
 	esac
 	shift
 done
 
 ORIG_SRC_DIR=${PACKAGE_NAME}
+ORIG_SRC_TAR=$(readlink -m ../${PACKAGE_NAME}_${VERSION}.orig.tar.gz)
 DEB_SRC_DIR=${PACKAGE_NAME}-${VERSION}+dfsg
-DEB_SRC_TAR=${PACKAGE_NAME}_${VERSION}+dfsg.orig.tar.gz
+DEB_SRC_TAR=${PACKAGE_NAME}_${VERSION}+dfsg.orig.tar.xz
 
 cd ${TMP_DIR}
 tar -axf ${ORIG_SRC_TAR}
@@ -32,6 +30,8 @@ find -name '*.pp' -exec chmod a-x {} ';'
 # https://bugs.freepascal.org/view.php?id=32288 (the fact the bug is closed
 # doesn't mean the issue is resolved)
 rm fpcsrc/packages/fcl-js/src/jsminifier.pp
+# causing more issues than it solves
+rm fpcsrc/.gitignore
 cd ..
 tar -acf ${DEB_SRC_TAR} ${DEB_SRC_DIR}
 cd ${ORIG_PATH}

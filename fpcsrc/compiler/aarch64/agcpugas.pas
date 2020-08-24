@@ -29,9 +29,9 @@ unit agcpugas;
   interface
 
     uses
-       globtype,
+       globtype,systems,
        aasmtai,
-       aggas,
+       assemble,aggas,
        cpubase,cpuinfo;
 
     type
@@ -40,11 +40,11 @@ unit agcpugas;
       end;
 
       TAArch64Assembler=class(TGNUassembler)
-        constructor create(smart: boolean); override;
+        constructor CreateWithWriter(info: pasminfo; wr: TExternalAssemblerOutputFile; freewriter, smart: boolean); override;
       end;
 
       TAArch64AppleAssembler=class(TAppleGNUassembler)
-        constructor create(smart: boolean); override;
+        constructor CreateWithWriter(info: pasminfo; wr: TExternalAssemblerOutputFile; freewriter, smart: boolean); override;
       end;
 
 
@@ -64,8 +64,6 @@ unit agcpugas;
 
     uses
        cutils,globals,verbose,
-       systems,
-       assemble,
        aasmcpu,
        itcpugas,
        cgbase,cgutils;
@@ -75,9 +73,9 @@ unit agcpugas;
 {                      AArch64 Assembler writer                              }
 {****************************************************************************}
 
-    constructor TAArch64Assembler.create(smart: boolean);
+    constructor TAArch64Assembler.CreateWithWriter(info: pasminfo; wr: TExternalAssemblerOutputFile; freewriter, smart: boolean);
       begin
-        inherited create(smart);
+        inherited;
         InstrWriter := TAArch64InstrWriter.create(self);
       end;
 
@@ -85,9 +83,9 @@ unit agcpugas;
 {                      Apple AArch64 Assembler writer                        }
 {****************************************************************************}
 
-    constructor TAArch64AppleAssembler.create(smart: boolean);
+    constructor TAArch64AppleAssembler.CreateWithWriter(info: pasminfo; wr: TExternalAssemblerOutputFile; freewriter, smart: boolean);
       begin
-        inherited create(smart);
+        inherited;
         InstrWriter := TAArch64InstrWriter.create(self);
       end;
 
@@ -96,7 +94,7 @@ unit agcpugas;
 {                  Helper routines for Instruction Writer                    }
 {****************************************************************************}
 
-    function getreferencestring(var ref : treference) : string;
+    function getreferencestring(asminfo: pasminfo; var ref : treference) : string;
       const
         darwin_addrpage2str: array[addr_page..addr_gotpageoffset] of string[11] =
            ('@PAGE','@PAGEOFF','@GOTPAGE','@GOTPAGEOFF');
@@ -121,9 +119,11 @@ unit agcpugas;
                     result:=ref.symbol.name+darwin_addrpage2str[ref.refaddr]
                   else
                     result:=linux_addrpage2str[ref.refaddr]+ref.symbol.name
-                end
+                end;
+              addr_pic:
+                result:=ref.symbol.name;
               else
-                internalerror(2015022301);
+                internalerror(2015022302);
             end
           end
         else
@@ -187,7 +187,7 @@ unit agcpugas;
       end;
 
 
-    function getopstr(hp: taicpu; opnr: longint; const o: toper): string;
+    function getopstr(asminfo: pasminfo; hp: taicpu; opnr: longint; const o: toper): string;
       begin
         case o.typ of
           top_reg:
@@ -235,7 +235,7 @@ unit agcpugas;
                 getopstr:=o.ref^.symbol.name;
               end
             else
-              getopstr:=getreferencestring(o.ref^);
+              getopstr:=getreferencestring(asminfo,o.ref^);
           else
             internalerror(2014121507);
         end;
@@ -261,11 +261,11 @@ unit agcpugas;
                  // debug code
                  // writeln(s);
                  // writeln(taicpu(hp).fileinfo.line);
-                 s:=s+sep+getopstr(taicpu(hp),i,taicpu(hp).oper[i]^);
+                 s:=s+sep+getopstr(owner.asminfo,taicpu(hp),i,taicpu(hp).oper[i]^);
                  sep:=',';
               end;
           end;
-        owner.AsmWriteLn(s);
+        owner.writer.AsmWriteLn(s);
       end;
 
 
@@ -276,7 +276,7 @@ unit agcpugas;
             idtxt  : 'AS';
             asmbin : 'as';
             asmcmd : '-o $OBJ $EXTRAOPT $ASM';
-            supported_targets : [system_aarch64_linux];
+            supported_targets : [system_aarch64_linux,system_aarch64_android];
             flags : [af_needar,af_smartlink_sections];
             labelprefix : '.L';
             comment : '// ';

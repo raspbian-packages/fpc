@@ -41,13 +41,16 @@ type
   TFPSList = class;
   TFPSListCompareFunc = function(Key1, Key2: Pointer): Integer of object;
 
+  { TFPSList }
+
   TFPSList = class(TObject)
   protected
     FList: PByte;
     FCount: Integer;
-    FCapacity: Integer; { list is one longer sgthan capacity, for temp }
+    FCapacity: Integer; { list has room for capacity+1 items, contains room for a temporary item }
     FItemSize: Integer;
     procedure CopyItem(Src, Dest: Pointer); virtual;
+    procedure CopyItems(Src, Dest: Pointer; aCount : Integer); virtual;
     procedure Deref(Item: Pointer); virtual; overload;
     procedure Deref(FromIndex, ToIndex: Integer); overload;
     function Get(Index: Integer): Pointer;
@@ -68,9 +71,11 @@ type
   public
     constructor Create(AItemSize: Integer = sizeof(Pointer));
     destructor Destroy; override;
+    class Function ItemIsManaged : Boolean; virtual;
     function Add(Item: Pointer): Integer;
     procedure Clear;
     procedure Delete(Index: Integer);
+    procedure DeleteRange(IndexFrom, IndexTo : Integer);
     class procedure Error(const Msg: string; Data: PtrInt);
     procedure Exchange(Index1, Index2: Integer);
     function Expand: TFPSList;
@@ -80,6 +85,7 @@ type
     function Insert(Index: Integer): Pointer;
     procedure Move(CurIndex, NewIndex: Integer);
     procedure Assign(Obj: TFPSList);
+    procedure AddList(Obj: TFPSList);
     function Remove(Item: Pointer): Integer;
     procedure Pack;
     procedure Sort(Compare: TFPSListCompareFunc);
@@ -94,9 +100,9 @@ type
 
 const
 {$ifdef cpu16}
-  MaxGListSize = {MaxInt div} 1024;
+  MaxGListSize = {MaxInt div} 1024 deprecated;
 {$else cpu16}
-  MaxGListSize = MaxInt div 1024;
+  MaxGListSize = MaxInt div 1024 deprecated;
 {$endif cpu16}
 
 type
@@ -111,13 +117,15 @@ type
     property Current: T read GetCurrent;
   end;
 
+  { TFPGList }
+
   generic TFPGList<T> = class(TFPSList)
   private
     type
       TCompareFunc = function(const Item1, Item2: T): Integer;
-      TTypeList = array[0..MaxGListSize] of T;
-      PTypeList = ^TTypeList;
       PT = ^T;
+      TTypeList = PT;
+      PTypeList = ^TTypeList;
   {$ifndef OldSyntax}protected var{$else}var protected{$endif}
       FOnCompare: TCompareFunc;
     procedure CopyItem(Src, Dest: Pointer); override;
@@ -134,6 +142,8 @@ type
     Type
       TFPGListEnumeratorSpec = specialize TFPGListEnumerator<T>;
     constructor Create;
+
+    class Function ItemIsManaged : Boolean; override;
     function Add(const Item: T): Integer; {$ifdef FGLINLINE} inline; {$endif}
     function Extract(const Item: T): T; {$ifdef FGLINLINE} inline; {$endif}
     property First: T read GetFirst write SetFirst;
@@ -143,6 +153,7 @@ type
     property Last: T read GetLast write SetLast;
 {$ifndef VER2_4}
     procedure Assign(Source: TFPGList);
+    procedure AddList(Source: TFPGList);
 {$endif VER2_4}
     function Remove(const Item: T): Integer; {$ifdef FGLINLINE} inline; {$endif}
     procedure Sort(Compare: TCompareFunc);
@@ -150,13 +161,13 @@ type
     property List: PTypeList read GetList;
   end;
 
-  generic TFPGObjectList<T> = class(TFPSList)
+  generic TFPGObjectList<T: TObject> = class(TFPSList)
   private
     type
       TCompareFunc = function(const Item1, Item2: T): Integer;
-      TTypeList = array[0..MaxGListSize] of T;
-      PTypeList = ^TTypeList;
       PT = ^T;
+      TTypeList = PT;
+      PTypeList = ^TTypeList;
       TFPGListEnumeratorSpec = specialize TFPGListEnumerator<T>;
   {$ifndef OldSyntax}protected var{$else}var protected{$endif}
       FOnCompare: TCompareFunc;
@@ -181,6 +192,7 @@ type
     procedure Insert(Index: Integer; const Item: T); {$ifdef FGLINLINE} inline; {$endif}
     property Last: T read GetLast write SetLast;
 {$ifndef VER2_4}
+    procedure AddList(Source: TFPGObjectList);
     procedure Assign(Source: TFPGObjectList);
 {$endif VER2_4}
     function Remove(const Item: T): Integer; {$ifdef FGLINLINE} inline; {$endif}
@@ -194,9 +206,9 @@ type
   private
     type
       TCompareFunc = function(const Item1, Item2: T): Integer;
-      TTypeList = array[0..MaxGListSize] of T;
-      PTypeList = ^TTypeList;
       PT = ^T;
+      TTypeList = PT;
+      PTypeList = ^TTypeList;
       TFPGListEnumeratorSpec = specialize TFPGListEnumerator<T>;
   {$ifndef OldSyntax}protected var{$else}var protected{$endif}
       FOnCompare: TCompareFunc;
@@ -221,6 +233,7 @@ type
     property Last: T read GetLast write SetLast;
 {$ifndef VER2_4}
     procedure Assign(Source: TFPGInterfacedObjectList);
+    procedure AddList(Source: TFPGInterfacedObjectList);
 {$endif VER2_4}
     function Remove(const Item: T): Integer; {$ifdef FGLINLINE} inline; {$endif}
     procedure Sort(Compare: TCompareFunc);
@@ -325,7 +338,7 @@ type
     property OnDataCompare: TDataCompareFunc read FOnDataCompare write SetOnDataCompare;
   end;
 
-  generic TFPGMapObject<TKey, TData> = class(TFPSMap)
+  generic TFPGMapObject<TKey; TData: TObject> = class(TFPSMap)
   private
     type
       TKeyCompareFunc = function(const Key1, Key2: TKey): Integer;
@@ -450,6 +463,11 @@ begin
   System.Move(Src^, Dest^, FItemSize);
 end;
 
+procedure TFPSList.CopyItems(Src, Dest: Pointer; aCount: Integer);
+begin
+  System.Move(Src^, Dest^, FItemSize*aCount);
+end;
+
 procedure TFPSList.RaiseIndexError(Index : Integer);
 begin
   Error(SListIndexError, Index);
@@ -542,6 +560,11 @@ begin
     Error(SListIndexError, AIndex);
 end;
 
+class function TFPSList.ItemIsManaged: Boolean;
+begin
+  Result:=False;
+end;
+
 
 procedure TFPSList.Clear;
 begin
@@ -561,6 +584,35 @@ begin
   ListItem := InternalItems[Index];
   Deref(ListItem);
   System.Move(InternalItems[Index+1]^, ListItem^, (FCount - Index) * FItemSize);
+  // Shrink the list if appropriate
+  if (FCapacity > 256) and (FCount < FCapacity shr 2) then
+  begin
+    FCapacity := FCapacity shr 1;
+    ReallocMem(FList, (FCapacity+1) * FItemSize);
+  end;
+  { Keep the ending of the list filled with zeros, don't leave garbage data
+    there. Otherwise, we could accidentally have there a copy of some item
+    on the list, and accidentally Deref it too soon.
+    See http://bugs.freepascal.org/view.php?id=20005. }
+  FillChar(InternalItems[FCount]^, (FCapacity+1-FCount) * FItemSize, #0);
+end;
+
+procedure TFPSList.DeleteRange(IndexFrom, IndexTo : Integer);
+var
+  ListItem: Pointer;
+  I: Integer;
+  OldCnt : Integer;
+begin
+  CheckIndex(IndexTo);
+  CheckIndex(IndexFrom);
+  OldCnt:=FCount;
+  Dec(FCount,IndexTo-IndexFrom+1);
+  For I :=IndexFrom To Indexto Do
+    begin
+      ListItem := InternalItems[I];
+      Deref(ListItem);
+    end;
+  System.Move(InternalItems[IndexTo+1]^, InternalItems[IndexFrom]^, (OldCnt - IndexTo-1) * FItemSize);
   // Shrink the list if appropriate
   if (FCapacity > 256) and (FCount < FCapacity shr 2) then
   begin
@@ -798,15 +850,37 @@ begin
   QuickSort(0, FCount-1, Compare);
 end;
 
-procedure TFPSList.Assign(Obj: TFPSList);
+procedure TFPSList.AddList(Obj: TFPSList);
 var
   i: Integer;
 begin
   if Obj.ItemSize <> FItemSize then
     Error(SListItemSizeError, 0);
+  // Do this now.
+  Capacity:=Capacity+Obj.Count;
+  if ItemIsManaged then
+    begin
+    // nothing for it, need to do it manually to give deref a chance.
+    For I:=0 to Obj.Count-1 do
+      Add(Obj[i])
+    end
+  else
+    begin
+    if Obj.Count=0 then
+      exit;
+    CopyItems(Obj.InternalItems[0],InternalItems[FCount],Obj.Count);
+    FCount:=FCount+Obj.Count;
+    end
+end;
+
+procedure TFPSList.Assign(Obj: TFPSList);
+
+begin
+  // We must do this check here, to avoid clearing the list.
+  if Obj.ItemSize <> FItemSize then
+    Error(SListItemSizeError, 0);
   Clear;
-  for I := 0 to Obj.Count - 1 do
-    Add(Obj[i]);
+  AddList(Obj);
 end;
 
 {****************************************************************************}
@@ -847,7 +921,7 @@ end;
 
 procedure TFPGList.Deref(Item: Pointer);
 begin
-  Finalize(T(Item^));
+ Finalize(T(Item^));
 end;
 
 function TFPGList.Get(Index: Integer): T;
@@ -857,7 +931,7 @@ end;
 
 function TFPGList.GetList: PTypeList;
 begin
-  Result := PTypeList(FList);
+  Result := PTypeList(@FList);
 end;
 
 function TFPGList.ItemPtrCompare(Item1, Item2: Pointer): Integer;
@@ -891,6 +965,15 @@ end;
 procedure TFPGList.SetFirst(const Value: T);
 begin
   inherited SetFirst(@Value);
+end;
+
+class function TFPGList.ItemIsManaged: Boolean;
+begin
+{$IFNDEF VER3_0}
+  Result:=IsManagedType(T);
+{$ELSE}
+  Result:=True; // Fallback to old behaviour  
+{$ENDIF}
 end;
 
 function TFPGList.GetEnumerator: TFPGListEnumeratorSpec;
@@ -927,13 +1010,31 @@ begin
 end;
 
 {$ifndef VER2_4}
-procedure TFPGList.Assign(Source: TFPGList);
+procedure TFPGList.AddList(Source: TFPGList);
+
 var
   i: Integer;
+  
 begin
-  Clear;
-  for I := 0 to Source.Count - 1 do
-    Add(Source[i]);
+  if ItemIsManaged then
+    begin
+    Capacity:=Capacity+Source.Count;
+    for I := 0 to Source.Count - 1 do
+      Add(Source[i]);
+    end
+  else
+    Inherited AddList(TFPSList(source))
+end;
+
+procedure TFPGList.Assign(Source: TFPGList);
+begin
+  if ItemIsManaged then
+    begin
+    Clear;
+    AddList(Source);
+    end
+  else
+    Inherited Assign(TFPSList(source))
 end;
 {$endif VER2_4}
 
@@ -979,7 +1080,7 @@ end;
 
 function TFPGObjectList.GetList: PTypeList;
 begin
-  Result := PTypeList(FList);
+  Result := PTypeList(@FList);
 end;
 
 function TFPGObjectList.ItemPtrCompare(Item1, Item2: Pointer): Integer;
@@ -1043,13 +1144,18 @@ begin
 end;
 
 {$ifndef VER2_4}
-procedure TFPGObjectList.Assign(Source: TFPGObjectList);
+procedure TFPGObjectList.AddList(Source: TFPGObjectList);
 var
   i: Integer;
 begin
-  Clear;
   for I := 0 to Source.Count - 1 do
     Add(Source[i]);
+end;
+
+procedure TFPGObjectList.Assign(Source: TFPGObjectList);
+begin
+  Clear;
+  AddList(Source);
 end;
 {$endif VER2_4}
 
@@ -1098,7 +1204,7 @@ end;
 
 function TFPGInterfacedObjectList.GetList: PTypeList;
 begin
-  Result := PTypeList(FList);
+  Result := PTypeList(@FList);
 end;
 
 function TFPGInterfacedObjectList.ItemPtrCompare(Item1, Item2: Pointer): Integer;
@@ -1163,10 +1269,16 @@ end;
 
 {$ifndef VER2_4}
 procedure TFPGInterfacedObjectList.Assign(Source: TFPGInterfacedObjectList);
+
+begin
+  Clear;
+  AddList(Source);
+end;
+
+procedure TFPGInterfacedObjectList.AddList(Source: TFPGInterfacedObjectList);
 var
   i: Integer;
 begin
-  Clear;
   for I := 0 to Source.Count - 1 do
     Add(Source[i]);
 end;
@@ -1558,11 +1670,7 @@ begin
   if Result then
     AData := TData(inherited GetData(I)^)
   else
-{$IFDEF VER2_6}  
-    FillChar(AData,SizeOf(TData),0);
-{$ELSE}
     AData := Default(TData);
-{$ENDIF}    
 end;
 
 procedure TFPGMap.AddOrSetData(const AKey: TKey; const AData: TData);
@@ -1624,7 +1732,7 @@ end;
 
 procedure TFPGMapObject.CopyData(Src, Dest: Pointer);
 begin
-  if Assigned(Pointer(Dest^)) then
+  if Assigned(Pointer(Dest^)) And FFreeObjects then
     TData(Dest^).Free;
   TData(Dest^) := TData(Src^);
 end;
@@ -1744,11 +1852,7 @@ begin
   if Result then
     AData := TData(inherited GetData(I)^)
   else
-{$IFDEF VER2_6}
-    FillChar(AData,SizeOf(TData),0);
-{$ELSE}
     AData := Default(TData);
-{$ENDIF}
 end;
 
 procedure TFPGMapObject.AddOrSetData(const AKey: TKey; const AData: TData);
@@ -1926,11 +2030,7 @@ begin
   if Result then
     AData := TData(inherited GetData(I)^)
   else
-{$IFDEF VER2_6}
-    FillChar(AData,SizeOf(TData),0);
-{$ELSE}
     AData := Default(TData);
-{$ENDIF}
 end;
 
 procedure TFPGMapInterfacedObjectData.AddOrSetData(const AKey: TKey;

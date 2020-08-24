@@ -26,10 +26,10 @@ begin
     P.ShortName:='fppk';
     P.Directory:=ADirectory;
 
-    P.Version:='3.0.4';
+    P.Version:='3.2.0';
     P.Dependencies.Add('fcl-base');
     P.Dependencies.Add('fcl-xml');
-    P.Dependencies.Add('fcl-process');
+    P.Dependencies.Add('fcl-process',AllOSes-[go32v2,os2]);
     P.Dependencies.Add('paszlib');
     P.Dependencies.Add('fpmkunit');
 
@@ -44,9 +44,9 @@ begin
     P.Email := '';
     P.Description := 'Libraries to create fppkg package managers.';
     P.NeedLibC:= false;
-    P.OSes := P.OSes - [embedded,nativent,msdos];
-    if Defaults.CPU = powerpc then
-      P.OSes := P.OSes - [amiga];
+    P.OSes := P.OSes - [embedded,nativent,msdos,win16,atari,macos,palmos,symbian];
+    if Defaults.CPU=jvm then
+      P.OSes := P.OSes - [java,android];
 
     P.SourcePath.Add('src');
     P.IncludePath.Add('src');
@@ -64,6 +64,7 @@ begin
     T.ResourceStrings:=true;
 
     T:=P.Targets.AddUnit('pkgoptions.pp');
+    T:=P.Targets.AddUnit('pkgfppkg.pp');
     T:=P.Targets.AddUnit('pkgglobals.pp');
     T:=P.Targets.AddUnit('pkghandler.pp');
     T:=P.Targets.AddUnit('pkgmkconv.pp');
@@ -71,6 +72,8 @@ begin
     T:=P.Targets.AddUnit('pkgfpmake.pp');
     T.Dependencies.AddInclude('fpmkunitsrc.inc');
     T:=P.Targets.AddUnit('pkgcommands.pp');
+    T:=P.Targets.AddUnit('pkgpackagesstructure.pp');
+    T:=P.Targets.AddUnit('pkguninstalledsrcsrepo.pp');
 
     T:=P.Targets.AddUnit('pkgwget.pp', TargetsWithWGet);
     T:=P.Targets.AddUnit('pkgfphttp.pp', TargetsWithfpWeb);

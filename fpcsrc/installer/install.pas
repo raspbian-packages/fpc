@@ -93,8 +93,8 @@ program install;
      WHTMLScn,insthelp;
 
   const
-     installerversion='3.0.4';
-     installercopyright='Copyright (c) 1993-2017 Florian Klaempfl';
+     installerversion='3.2.0';
+     installercopyright='Copyright (c) 1993-2020 Florian Klaempfl';
 
 
      maxpacks=20;
@@ -1220,7 +1220,7 @@ program install;
        end;
 
        New(Tab, Init(TabR,
-         NewTabDef('~G~eneral',IlPath,
+         NewTabDef('Gener~a~l',IlPath,
            NewTabItem(TitleText,
            NewTabItem(LabPath,
            NewTabItem(ILPath,

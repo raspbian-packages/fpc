@@ -1,11 +1,12 @@
 #! /usr/bin/dh-exec
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/ggi*
-usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/graph*        [!linux-arm64 !linux-armel !linux-armhf !linux-m68k !linux-mips !linux-mipsel !linux-ppc64]
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/graph*        [!linux-arm64 !linux-armel !linux-armhf !linux-m68k !linux-mips !linux-mipsel !linux-ppc64 !linux-ppc64el !linux-sparc64]
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/hermes*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/imagemagick*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/libfontconfig*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/libgd*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/libpng*
-usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/opencl*       [!freebsd-any !linux-arm64 !linux-armel !linux-armhf !linux-m68k !linux-mips !linux-mipsel !linux-powerpc !linux-ppc64]
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/opencl*       [!freebsd-any !linux-arm64 !linux-armel !linux-armhf !linux-m68k !linux-mips !linux-mipsel !linux-powerpc !linux-ppc64 !linux-ppc64el !linux-sparc64]
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/opengl*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/opengles*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/ptc*          [!freebsd-any]

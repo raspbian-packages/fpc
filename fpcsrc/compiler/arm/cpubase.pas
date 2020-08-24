@@ -109,7 +109,7 @@ unit cpubase;
       { registers which may be destroyed by calls }
       VOLATILE_INTREGISTERS = [RS_R0..RS_R3,RS_R12..RS_R14];
       VOLATILE_FPUREGISTERS = [RS_F0..RS_F3];
-      VOLATILE_MMREGISTERS =  [RS_D0..RS_D7,RS_D16..RS_D31,RS_S1..RS_S15];
+      VOLATILE_MMREGISTERS =  [RS_D0..RS_D7,RS_D16..RS_D31];
 
       VOLATILE_INTREGISTERS_DARWIN = [RS_R0..RS_R3,RS_R9,RS_R12..RS_R14];
 
@@ -302,7 +302,7 @@ unit cpubase;
       { Stack pointer register }
       NR_STACK_POINTER_REG = NR_R13;
       RS_STACK_POINTER_REG = RS_R13;
-      { Frame pointer register (initialized in tarmprocinfo.init_framepointer) }
+      { Frame pointer register (initialized in tcpuprocinfo.init_framepointer) }
       RS_FRAME_POINTER_REG: tsuperregister = RS_NO;
       NR_FRAME_POINTER_REG: tregister = NR_NO;
       { Register for addressing absolute data in a position independant way,
@@ -341,20 +341,6 @@ unit cpubase;
 *****************************************************************************}
 
     const
-      { Registers which must be saved when calling a routine declared as
-        cppdecl, cdecl, stdcall, safecall, palmossyscall. The registers
-        saved should be the ones as defined in the target ABI and / or GCC.
-
-        This value can be deduced from the CALLED_USED_REGISTERS array in the
-        GCC source.
-      }
-      saved_standard_registers : array[0..6] of tsuperregister =
-        (RS_R4,RS_R5,RS_R6,RS_R7,RS_R8,RS_R9,RS_R10);
-
-      { this is only for the generic code which is not used for this architecture }
-      saved_address_registers : array[0..0] of tsuperregister = (RS_INVALID);
-      saved_mm_registers : array[0..0] of tsuperregister = (RS_INVALID);
-
       { Required parameter alignment when calling a routine declared as
         stdcall and cdecl. The alignment value should be the one defined
         by GCC or the target ABI.
@@ -391,8 +377,9 @@ unit cpubase;
       doesn't handle ROR_C detection }
     function is_thumb32_imm(d : aint) : boolean;
     function split_into_shifter_const(value : aint;var imm1: dword; var imm2: dword):boolean;
-    function is_continuous_mask(d : aint;var lsb, width: byte) : boolean;
+    function is_continuous_mask(d : aword;var lsb, width: byte) : boolean;
     function dwarf_reg(r:tregister):shortint;
+    function dwarf_reg_no_error(r:tregister):shortint;
 
     function IsIT(op: TAsmOp) : boolean;
     function GetITLevels(op: TAsmOp) : longint;
@@ -400,6 +387,8 @@ unit cpubase;
     function GenerateARMCode : boolean;
     function GenerateThumbCode : boolean;
     function GenerateThumb2Code : boolean;
+
+    function IsVFPFloatImmediate(ft : tfloattype;value : bestreal) : boolean;
 
   implementation
 
@@ -608,7 +597,7 @@ unit cpubase;
         else
           begin
             result:=false;
-            for i:=1 to 31 do
+            for i:=8 to 31 do
               begin
                 t:=RolDWord(d,i);
                 if ((t and $FF)=t) and
@@ -621,7 +610,7 @@ unit cpubase;
           end;
       end;
     
-    function is_continuous_mask(d : aint;var lsb, width: byte) : boolean;
+    function is_continuous_mask(d : aword;var lsb, width: byte) : boolean;
       var
         msb : byte;
       begin
@@ -630,7 +619,7 @@ unit cpubase;
         
         width:=msb-lsb+1;
         
-        result:=(lsb<>255) and (msb<>255) and ((((1 shl (msb-lsb+1))-1) shl lsb) = d);
+        result:=(lsb<>255) and (msb<>255) and (aword(((1 shl (msb-lsb+1))-1) shl lsb) = d);
       end;
 
 
@@ -664,6 +653,11 @@ unit cpubase;
         result:=regdwarf_table[findreg_by_number(r)];
         if result=-1 then
           internalerror(200603251);
+      end;
+
+    function dwarf_reg_no_error(r:tregister):shortint;
+      begin
+        result:=regdwarf_table[findreg_by_number(r)];
       end;
 
       { Low part of 64bit return value }
@@ -747,6 +741,33 @@ unit cpubase;
     function GenerateThumb2Code : boolean;
       begin
         Result:=(current_settings.instructionset=is_thumb) and (CPUARM_HAS_THUMB2 in cpu_capabilities[current_settings.cputype]);
+      end;
+
+
+    function IsVFPFloatImmediate(ft : tfloattype;value : bestreal) : boolean;
+      var
+        singlerec : tcompsinglerec;
+        doublerec : tcompdoublerec;
+      begin
+        Result:=false;
+        case ft of
+          s32real:
+            begin
+              singlerec.value:=value;
+              singlerec:=tcompsinglerec(NtoLE(DWord(singlerec)));
+              Result:=(singlerec.bytes[0]=0) and (singlerec.bytes[1]=0) and ((singlerec.bytes[2] and 7)=0)  and
+                (((singlerec.bytes[3] and $7e)=$40) or ((singlerec.bytes[3] and $7e)=$3e));
+            end;
+          s64real:
+            begin
+              doublerec.value:=value;
+              doublerec:=tcompdoublerec(NtoLE(QWord(doublerec)));
+              Result:=(doublerec.bytes[0]=0) and (doublerec.bytes[1]=0) and (doublerec.bytes[2]=0) and
+                      (doublerec.bytes[3]=0) and (doublerec.bytes[4]=0) and (doublerec.bytes[5]=0) and
+                      ((((doublerec.bytes[6] and $7f)=$40) and ((doublerec.bytes[7] and $c0)=0)) or
+                       (((doublerec.bytes[6] and $7f)=$3f) and ((doublerec.bytes[7] and $c0)=$c0)));
+            end;
+        end;
       end;
 
 

@@ -7,7 +7,7 @@ Index: fpc/fpcsrc/utils/fpdoc/dglobals.pp
 ===================================================================
 --- fpc.orig/fpcsrc/utils/fpdoc/dglobals.pp
 +++ fpc/fpcsrc/utils/fpdoc/dglobals.pp
-@@ -1677,7 +1677,7 @@ procedure TranslateDocStrings(const Lang
+@@ -1683,7 +1683,7 @@ procedure TranslateDocStrings(const Lang
  
  Const
  {$ifdef unix}
@@ -16,7 +16,7 @@ Index: fpc/fpcsrc/utils/fpdoc/dglobals.pp
  {$else}  
    DefDir = 'intl';
  {$endif}
-@@ -1691,7 +1691,7 @@ begin
+@@ -1697,7 +1697,7 @@ begin
      Dir:=DefDir;
    Dir:=IncludeTrailingPathDelimiter(Dir);
  {$IFDEF Unix}
@@ -42,8 +42,8 @@ Index: fpc/fpcsrc/utils/fpdoc/fpdoc.pp
 ===================================================================
 --- fpc.orig/fpcsrc/utils/fpdoc/fpdoc.pp
 +++ fpc/fpcsrc/utils/fpdoc/fpdoc.pp
-@@ -394,7 +394,7 @@ Procedure TFPDocApplication.DoRun;
- begin
+@@ -397,7 +397,7 @@ begin
+    ExceptionExitCode:=1;
    try
    {$IFDEF Unix}
 -    gettext.TranslateResourceStrings('/usr/local/share/locale/%s/LC_MESSAGES/fpdoc.mo');
@@ -79,7 +79,7 @@ Index: fpc/fpcsrc/utils/fpdoc/makeskel.pp
 ===================================================================
 --- fpc.orig/fpcsrc/utils/fpdoc/makeskel.pp
 +++ fpc/fpcsrc/utils/fpdoc/makeskel.pp
-@@ -584,7 +584,7 @@ Function ParseCommandLine : Integer;
+@@ -585,7 +585,7 @@ Function ParseCommandLine : Integer;
  
  Const
  {$IFDEF Unix}

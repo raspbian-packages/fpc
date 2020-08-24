@@ -113,7 +113,7 @@ Index: fpc/fpcsrc/utils/instantfpc/instantfpc.pas
    writeln('      Prints current cache directory and exit.');
    writeln;
    writeln('Options:');
-@@ -106,7 +107,7 @@ begin
+@@ -109,7 +110,7 @@ begin
    if (P='') then exit;
    if p='-v' then 
      begin
@@ -122,7 +122,7 @@ Index: fpc/fpcsrc/utils/instantfpc/instantfpc.pas
      Halt(1);
      end
    else if p='-h' then 
-@@ -139,6 +140,8 @@ begin
+@@ -147,6 +148,8 @@ begin
    { For example:
        /usr/bin/instantfpc -MObjFpc -Sh ./envvars.pas param1
    }
@@ -141,7 +141,7 @@ Index: fpc/fpcsrc/utils/instantfpc/Makefile.fpc
  [package]
 -name=instantfpc
 +name=ifpc
- version=3.0.4
+ version=3.2.0
  
  [require]
 Index: fpc/fpcsrc/utils/instantfpc/ifpc.pas
@@ -160,10 +160,10 @@ Index: fpc/fpcsrc/utils/instantfpc/fpmake.pp
      P:=AddPackage('utils-instantfpc');
 -    P.ShortName:='instantfpc';
 +    P.ShortName:='ifpc';
- 
-     P.Author := '<various>';
-     P.License := 'LGPL with modification';
-@@ -32,7 +32,7 @@ begin
+     P.OSes:=AllOSes-[embedded,msdos,win16,macos,palmos];
+     if Defaults.CPU=jvm then
+       P.OSes := P.OSes - [java,android];
+@@ -35,7 +35,7 @@ begin
  
      P.OSes := [win32,win64,wince,haiku,linux,freebsd,openbsd,netbsd,darwin,iphonesim,solaris,aix];
  

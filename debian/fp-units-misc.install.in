@@ -10,6 +10,9 @@ usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/fppkg*        [!freebsd-any]
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/gdbint*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/iconvenc*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/jni*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/libffi*       [linux-amd64]
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/libgc*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/libmagic*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/libsee*       [!freebsd-any]
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/libxml2*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/lua*          [!freebsd-any]

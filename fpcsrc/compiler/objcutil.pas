@@ -40,7 +40,7 @@ interface
 
     { Encode a method's parameters and result type into the format used by the
       run time (for generating protocol and class rtti).  }
-    function objcencodemethod(pd: tprocdef): ansistring;
+    function objcencodemethod(pd: tabstractprocdef): ansistring;
 
     { Exports all assembler symbols related to the obj-c class }
     procedure exportobjcclass(def: tobjectdef);
@@ -53,13 +53,13 @@ implementation
 
     uses
       globtype,
-      cutils,cclasses,
+      cutils,
       pass_1,
       verbose,systems,
-      symtable,symconst,symsym,
+      symconst,symsym,
       objcdef,
       defutil,paramgr,
-      nbas,nmem,ncal,nld,ncon,ncnv,
+      nmem,ncal,nld,ncon,ncnv,
       export;
 
 
@@ -124,7 +124,7 @@ end;
           result:=ctypeconvnode.create_internal(
             cderefnode.create(
               ctypeconvnode.create_internal(n,
-                getpointerdef(getpointerdef(voidpointertype))
+                cpointerdef.getreusable(cpointerdef.getreusable(voidpointertype))
               )
             ),tfieldvarsym(vs).vardef
           )
@@ -211,7 +211,7 @@ end;
       end;
 
 
-    function objcencodemethod(pd: tprocdef): ansistring;
+    function objcencodemethod(pd: tabstractprocdef): ansistring;
       var
         parasize,
         totalsize: aint;
@@ -245,7 +245,11 @@ end;
                (vs.varspez in [vs_var,vs_out,vs_constref]) then
               result:=result+'^';
             { Add the parameter type.  }
-            if not objcaddencodedtype(vs.vardef,ris_initial,false,result,founderror) then
+            if (vo_is_parentfp in vs.varoptions) and
+               (po_is_block in pd.procoptions) then
+              { special case: self parameter of block procvars has to be @? }
+              result:=result+'@?'
+            else if not objcaddencodedtype(vs.vardef,ris_initial,false,result,founderror) then
               { should be checked earlier on }
               internalerror(2009081701);
             { And the total size of the parameters coming before this one
@@ -283,7 +287,7 @@ end;
             { TODO: package visibility (private_extern) -- must not be exported
                either}
             if not(vf.visibility in [vis_private,vis_strictprivate]) then
-              exportname(prefix+vf.RealName,0);
+              exportname(prefix+vf.RealName,[]);
           end;
     end;
 
@@ -293,15 +297,15 @@ end;
         if (target_info.system in systems_objc_nfabi) then
           begin
             { export class and metaclass symbols }
-            exportname(def.rtti_mangledname(objcclassrtti),0);
-            exportname(def.rtti_mangledname(objcmetartti),0);
+            exportname(def.rtti_mangledname(objcclassrtti),[]);
+            exportname(def.rtti_mangledname(objcmetartti),[]);
             { export public/protected instance variable offset symbols }
             exportobjcclassfields(def);
           end
         else
           begin
              { export the class symbol }
-             exportname('.objc_class_name_'+def.objextname^,0);
+             exportname('.objc_class_name_'+def.objextname^,[]);
           end;
       end;
 

@@ -3,7 +3,7 @@
 # It is licensed under the same license as the fpc package
 
 set -e # Make sure the test fails if a command fails
-
+echo starting run-upstream-testsuite
 FULL_TARGET=`fpc -iSP`-`fpc -iSO` # x86_64-linux
 FPC_VER=`fpc -iV`
 DEB_HOST_MULTIARCH=`dpkg-architecture -qDEB_HOST_MULTIARCH`
@@ -18,13 +18,18 @@ if [ -f fpcsrc/tests/Makefile ] ; then
 else   
 	MAKEMAKEFILES=true
 fi
-
+echo about to run debian/rules makefiles
 [ "$MAKEMAKEFILES" = "true" ] && debian/rules makefiles
-# Generate missing configuration file for testsuite
+echo debian/rules makefiles builds the rtl which caused problems later
+echo so clean up the rtl that was just built.
+find . -name '*.o' -delete
+find . -name '*.ppu' -delete
+
+echo Generate missing configuration file for testsuite
 [ -f ${UTESTS}.cfg ] || grep '^  Def' ${UTESTS}.pp > ${UTESTS}.cfg
 
-# If the make target is run without intervention, the units target is build and
-# installed, while we want to test with the installed units.
+echo If the make target is run without intervention, the units target is build and
+echo installed, while we want to test with the installed units.
 [ -d ${TESTUNITDIR} ] || mkdir ${TESTUNITDIR}
 for FILE in ${LIBDIR}/units/$FULL_TARGET/*/*.[op]* ; do
 	[ -h ${TESTUNITDIR}/${FILE##*/} ] || ln -s ${FILE} ${TESTUNITDIR}
@@ -33,28 +38,28 @@ echo Compiled > ${TESTUNITDIRROOT}/rtl-stamp.${FULL_TARGET}
 echo Compiled > ${TESTUNITDIRROOT}/fpcunit-stamp.${FULL_TARGET}
 echo Compiled > ${TESTUNITDIRROOT}/packages-stamp.${FULL_TARGET}
 
-# Some tests need additional objects, lets make them first (why are they not
-# automatically build?)
+echo 'Some tests need additional objects, lets make them first (why are they not'
+echo 'automatically build?)'
 mkdir -p fpcsrc/tests/test/cg/obj/${FULL_TARGET##*-}/${FULL_TARGET%%-*} #linux/x86_64
 make -C fpcsrc/tests create_c_objects TEST_FPC=`which fpc` TEST_CCOMPILER=gcc
-# Run the real test suite; this doesn't fail on its own
+echo 'Run the real test suite; this does not fail on its own'
 LC_ALL=C.UTF-8 make -C fpcsrc/tests all TEST_FPC=`which fpc`
-# The next line just creates some nice output
+echo The next line just creates some nice output
 make -C fpcsrc/tests digest TEST_FPC=`which fpc`
 
-# Let's save some of the output
+echo Let\'s save some of the output
 if [ -n "${ADT_ARTIFACTS}" ] ; then
 	cp -p fpcsrc/tests/output/${FULL_TARGET}/faillist ${ADT_ARTIFACTS}
 	cp -p fpcsrc/tests/output/${FULL_TARGET}/log ${ADT_ARTIFACTS}
 	cp -p fpcsrc/tests/output/${FULL_TARGET}/longlog ${ADT_ARTIFACTS}
 fi
 
-# Compare the new results with known results if we have them
+echo Compare the new results with known results if we have them
 REF_FILE=debian/tests/ref_fail_${FULL_TARGET}
 if [ -f ${REF_FILE} ] ; then
 	echo
 	echo Difference between expected failures and current failures:
-	diff ${REF_FILE} fpcsrc/tests/output/${FULL_TARGET}/faillist || true
+	diff -u ${REF_FILE} fpcsrc/tests/output/${FULL_TARGET}/faillist || true
 	echo
 	echo "Checking (and fail if so) for new failures:"
 	if diff ${REF_FILE} fpcsrc/tests/output/${FULL_TARGET}/faillist | grep \>\  >/dev/null ; then
@@ -67,7 +72,7 @@ else
     echo "No reference file found for $FULL_TARGET. Please consider adding one."
 fi
 
-# For debugging, add clean target
+echo For debugging, add clean target
 if [ -n "$CLEAN" ] ; then
 	make -C fpcsrc/tests digest TEST_FPC=`which fpc`
 	debian/rules clean-makefiles

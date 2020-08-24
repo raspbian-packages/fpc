@@ -72,6 +72,12 @@ begin
 {$include dbus/fpmake.pp}
 end;
 
+procedure add_libmagic(const ADirectory: string);
+begin
+  with Installer do
+{$include libmagic/fpmake.pp}
+end;
+
 procedure add_dts(const ADirectory: string);
 begin
   with Installer do
@@ -176,11 +182,7 @@ begin
 {$include fcl-stl/fpmake.pp}
 end;
 
-procedure add_fcl_web(const ADirectory: string);
-begin
-  with Installer do
 {$include fcl-web/fpmake.pp}
-end;
 
 procedure add_fcl_xml(const ADirectory: string);
 begin
@@ -326,6 +328,18 @@ begin
 {$include libcurl/fpmake.pp}
 end;
 
+procedure add_libcups(const ADirectory: string);
+begin
+  with Installer do
+{$include libcups/fpmake.pp}
+end;
+
+procedure add_libffi(const ADirectory: string);
+begin
+  with Installer do
+{$include libffi/fpmake.pp}
+end;
+
 procedure add_libgbafpc(const ADirectory: string);
 begin
   with Installer do
@@ -366,6 +380,12 @@ procedure add_libsee(const ADirectory: string);
 begin
   with Installer do
 {$include libsee/fpmake.pp}
+end;
+
+procedure add_libusb(const ADirectory: string);
+begin
+  with Installer do
+{$include libusb/fpmake.pp}
 end;
 
 procedure add_libtar(const ADirectory: string);
@@ -493,6 +513,12 @@ begin
 {$include openssl/fpmake.pp}
 end;
 
+procedure add_gnutls(const ADirectory: string);
+begin
+  with Installer do
+{$include gnutls/fpmake.pp}
+end;
+
 procedure add_oracle(const ADirectory: string);
 begin
   with Installer do
@@ -503,6 +529,12 @@ procedure add_os2units(const ADirectory: string);
 begin
   with Installer do
 {$include os2units/fpmake.pp}
+end;
+
+procedure add_os4units(const ADirectory: string);
+begin
+  with Installer do
+{$include os4units/fpmake.pp}
 end;
 
 procedure add_palmunits(const ADirectory: string);
@@ -575,6 +607,8 @@ end;
 
 {$include rtl-extra/fpmake.pp}
 
+{$include rtl-generics/fpmake.pp}
+
 {$include rtl-objpas/fpmake.pp}
 
 {$include rtl-unicode/fpmake.pp}
@@ -613,6 +647,12 @@ procedure add_tcl(const ADirectory: string);
 begin
   with Installer do
 {$include tcl/fpmake.pp}
+end;
+
+procedure add_tosunits(const ADirectory: string);
+begin
+  with Installer do
+{$include tosunits/fpmake.pp}
 end;
 
 procedure add_univint(const ADirectory: string);
@@ -687,11 +727,19 @@ begin
 {$include zlib/fpmake.pp}
 end;
 
+procedure add_libenet(const ADirectory: string);
+begin
+  with Installer do
+{$include libenet/fpmake.pp}
+end;
+
 procedure add_zorba(const ADirectory: string);
 begin
   with Installer do
 {$include zorba/fpmake.pp}
 end;
+
+{$include googleapi/fpmake.pp}
 
 procedure add_fcl_pdf(const ADirectory: string);
 begin
@@ -699,5 +747,43 @@ begin
 {$include fcl-pdf/fpmake.pp}
 end;
 
-{$include googleapi/fpmake.pp}
+{$include odata/fpmake.pp}
 
+procedure add_pastojs(const ADirectory: string);
+begin
+  with Installer do
+{$include pastojs/fpmake.pp}
+end;
+
+procedure add_libgc(const ADirectory: string);
+begin
+  with Installer do
+{$include libgc/fpmake.pp}
+end;
+
+procedure add_libfontconfig(const ADirectory: string);
+begin
+  with Installer do
+{$include libfontconfig/fpmake.pp}
+end;
+
+procedure add_fcl_report(const ADirectory: string);
+begin
+  with Installer do
+{$include fcl-report/fpmake.pp}
+end;
+
+procedure add_webidl(const ADirectory: string);
+begin
+  with Installer do
+{$include webidl/fpmake.pp}
+end;
+
+procedure add_vclcompat(const ADirectory: string);
+begin
+  with Installer do
+{$include vcl-compat/fpmake.pp}
+end;
+
+
+{$include ide/fpmake.pp}

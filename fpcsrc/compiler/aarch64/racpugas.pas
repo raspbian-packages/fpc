@@ -55,10 +55,10 @@ Unit racpugas;
       globtype,verbose,
       systems,aasmbase,aasmtai,aasmdata,aasmcpu,
       { symtable }
-      symconst,symsym,
+      symconst,symsym,symdef,
       procinfo,
       rabase,rautils,
-      cgbase,cgutils;
+      cgbase,cgutils,paramgr;
 
 
     function taarch64attreader.is_register(const s:string):boolean;
@@ -485,8 +485,8 @@ Unit racpugas;
                       useszr:=false;
                       for i:=low(instr.operands) to pred(opnr) do
                         begin
-                          if (instr.operands[1].opr.typ=OPR_REGISTER) then
-                            case getsupreg(instr.operands[1].opr.reg) of
+                          if (instr.operands[i].opr.typ=OPR_REGISTER) then
+                            case getsupreg(instr.operands[i].opr.reg) of
                               RS_XZR:
                                 useszr:=true;
                               RS_SP:
@@ -494,7 +494,10 @@ Unit racpugas;
                             end;
                         end;
                       result:=valid_shifter_operand(instr.opcode,useszr,usessp,instr.Is64bit,sm,instr.operands[opnr].opr.shifterop.shiftimm);
-                    end
+                      if result then
+                        instr.Ops:=opnr;
+                    end;
+                  break;
                 end;
           end;
       end;
@@ -560,7 +563,8 @@ Unit racpugas;
                oper.opr.symbol:=hl;
              end
             else if (actopcode=A_ADR) or
-               (actopcode=A_ADRP) then
+               (actopcode=A_ADRP) or
+               (actopcode=A_LDR) then
               begin
                 oper.InitRef;
                 MaybeAddGotAddrMode;
@@ -585,6 +589,7 @@ Unit racpugas;
             if not(actasmtoken in [AS_DOT,AS_PLUS,AS_MINUS]) then
               exit;
             l:=0;
+            mangledname:='';
             hasdot:=(actasmtoken=AS_DOT);
             if hasdot then
               begin
@@ -606,10 +611,8 @@ Unit racpugas;
                   { don't allow direct access to fields of parameters, because that
                     will generate buggy code. Allow it only for explicit typecasting }
                   if hasdot and
-                     (not oper.hastype) and
-                     (tabstractnormalvarsym(oper.opr.localsym).owner.symtabletype=parasymtable) and
-                     (current_procinfo.procdef.proccalloption<>pocall_register) then
-                    Message(asmr_e_cannot_access_field_directly_for_parameters);
+                     (not oper.hastype) then
+                    checklocalsubscript(oper.opr.localsym);
                   inc(oper.opr.localsymofs,l)
                 end;
               OPR_CONSTANT :
@@ -620,7 +623,7 @@ Unit racpugas;
                     if (oper.opr.val<>0) then
                       Message(asmr_e_wrong_sym_type);
                     oper.opr.typ:=OPR_SYMBOL;
-                    oper.opr.symbol:=current_asmdata.RefAsmSymbol(mangledname);
+                    oper.opr.symbol:=current_asmdata.RefAsmSymbol(mangledname,AT_FUNCTION);
                   end
                 else
                   inc(oper.opr.val,l);

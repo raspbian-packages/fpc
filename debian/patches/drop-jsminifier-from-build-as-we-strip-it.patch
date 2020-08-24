@@ -6,7 +6,7 @@ Index: fpc/fpcsrc/packages/fcl-js/fpmake.pp
 ===================================================================
 --- fpc.orig/fpcsrc/packages/fcl-js/fpmake.pp
 +++ fpc/fpcsrc/packages/fcl-js/fpmake.pp
-@@ -39,8 +39,6 @@ begin
+@@ -43,8 +43,6 @@ begin
        T.ResourceStrings:=true;
      T:=P.Targets.AddUnit('jswriter.pp');
        T.ResourceStrings:=true;

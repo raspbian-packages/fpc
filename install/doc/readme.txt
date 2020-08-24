@@ -1,7 +1,7 @@
 
                             Free Pascal Compiler
 
-                               Version 3.0.4
+                               Version 3.2.0
 
 ****************************************************************************
 * Introduction
@@ -16,7 +16,7 @@ also partial support for the Macintosh pascal dialect.
 
 News and changes related to this release are described in whatsnew.txt.
 
-Free Pascal 3.0.4 is currently available for the following platforms:
+Free Pascal 3.2.0 is currently available for the following platforms:
 - Linux-i386
 - Linux-x86_64 (amd64)
 - Linux-powerpc
@@ -38,7 +38,7 @@ Free Pascal 3.0.4 is currently available for the following platforms:
 - Nintendo Wii-powerpc (cross compile from win32-i386)
 - AIX 5.3 and later for PowerPC (32 and 64 bit)
 - Java JVM (1.5 and later) and Android Dalvik (Android 4.0 and later)
-- Android (ARM, i386, MIPS) via cross-compiling.
+- Android (AArch64, x86_64, ARM, i386, MIPS) via cross-compiling.
 - MSDos-i8086 (cross compiled from win32-i386 or Linux) 
 - Amiga, MorphOS and AROS
 
@@ -64,7 +64,7 @@ e-mail addresses are listed below.
   - exception support
   - RTTI support
   - procedure overloading
-  - generics (experimental)
+  - generics
   - operator overloading
   - COM, CORBA and raw interfaces support
   - dynamic array support
@@ -134,7 +134,7 @@ Mac OS X:
 * Quick start - Win32
 ****************************************************************************
 
-Download the distribution package (fpc-3.0.4.i386-win32.exe) and run it
+Download the distribution package (fpc-3.2.0.i386-win32.exe) and run it
 - it is a self-extracting installer, so just follow the instructions
 to install it. The installer should set the PATH environment variable as
 appropriate.
@@ -149,7 +149,7 @@ and type on the command line:
 * Quick start - DOS
 ****************************************************************************
 
-Download distribution archive (dos304.zip for GO32v2) and unzip it into
+Download distribution archive (dos320.zip for GO32v2) and unzip it into
 a temporary directory.
 
 Start the install program INSTALL.EXE and follow the instructions.
@@ -172,7 +172,7 @@ and type
 * Quick start - OS/2 / eComStation / ArcaOS
 ****************************************************************************
 
-Download distribution archive (os2304full.zip or os2304.zip for OS/2,
+Download distribution archive (os2320full.zip or os2320.zip for OS/2,
 eComStation or ArcaOS) and unzip it into a temporary directory.
 
 Start the install program INSTALL.EXE and follow the instructions.
@@ -197,7 +197,7 @@ and type
 * Quick start - Linux/FreeBSD
 ****************************************************************************
 
-Download fpc-3.0.4.<cpu>-<os>.tar and untar into a temporary directory.
+Download fpc-3.2.0.<cpu>-<os>.tar and untar into a temporary directory.
 
 Start the install script with ./install.sh and follow the instructions.
 

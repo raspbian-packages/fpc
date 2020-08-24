@@ -149,6 +149,7 @@ Type
     FSource: String;
   Public
     Constructor Create(ALine,AColumn : Integer; Const ASource : String = ''); virtual;
+    Procedure AssignPosition(El: TJSElement); virtual;
     Property Source : String Read FSource Write FSource;
     Property Line : Integer Read FLine Write FLine;
     Property Column : Integer Read FColumn Write FColumn;
@@ -175,7 +176,7 @@ Type
     Property Value : TJSValue Read FValue Write FValue;
   end;
 
-  { TJSRegularExpressionLiteral }
+  { TJSRegularExpressionLiteral - /Pattern/PatternFlags }
 
   TJSRegularExpressionLiteral = Class(TJSElement)
   private
@@ -210,11 +211,11 @@ Type
   TJSArrayLiteralElement = Class(TCollectionItem)
   private
     FExpr: TJSelement;
-    FFindex: Integer;
+    FElementIndex: Integer;
   Public
     Destructor Destroy; override;
     Property Expr : TJSElement Read FExpr Write FExpr;
-    Property ElementIndex : Integer Read FFindex Write FFIndex;
+    Property ElementIndex : Integer Read FElementIndex Write FElementIndex;
   end;
 
   { TJSArrayLiteralElements - Elements property of TJSArrayLiteral }
@@ -227,7 +228,7 @@ Type
     Property Elements[AIndex : Integer] : TJSArrayLiteralElement Read GetE ; default;
   end;
 
-  { TJSArrayLiteral }
+  { TJSArrayLiteral - [element1,...] }
 
   TJSArrayLiteral = Class(TJSElement)
   private
@@ -247,7 +248,7 @@ Type
     FName: TJSString;
   Public
     Destructor Destroy; override;
-    Property Expr : TJSelement Read FExpr Write FExpr;
+    Property Expr : TJSElement Read FExpr Write FExpr;
     Property Name : TJSString Read FName Write FName;
   end;
 
@@ -272,7 +273,7 @@ Type
     Property Elements : TJSObjectLiteralElements Read FElements;
   end;
 
-  { TJSArguments }
+  { TJSArguments - (element1,...) }
 
   TJSArguments = Class(TJSArrayLiteral);
 
@@ -438,6 +439,13 @@ Type
     Class function PostFixOperatorToken : tjsToken; override;
   end;
 
+  { TJSUnaryBracketsExpression - e.g. '(A)' }
+
+  TJSUnaryBracketsExpression = Class(TJSUnaryExpression)
+  Public
+    Class function PrefixOperatorToken : tjsToken; override;
+    Class function PostFixOperatorToken : tjsToken; override;
+  end;
 
   { TJSBinary - base class }
 
@@ -884,7 +892,7 @@ Type
   Public
     Constructor Create(ALine,AColumn : Integer; const ASource : String = ''); override;
     Destructor Destroy; override;
-    Property Cond : TJSelement Read FCond Write FCond;
+    Property Cond : TJSElement Read FCond Write FCond;
     Property Cases : TJSCaseElements Read FCases;
     Property TheDefault : TJSCaseElement Read FDefault Write FDefault; // one of Cases
   end;
@@ -922,7 +930,7 @@ Type
   TJSTryFinallyStatement = Class(TJSTryStatement);
 
 
-  { TJSFunctionDeclarationStatement - as TJSFuncDef, except as a statement }
+  { TJSFunctionDeclarationStatement - same as TJSFuncDef, except as a TJSElement }
 
   TJSFunctionDeclarationStatement = Class(TJSElement)
   private
@@ -1431,6 +1439,18 @@ begin
   Result:=tjsThrow;
 end;
 
+{ TJSUnaryBracketsExpression }
+
+class function TJSUnaryBracketsExpression.PrefixOperatorToken: tjsToken;
+begin
+  Result:=tjsBraceOpen;
+end;
+
+class function TJSUnaryBracketsExpression.PostFixOperatorToken: tjsToken;
+begin
+  Result:=tjsBraceClose;
+end;
+
 { TJSUnaryPostMinusMinusExpression }
 
 Class function TJSUnaryPostMinusMinusExpression.PostFixOperatorToken : tjsToken;
@@ -1510,6 +1530,13 @@ begin
   FSource:=ASource;
 end;
 
+procedure TJSElement.AssignPosition(El: TJSElement);
+begin
+  Source:=El.Source;
+  Line:=El.Line;
+  Column:=El.Column;
+end;
+
 { TJSRegularExpressionLiteral }
 
 function TJSRegularExpressionLiteral.GetA(AIndex : integer): TJSValue;
@@ -1559,8 +1586,12 @@ begin
 end;
 
 procedure TJSArrayLiteral.AddElement(El: TJSElement);
+var
+  ArrEl: TJSArrayLiteralElement;
 begin
-  Elements.AddElement.Expr:=El;
+  ArrEl:=Elements.AddElement;
+  ArrEl.ElementIndex:=Elements.Count-1;
+  ArrEl.Expr:=El;
 end;
 
 destructor TJSArrayLiteral.Destroy;
@@ -1609,7 +1640,7 @@ end;
 
 destructor TJSArrayLiteralElement.Destroy;
 begin
-  FreeAndNil(Fexpr);
+  FreeAndNil(FExpr);
   inherited Destroy;
 end;
 
@@ -1623,6 +1654,8 @@ end;
 
 procedure TJSNewMemberExpression.AddArg(El: TJSElement);
 begin
+  if Args=nil then
+    Args:=TJSArguments.Create(Line,Column,Source);
   Args.Elements.AddElement.Expr:=El;
 end;
 

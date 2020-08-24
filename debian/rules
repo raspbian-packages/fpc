@@ -28,9 +28,14 @@ CPU_TARGET := $(subst amd64,x86_64,${CPU_TARGET})
 # Take care that Debian uses arm64 while FPC perfers aarch64 instead
 CPU_SOURCE := $(subst arm64,aarch64,${CPU_SOURCE})
 CPU_TARGET := $(subst arm64,aarch64,${CPU_TARGET})
-# Take care that debian uses ppc64 while FPC prefers powerpc64 instead
+# Take care that debian uses ppc64/-el while FPC prefers powerpc64 instead
+ifeq ($(DEB_HOST_ARCH_CPU),ppc64el)
+CPU_SOURCE := $(subst ppc64el,powerpc64,${CPU_SOURCE})
+CPU_TARGET := $(subst ppc64el,powerpc64,${CPU_TARGET})
+else
 CPU_SOURCE := $(subst ppc64,powerpc64,${CPU_SOURCE})
 CPU_TARGET := $(subst ppc64,powerpc64,${CPU_TARGET})
+endif
 # Shuld get rid of this one day, as it is done automatically  by FPC make files
 ifeq ($(CPU_TARGET),m68k)
 PPSUF=68k
@@ -58,6 +63,9 @@ PPSUF=a64
 endif
 ifeq ($(CPU_TARGET),sparc)
 PPSUF=sparc
+endif
+ifeq ($(CPU_TARGET),sparc64)
+PPSUF=sparc64
 endif
 ifeq ($(CPU_TARGET),mips)
 PPSUF=mips
@@ -126,7 +134,11 @@ NEWFPDOC=$(CURDIR)/fpcsrc/utils/fpdoc/fpdoc
 # Set default compilation options
 DEB_BUILD_FPC_OPT=debian/deb-build-fpc.cfg
 DEB_HOST_FPC_OPT=debian/deb-host-fpc.cfg
+ifeq ($(DEB_HOST_ARCH_CPU),ppc64el)
+BUILDOPTS=PP=$(NEWPP) OPT='@${CURDIR}/${DEB_HOST_FPC_OPT} -Cb- -Caelfv2'
+else
 BUILDOPTS=PP=$(NEWPP) OPT='@${CURDIR}/${DEB_HOST_FPC_OPT}'
+endif
 ifdef CROSSOPT
 BUILDOPTS+= CROSSOPT=${CROSSOPT}
 endif
@@ -134,13 +146,10 @@ INSTALLOPTS=INSTALL_PREFIX=$(INSTALL_DIR)/usr PP=$(NEWPP)
 
 export GDBLIBDIR=/usr/lib
 
-ifeq ($(CPU_TARGET),arm)
+ifeq ($(CPU_TARGET),m68k)
   # Disable optimization for the first runs as there may be bugs associated
-  # with that, preventing proper building new versions (cf bug 800811)
-  #
-  # Unsure if the -d option is still needed, this code was originally used to
-  # bootstrap other arm flavors
-  CYCLEOPTS:=OPT='@${CURDIR}/${DEB_HOST_FPC_OPT} -dFPC_$(DEB_HOST_ARCH)' OPTLEVEL1=-O-
+  # with that, preventing proper building new versions 
+  CYCLEOPTS:=OPT='@${CURDIR}/${DEB_HOST_FPC_OPT}' OPTLEVEL1=-O-
 else
   CYCLEOPTS:=OPT='@${CURDIR}/${DEB_HOST_FPC_OPT}'
 endif
@@ -217,7 +226,6 @@ clean-all-but-makefiles: makefiles
 	[ ! -s fpcsrc/Makefile ]  || $(MAKE) -C fpcsrc compiler_distclean
 	[ ! -s fpcsrc/Makefile ]  || $(MAKE) -C fpcsrc rtl_distclean
 	[ ! -s fpcsrc/Makefile ]  || $(MAKE) -C fpcsrc packages_distclean
-	[ ! -s fpcsrc/Makefile ]  || $(MAKE) -C fpcsrc ide_distclean
 	[ ! -s fpcsrc/Makefile ]  || $(MAKE) -C fpcsrc utils_distclean
 	[ ! -s fpcdocs/Makefile ] || $(MAKE) -C fpcdocs clean
 	# Just in case they forgot something
@@ -266,7 +274,7 @@ debian-files-stamp:debian/fixdeb debian/*.in
 	DEB_SUBST_DEB_HOST_MULTIARCH=${DEB_HOST_MULTIARCH} \
 	$< debian/*.in
 	# Because we use dh-exec to track units that don't need to install
-	# everywhere, we need the <package>.install files to be executable 
+	# everywhere, we need the <package>.install files to be executable
 	chmod a+x debian/*.install
 	touch debian-files-stamp
 
@@ -329,7 +337,6 @@ build-arch-stamp: ${DEB_BUILD_FPC_OPT} ${DEB_HOST_FPC_OPT}
 	$(MAKE) -C fpcsrc rtl_clean rtl_smart $(BUILDOPTS)
 	# Finally build packages and tools using new compiler and new RTL
 	$(MAKE) -C fpcsrc packages_smart ${BUILDOPTS} ${FPMAKE_BUILDOPTS}
-	$(MAKE) -C fpcsrc ide_all $(BUILDOPTS)
 	$(MAKE) -C fpcsrc utils_all ${BUILDOPTS}
 	# *.fpm files contain the build directory, which results in unreproducible
 	# builds. As this is useless anyways, let's canonize the text.
@@ -350,7 +357,6 @@ install-arch-stamp:
 	$(MAKE) -C fpcsrc compiler_distinstall $(INSTALLOPTS)
 	$(MAKE) -C fpcsrc rtl_distinstall $(INSTALLOPTS)
 	$(MAKE) -C fpcsrc packages_distinstall $(INSTALLOPTS)
-	$(MAKE) -C fpcsrc ide_distinstall $(INSTALLOPTS) INSTALL_DOCDIR=$(DOC_DIR)/fp-ide/${DEB_UPSTREAM_MAIN_VERSION}
 	$(MAKE) -C fpcsrc utils_distinstall $(INSTALLOPTS)
 	$(MAKE) -C fpcsrc/utils/fpdoc/intl install $(INSTALLOPTS)
 	${CP} -t ${LIB_DIR} \
@@ -402,7 +408,7 @@ install-man: install-man-stamp
 install-man-stamp:
 	# Generate man pages for newly supported arches
 	cd install/man/man1 ; \
-		for arch in 68k a64 mips mipsel ppc64 ; do \
+		for arch in 68k a64 mips mipsel ppc64 sparc64; do \
 			cp -p ppcx64.1 ppc$${arch}.1 ; \
 			sed --in-place s/x64/$${arch}/ ppc$${arch}.1 ; \
 		done
@@ -431,7 +437,7 @@ build-doc-stamp:
 	# locale here to get reproducible builds (because of sorting in index
 	# pages) and to fix some characters in some documentation files that are
 	# non-ascii.
-	LC_ALL=C.UTF-8 $(MAKE) -C fpcdocs $(CONVERTER)
+	LC_ALL=C.UTF-8 $(MAKE) -C fpcdocs $(CONVERTER) UNITDIR_RTL=
 	touch build-doc-stamp
 
 install-doc: build-doc install-doc-stamp
@@ -527,13 +533,11 @@ debian/%:debian/fixdeb debian/changelog debian/%.in
 	DEB_SUBST_DEB_HOST_MULTIARCH=${DEB_HOST_MULTIARCH} \
 	$< --gen-control $@.in
 
-${FPCMAKE}:fpcsrc/utils/fpcm/Makefile ${DEB_BUILD_FPC_OPT}
+${FPCMAKE}:fpcsrc/utils/fpcm/Makefile.fpc fpcsrc/Makefile.fpc ${DEB_BUILD_FPC_OPT}
+	fpcmake -r -Tall -q fpcsrc/Makefile.fpc
 	${MAKE} -C fpcsrc/rtl OPT=@${CURDIR}/${DEB_BUILD_FPC_OPT}
 	${MAKE} -C fpcsrc/packages/fpmkunit bootstrap OPT=@${CURDIR}/${DEB_BUILD_FPC_OPT}
 	${MAKE} -C ${<D} OPT=@${CURDIR}/${DEB_BUILD_FPC_OPT}
-
-fpcsrc/utils/fpcm/Makefile:fpcsrc/Makefile.fpc fpcsrc/utils/fpcm/Makefile.fpc
-	fpcmake -r -Tall -q $<
 
 ${DEB_BUILD_FPC_OPT}:
 	echo '# FPC configuration file for build system tools' > $@
