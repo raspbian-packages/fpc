@@ -15,7 +15,7 @@ begin
   With Installer do
     begin
     P:=AddPackage('utils-instantfpc');
-    P.ShortName:='instantfpc';
+    P.ShortName:='ifpc';
     P.OSes:=AllOSes-[embedded,msdos,win16,macos,palmos];
     if Defaults.CPU=jvm then
       P.OSes := P.OSes - [java,android];
@@ -35,7 +35,7 @@ begin
 
     P.OSes := [win32,win64,wince,haiku,linux,freebsd,openbsd,netbsd,darwin,iphonesim,solaris,aix];
 
-    T:=P.Targets.AddProgram('instantfpc.pas');
+    T:=P.Targets.AddProgram('ifpc.pas');
     T.Dependencies.AddUnit('instantfptools');
 
     P.Targets.AddUnit('instantfptools.pas').Install:=False;
