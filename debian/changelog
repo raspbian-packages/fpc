@@ -1,9 +1,20 @@
-fpc (3.2.0+dfsg-11+rpi1) bullseye-staging; urgency=medium
+fpc (3.2.0+dfsg-12+rpi1) bullseye-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 14 Jan 2021 20:35:41 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Fri, 05 Feb 2021 05:46:18 +0000
+
+fpc (3.2.0+dfsg-12) unstable; urgency=medium
+
+  [ Graham Inggs ]
+  * Drop unnecessary build dependency on binutils
+
+  [ Abou Al Montacir ]
+  * Disable FPU inlining on m68k.
+    Thanks to John Paul Adrian Glaubitz (Closes: Bug#980841)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Mon, 25 Jan 2021 22:36:28 +0100
 
 fpc (3.2.0+dfsg-11) bullseye; urgency=medium
 

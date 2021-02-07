@@ -20,7 +20,7 @@ fix_make_files_generation.patch
 #fix-IDE-GDB-support.patch
 clean_man_pages.patch
 ncurses6.patch
-fix-FTBFS-on-m68k.patch
+m68k-disable-FPU-inlining.patch
 Fix-liking-with-libc-when-PIC-is-enabled.patch
 fix-utest-version-lists.patch
 raspbian.diff
