@@ -1,0 +1,3 @@
+#! /usr/bin/dh-exec
+usr/lib/fpc/*/*/*/cairo*
+usr/lib/fpc/*/*/*/gtk2*
