@@ -132,6 +132,8 @@ unit agarmgas;
         inherited WriteExtraHeader;
         if TArmInstrWriter(InstrWriter).unified_syntax then
           writer.AsmWriteLn(#9'.syntax unified');
+        if target_info.abi = abi_eabihf then
+          writer.AsmWriteLn(#9'.eabi_attribute 28, 1 @Tag_ABI_VFP_args');
       end;
 
 {****************************************************************************}
