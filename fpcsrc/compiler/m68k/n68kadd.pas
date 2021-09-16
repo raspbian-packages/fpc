@@ -148,10 +148,7 @@ implementation
 
     function t68kaddnode.inlineable_realconstnode(const n: tnode): boolean;
       begin
-        result:=(n.nodetype = realconstn) and
-            not ((trealconstnode(n).value_real=MathInf.Value) or
-                 (trealconstnode(n).value_real=MathNegInf.Value) or
-                 (trealconstnode(n).value_real=MathQNaN.value));
+        result:=false;
       end;
 
 
