@@ -1408,7 +1408,7 @@ begin
   if HasExports then
     cmdstr:=cmdstr+' -E';
 
-  success:=DoExec(FindUtil(utilsprefix+BinStr),CmdStr,true,false);
+  success:=DoExec(FindUtil(utilsprefix+BinStr)+'.bfd',CmdStr,true,false);
 
   { Create external .dbg file with debuginfo }
   if success and (cs_link_separate_dbg_file in current_settings.globalswitches) then
@@ -1476,7 +1476,7 @@ begin
   Replace(cmdstr,'$SONAME',SoNameStr);
   Replace(cmdstr,'$MAP',mapstr);
   Replace(cmdstr,'$GCSECTIONS',GCSectionsStr);
-  success:=DoExec(FindUtil(utilsprefix+binstr),cmdstr,true,false);
+  success:=DoExec(FindUtil(utilsprefix+binstr)+'.bfd',cmdstr,true,false);
 
 { Strip the library ? }
   if success and (cs_link_strip in current_settings.globalswitches) then
