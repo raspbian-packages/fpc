@@ -14,48 +14,48 @@
   <packages>
     <package name="fcl" output="" content="fcl.xct">
       <units>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/iostream.pp" options="-S2"/>
-        <unit file="{{FPCDIR}}/packages/fcl-process/src/pipes.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/streamio.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-process/src/process.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-process/src/dbugintf.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/contnrs.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/paszlib/src/zstream.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/idea.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/bufstream.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/base64.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/gettext.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-web/src/base/ezcgi.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/pooledmm.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-process/src/dbugmsg.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/streamex.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/inicol.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/streamcoll.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/cachecls.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/eventlog.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/syncobjs.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/custapp.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/blowfish.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/nullstream.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-process/src/simpleipc.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/inifiles.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/rttiutils.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/avl_tree.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/uriparser.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-extra/src/daemonapp.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/libtar/src/libtar.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/ascii85.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-base/src/fptimer.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-db/src/base/db.pas" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-db/src/base/bufdataset.pas" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-db/src/memds/memds.pp" options="-Fi{{FPCDIR}}/packages/fcl-db/src/memds -dFPC"/>
-        <unit file="{{FPCDIR}}/packages/fcl-db/src/base/sqltypes.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/paszlib/src/zipper.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-db/src/sqldb/sqldb.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-db/src/sqldb/interbase/ibconnection.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-db/src/sqldb/mssql/mssqlconn.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-json/src/fpjson.pp" options=""/>
-        <unit file="{{FPCDIR}}/packages/fcl-web/src/base/fpmimetypes.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/iostream.pp" options="-S2"/>
+        <unit file="../fpcsrc/packages/fcl-process/src/pipes.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/streamio.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-process/src/process.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-process/src/dbugintf.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/contnrs.pp" options=""/>
+        <unit file="../fpcsrc/packages/paszlib/src/zstream.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/idea.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/bufstream.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/base64.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/gettext.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-web/src/base/ezcgi.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/pooledmm.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-process/src/dbugmsg.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/streamex.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/inicol.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/streamcoll.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/cachecls.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/eventlog.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/syncobjs.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/custapp.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/blowfish.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/nullstream.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-process/src/simpleipc.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/inifiles.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/rttiutils.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/avl_tree.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/uriparser.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-extra/src/daemonapp.pp" options=""/>
+        <unit file="../fpcsrc/packages/libtar/src/libtar.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/ascii85.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-base/src/fptimer.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-db/src/base/db.pas" options=""/>
+        <unit file="../fpcsrc/packages/fcl-db/src/base/bufdataset.pas" options=""/>
+        <unit file="../fpcsrc/packages/fcl-db/src/memds/memds.pp" options="-Fi../fpcsrc/packages/fcl-db/src/memds -dFPC"/>
+        <unit file="../fpcsrc/packages/fcl-db/src/base/sqltypes.pp" options=""/>
+        <unit file="../fpcsrc/packages/paszlib/src/zipper.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-db/src/sqldb/sqldb.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-db/src/sqldb/interbase/ibconnection.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-db/src/sqldb/mssql/mssqlconn.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-json/src/fpjson.pp" options=""/>
+        <unit file="../fpcsrc/packages/fcl-web/src/base/fpmimetypes.pp" options=""/>
       </units>
       <descriptions>
         <description file="fcl.xml"/>
@@ -103,7 +103,7 @@
         <description file="fpmimetypes.xml"/>
       </descriptions>
       <imports>
-        <import file="rtl.xct" prefix="../rtl/"/>
+        <import file="rtl.xct" prefix="../fpcsrc/rtl/"/>
       </imports>
     </package>
   </packages>
