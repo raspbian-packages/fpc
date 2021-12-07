@@ -356,7 +356,7 @@ unit scandir;
          hs : string;
       begin
         if not (target_info.system in systems_all_windows + [system_i386_os2,
-                                       system_i386_emx, system_powerpc_macos,
+                                       system_i386_emx, system_powerpc_macosclassic,
                                        system_arm_nds, system_i8086_msdos,
                                        system_i8086_embedded, system_m68k_atari] +
                                        systems_nativent) then
@@ -383,7 +383,7 @@ unit scandir;
                  else if (hs='FS') and (target_info.system in [system_i386_os2,
                                                              system_i386_emx]) then
                    SetApptype(app_fs)
-                 else if (hs='TOOL') and (target_info.system in [system_powerpc_macos]) then
+                 else if (hs='TOOL') and (target_info.system in [system_powerpc_macosclassic]) then
                    SetApptype(app_tool)
                  else if (hs='ARM9') and (target_info.system in [system_arm_nds]) then
                    SetApptype(app_arm9)
@@ -433,6 +433,12 @@ unit scandir;
     procedure dir_excessprecision;
       begin
         do_localswitch(cs_excessprecision);
+      end;
+
+
+    procedure dir_checkfpuexceptions;
+      begin
+        do_localswitch(cs_check_fpu_exceptions);
       end;
 
 
@@ -1322,30 +1328,32 @@ unit scandir;
     procedure dir_setpeflags;
       var
         ident : string;
+        flags : int64;
       begin
         if not (target_info.system in (systems_all_windows)) then
           Message(scan_w_setpeflags_not_support);
-        current_scanner.skipspace;
-        ident:=current_scanner.readid;
-        if ident<>'' then
-          peflags:=peflags or get_peflag_const(ident,scan_e_illegal_peflag)
-        else
-          peflags:=peflags or current_scanner.readval;
+        if current_scanner.readpreprocint(flags,'SETPEFLAGS') then
+          begin
+            if flags>$ffff then
+              message(scan_e_illegal_peflag);
+            peflags:=peflags or uint16(flags);
+          end;
         SetPEFlagsSetExplicity:=true;
       end;
 
     procedure dir_setpeoptflags;
       var
         ident : string;
+        flags : int64;
       begin
         if not (target_info.system in (systems_all_windows)) then
           Message(scan_w_setpeoptflags_not_support);
-        current_scanner.skipspace;
-        ident:=current_scanner.readid;
-        if ident<>'' then
-          peoptflags:=peoptflags or get_peflag_const(ident,scan_e_illegal_peoptflag)
-        else
-          peoptflags:=peoptflags or current_scanner.readval;
+        if current_scanner.readpreprocint(flags,'SETPEOPTFLAGS') then
+          begin
+            if flags>$ffff then
+              message(scan_e_illegal_peoptflag);
+            peoptflags:=peoptflags or uint16(flags);
+          end;
         SetPEOptFlagsSetExplicity:=true;
       end;
 
@@ -1907,6 +1915,7 @@ unit scandir;
         AddDirective('BOOLEVAL',directive_all, @dir_booleval);
         AddDirective('BITPACKING',directive_all, @dir_bitpacking);
         AddDirective('CALLING',directive_all, @dir_calling);
+        AddDirective('CHECKFPUEXCEPTIONS',directive_all, @dir_checkfpuexceptions);
         AddDirective('CHECKLOWADDRLOADS',directive_all, @dir_checklowaddrloads);
         AddDirective('CHECKPOINTER',directive_all, @dir_checkpointer);
         AddDirective('CODEALIGN',directive_all, @dir_codealign);

@@ -1,9 +1,40 @@
-fpc (3.2.0+dfsg-13+rpi1) bookworm-staging; urgency=medium
+fpc (3.2.2+dfsg-4+rpi1) bookworm-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
 
- -- Raspbian forward porter <root@raspbian.org>  Tue, 21 Sep 2021 19:22:17 +0000
+ -- Peter Michael Green <plugwash@raspbian.org>  Tue, 07 Dec 2021 14:56:06 +0000
+
+fpc (3.2.2+dfsg-4) unstable; urgency=medium
+
+  * Updated list of expected failed tests.
+    Most are testes used to fail and do not fail anymore.
+    Some of them are new tests added by this release (i386:+1, ppc64:+1).
+    A new generics related test is also failing on non x86_64 platforms.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 30 Oct 2021 14:46:26 +0200
+
+fpc (3.2.2+dfsg-3) unstable; urgency=medium
+
+  * New upstream version 3.2.2+dfsg into unstable.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 23 Oct 2021 18:53:06 +0200
+
+fpc (3.2.2+dfsg-2) experimental; urgency=medium
+
+  * New upstream version 3.2.2+dfsg
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 23 Oct 2021 16:25:32 +0200
+
+fpc (3.2.2+dfsg-1) experimental; urgency=low
+
+  * Fixed watch file.
+  * New upstream version 3.2.2+dfsg
+  * Updated patches with regards to issues that were fixed in new release.
+  * Updated patches with regards to new upstream release changes.
+  * Updated IDE source files path.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 19 Jun 2021 12:43:44 +0200
 
 fpc (3.2.0+dfsg-13) unstable; urgency=medium
 

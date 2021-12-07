@@ -102,6 +102,18 @@ options are supported on all platforms.
 <short>Do not follow processes started by this process (Win32 only)</short>
 </element>
 
+<!-- enumeration value Visibility: default -->
+<element name="TProcessOption.poDetached">
+<short>Runs a process using the DETACHED_PROCESS creation flag on Windows</short>
+</element>
+
+<!-- enumeration value Visibility: default -->
+<element name="TProcessOption.poRunIdle">
+<short>
+Signals an event handler to wait for output in the run loop for a process.
+</short>
+</element>
+
 <!-- enumeration type Visibility: default -->
 <element name="TShowWindowOptions">
 <short>Description of the main window of the new process.</short>
@@ -257,7 +269,7 @@ to do)</short>
 </element>
 
 <!-- set type Visibility: default -->
-<element name="TstartUpoptions">
+<element name="TStartupOptions">
 <short>Set of <link id="#fcl.process.TStartupOption">TStartUpOption</link>.</short>
 </element>
 
@@ -841,11 +853,13 @@ Changing this property after the process was started has no effect.
 <short>Working directory of the process.</short>
 <descr>
 <p>
-<var>CurrentDirectory</var> specifies the working directory of the newly
-started process.
+<var>CurrentDirectory</var> specifies the initial working directory of the newly
+started process. 
 </p>
 <p>
-Changing this property after the process was started has no effect.
+Changing this property after the process was started has no effect, 
+and if the process or any of its children changes their working directory, 
+it will not reflect this.
 </p>
 </descr>
 <seealso>
@@ -881,12 +895,13 @@ On UNIX, this parameter is ignored.
 <short>Environment variables for the new process</short>
 <descr>
 <p>
-<var>Environment</var> contains the environment for the new process;
-it's a list of <var>Name=Value</var> pairs, one per line. 
+<var>Environment</var> contains the complete environment for the new process;
+it is a list of <var>Name=Value</var> pairs, one per line. You must specify all variables, 
+i.e. the variables defined here are <em>not</em> added to the environment of the current process.
 </p>
 <p>
 If it is empty, the environment of the current process is 
-passed on to the new process.
+passed on to the new process. 
 </p>
 </descr>
 <seealso>
@@ -1331,6 +1346,11 @@ only process-global things should be performed in this event handler.
 </seealso>
 </element>
 
+<!-- argument Visibility: default -->
+<element name="TProcessForkEvent.Sender">
+<short><var>TProcess</var> instance that caused the fork.</short>
+</element>
+
 <!-- property Visibility: published -->
 <element name="TProcess.Executable">
 <short>Executable name. Supersedes <var>CommandLine</var> and <var>ApplicationName</var>.</short>
@@ -1624,6 +1644,12 @@ On error, <var>False</var> is returned.
 <short>Options to use when running the command</short>
 </element>
 
+<element name="RunCommandIndir.SWOptions">
+<short>
+Show window options for the process. Default value is swoNone.
+</short>
+</element>
+
 <!-- argument Visibility: default -->
 <element name="RunCommand.Options">
 <short>Options to use when running the command</short>
@@ -1668,7 +1694,7 @@ separate command-line arguments. This version of the function is deprecated.
 
 <!-- argument Visibility: default -->
 <element name="RunCommand.cmdline">
-<short>Filename of binary to start and command-line arguments, separated by whitespace.</short>
+<short>Qualified path to the binary to start, and command-line arguments separated by whitespace.</short>
 </element>
 
 <!-- argument Visibility: default -->
@@ -1676,15 +1702,36 @@ separate command-line arguments. This version of the function is deprecated.
 <short><var>TProcess</var> instance that caused the fork.</short>
 </element>
 
+<!-- argument Visibility: default -->
+<element name="RunCommand.Options">
+<short>
+Process options enabled in the run loop for the command.
+</short>
+</element>
+
+<!-- argument Visibility: default -->
+<element name="RunCommand.SWOptions">
+<short>
+Show window options for the process. Default value is swoNone.
+</short>
+</element>
+
+<!-- uses unit Visibility: default -->
+<element name="Math">
+<short>Min and Max</short>
+</element>
+
 <!-- property Visibility: public -->
 <element name="TProcess.ExitCode">
 <short>Exit code of the process</short>
 <descr>
+<p>
 <var>ExitCode</var> is the actual exit code of the process. On UNIX, this may differ
 from the <link id="ExitStatus"/> value if the process was terminated by a
 signal: in that case <var>ExitStatus</var> is the raw exit status as
 reported by one of the UNIX <var>Wait</var> command, and <var>ExitCode</var> is the
 exit code reported by the program.
+</p>
 </descr>
 <seealso>
 <link id="TProcess.ExitStatus"/>
@@ -1827,7 +1874,7 @@ but is a 2-byte (unicode) string in the unicode version of <var>TProcess</var>.
 <element name="TProcessStrings">
 <short>Special-Purpose stringlist</short>
 <descr>
-<var>TProcessStrings</var> is a simple string list class which, depending on the version (unicode or not) contains unicode strings or single-byte strings: in the latter case it is an alias for the <link id="#classes.TStrings"/> class. 
+<var>TProcessStrings</var> is a simple string list class which, depending on the version (unicode or not) contains unicode strings or single-byte strings: in the latter case it is an alias for the <link id="#rtl.classes.TStrings"/> class. 
 </descr>
 <seealso>
 <link id="TProcess"/>
@@ -1838,8 +1885,11 @@ but is a 2-byte (unicode) string in the unicode version of <var>TProcess</var>.
 <element name="TProcessStringList">
 <short>Alias for <var>TProcessStrings</var></short>
 <descr>
+<p>
 <var>TProcessStringList</var> is an alias for <link id="TProcessStrings"/> in unicode code, 
-or an alias for the <link id="#classes.TStringList"/> class in single-byte string mode.
+or an alias for the <link id="#rtl.classes.TStringList">TStringList</link> class in single-byte
+string mode.
+</p>
 </descr>
 <seealso>
 <link id="TProcessStrings"/>
@@ -1847,12 +1897,12 @@ or an alias for the <link id="#classes.TStringList"/> class in single-byte strin
 </element>
 
 <!-- argument Visibility: default -->
-<element name="TPROCESS.WaitOnExit.Timeout">
+<element name="TProcess.WaitOnExit.Timeout">
 <short>Timeout for wait (in milliseconds)</short>
 </element>
 
 <!-- function Visibility: public -->
-<element name="TPROCESS.ReadInputStream">
+<element name="TProcess.ReadInputStream">
 <short>Read available data from input stream</short>
 <descr>
 <p>
@@ -1872,37 +1922,37 @@ None.
 </element>
 
 <!-- function result Visibility: default -->
-<element name="TPROCESS.ReadInputStream.Result">
+<element name="TProcess.ReadInputStream.Result">
 <short>True if data was read</short>
 </element>
 
 <!-- argument Visibility: default -->
-<element name="TPROCESS.ReadInputStream.p">
+<element name="TProcess.ReadInputStream.p">
 <short>Pipe stream to read data from</short>
 </element>
 
 <!-- argument Visibility: default -->
-<element name="TPROCESS.ReadInputStream.BytesRead">
+<element name="TProcess.ReadInputStream.BytesRead">
 <short>Number of bytes read during the call</short>
 </element>
 
 <!-- argument Visibility: default -->
-<element name="TPROCESS.ReadInputStream.DataLength">
+<element name="TProcess.ReadInputStream.DataLength">
 <short>On entry, length of data. Updated with new length when the call ends</short>
 </element>
 
 <!-- argument Visibility: default -->
-<element name="TPROCESS.ReadInputStream.Data">
+<element name="TProcess.ReadInputStream.Data">
 <short>String data or stream data</short>
 </element>
 
 <!-- argument Visibility: default -->
-<element name="TPROCESS.ReadInputStream.MaxLoops">
+<element name="TProcess.ReadInputStream.MaxLoops">
 <short>Number of times to check if data is available</short>
 </element>  
 
 <!-- function Visibility: public -->
-<element name="TPROCESS.RunCommandLoop">
+<element name="TProcess.RunCommandLoop">
 <short>Execute command and collect output in strings</short>
 <descr>
 <p>
@@ -1912,7 +1962,7 @@ and the error output is returned in the <var>stderrstring</var> string.
 </p>
 <p>
 During collection of data or on error, the <link id="TProcess.OnRunCommandEvent"/> event handler is called during the various stages of the call.
-If it is not explicitly set, a sleep period specified by <link id="TPROCESS.RunCommandSleepTime"/> is interjected between the various read calls.
+If it is not explicitly set, a sleep period specified by <link id="TProcess.RunCommandSleepTime"/> is interjected between the various read calls.
 </p>
 <p>
 The return value of this call is 1 for error, zero for success.
@@ -1920,33 +1970,32 @@ The return value of this call is 1 for error, zero for success.
 </descr>
 <seealso>
 <link id="TProcess.OnRunCommandEvent"/>
-<link id="TPROCESS.RunCommandSleepTime"/>
-
+<link id="TProcess.RunCommandSleepTime"/>
 </seealso>
 </element>
 
 <!-- function result Visibility: default -->
-<element name="TPROCESS.RunCommandLoop.Result">
+<element name="TProcess.RunCommandLoop.Result">
 <short>1 on error, 0 on success.</short>
 </element>
 
 <!-- argument Visibility: default -->
-<element name="TPROCESS.RunCommandLoop.outputstring">
+<element name="TProcess.RunCommandLoop.outputstring">
 <short>Standard output as a string</short>
 </element>
 
 <!-- argument Visibility: default -->
-<element name="TPROCESS.RunCommandLoop.stderrstring">
+<element name="TProcess.RunCommandLoop.stderrstring">
 <short>Standard error output as a string</short>
 </element>
 
 <!-- argument Visibility: default -->
-<element name="TPROCESS.RunCommandLoop.anexitstatus">
+<element name="TProcess.RunCommandLoop.anexitstatus">
 <short>Exit status of the process</short>
 </element>
 
 <!-- property Visibility: public -->
-<element name="TPROCESS.OnRunCommandEvent">
+<element name="TProcess.OnRunCommandEvent">
 <short>Event handler, called when <var>RunCommandLoop</var> is executing</short>
 <descr>
 <var>OnRunCommandEvent</var> is a progress report callback, 
@@ -1958,7 +2007,7 @@ called at various stages of the <link id="TProcess.RunCommandLoop"/> call and wh
 </element>
 
 <!-- property Visibility: public -->
-<element name="TPROCESS.RunCommandSleepTime">
+<element name="TProcess.RunCommandSleepTime">
 <short>Sleep time between attempts to collect data</short>
 <descr>
 </descr>

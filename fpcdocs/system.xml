@@ -420,7 +420,7 @@ nothing, and no code is generated for the <var>Assert</var> call.
 
 Enabling and disabling assertions at compile time is done via
 the <var>\$C</var> or <var>\$ASSERTIONS</var> compiler switches. These are
-global switches.
+local switches.
 
 The default behavior of the assert call can be changed by 
 setting a new handler in the <var>AssertErrorProc</var> variable.
@@ -820,11 +820,17 @@ None.
 
 
 <element name="Concat">
-<short>Append one string to another.</short>
+<short>Append one string or dynamic array to another.</short>
 <descr>
+<p>
 <var>Concat</var> concatenates the strings <var>S1</var>,<var>S2</var> etc. to one long
-string. The resulting string is truncated at a length of 255 bytes.
-The same operation can be performed with the <var>+</var> operation.
+string. The same operation can be performed with the <var>+</var> operation.
+</p>
+<p>
+<var>Concat</var> can also be used to concatenate 2 dynamic arrays of any type, 
+resulting in a new dynamic array containing all the elements of the dynamic 
+arrays used in the call.
+</p>
 </descr>
 <errors>
 None.
@@ -888,8 +894,8 @@ the original one, and copies <var>Count</var> elements from the old array,
 starting at the position in <var>Index</var>. 
 </p>
 <p>
-In Delphi mode, the <var>Count</var> argument can be omitted. In that case, the string (or dynamic
-array) is copied from the position <var>Index</var> till the end of the string or array.
+The <var>Count</var> argument can be omitted.
+In that case, the string (or dynamic array) is copied from the position <var>Index</var> till the end of the string or array.
 </p>
 </descr>
 <errors>
@@ -948,8 +954,14 @@ None.
 <element name="Dec">
 <short>Decrease value of variable</short>
 <descr>
+<p>
 <var>Dec</var> decreases the value of <var>X</var> with <var>Decrement</var>.
 If <var>Decrement</var> isn't specified, then 1 is taken as a default.
+</p>
+<p>
+<var>Dec</var> can be used on typed pointers: in that case it decreases the value with <var>Decrement</var> the size of the type the pointer points to.
+This works independently of the setting of the <var>$POINTERMATH</var> directive.
+</p>
 </descr>
 <errors>
 A range check can occur, or an underflow error, if an attempt is made
@@ -1581,8 +1593,14 @@ None.
 <element name="Inc">
 <short>Increase value of integer variable</short>
 <descr>
+<p>
 <var>Inc</var> increases the value of <var>X</var> with <var>Increment</var>.
 If <var>Increment</var> isn't specified, then 1 is taken as a default.
+</p>
+<p>
+<var>Inc</var> can be used on typed pointers: in that case it increases the value with <var>Increment</var> the size of the type the pointer points to.
+This works independently of the setting of the <var>$POINTERMATH</var> directive.
+</p>
 </descr>
 <errors>
 If range checking is on, then A range check can occur, or an overflow
@@ -2839,8 +2857,9 @@ of elements. The elements are numbered from index 0, so the count runs from
 0 to <var>Len-1</var>. If Zero is specified, the array is cleared and removed from memory.
 </p>
 <p>
-In case the length is set to a smaller length than the current one, the existing elements
-(characters in case of a string) are kept.
+In case the length is set to a smaller length than the current one, the elements <var>0-(Len-1)</var>
+(or characters <var>1-Len</var> in case of a string) are kept. 
+The elements that fall outside the new length are finalized if the array element is a managed type. 
 </p>
 <p>
 In case the length is set to a larger length than the current one, the new
@@ -3323,7 +3342,7 @@ undefined.
 
 
 <element name="Write">
-<short>Write variable to a text file</short>
+<short>Write variable to a text file or standard output</short>
 <descr>
 <p>
 <var>Write</var> writes the contents of the variables <var>V1</var>, <var>V2</var>, <var>V3</var>  etc. to
@@ -3374,6 +3393,15 @@ In particular, for console output, it is the programmer's responsibility
 to make sure that the codepage of the string matches the codepage of the
 console.
 </remark>
+<remark>
+Note that on MS Windows GUI applications do not have a standard output by default: 
+Standard file descriptors are available only when the
+<pre>
+{$APPPTYPE CONSOLE}
+</pre>
+directive is present in the program file.
+</remark>
+
 </descr>
 <errors>
 If an error occurs, a run-time error is generated. This behavior can be
@@ -3388,7 +3416,7 @@ controlled with the <var>{$I}</var> switch.
 </element>
 
 <element name="WriteLn">
-<short>Write variable to a text file and append newline</short>
+<short>Write variable to a text file or standard output and append newline</short>
 <descr>
 <p>
 <var>WriteLn</var> does the same as <link id="Write"/> for text files, and emits a
@@ -3408,6 +3436,9 @@ In particular, for console output, it is the programmer's responsibility
 to make sure that the codepage of the string matches the codepage of the
 console.
 </remark>
+<p>
+More details can be found in the <link id="Write"/> description.
+</p>
 </descr>
 <errors>
 If an error occurs, a run-time error is generated. This behavior can be
@@ -4908,9 +4939,8 @@ the current class.
 <element name="TObject.ClassName">
 <short>Return the current class name.</short>
 <descr>
-<var>ClassName</var> returns the class name for the current class, in
-all-uppercase letters. To check for the class name, use the <link
-id="TObject.ClassNameIs">ClassNameIs</link> class method.
+<var>ClassName</var> returns the class name for the current class.
+To check for the class name, you can use the <link id="TObject.ClassNameIs">ClassNameIs</link> class method.
 </descr>
 <errors>
 None.
@@ -4927,8 +4957,7 @@ None.
 <short>Check whether the class name equals the given name.</short>
 <descr>
 <var>ClassNameIs</var> checks whether <var>Name</var> equals the class name.
-It takes of case sensitivity, i.e. it converts both names to uppercase
-before comparing.
+It takes of case sensitivity.
 </descr>
 <seealso>
 <link id="TObject.ClassInfo">ClassInfo</link>
@@ -14989,11 +15018,11 @@ on the architecture the program runs on. On most processors, it should be one of
 with the size of a pointer, so 32-bit on 32-bit platforms, 64-bit on 64-bit
 platforms.
 
-It is advisable to use unsigned variants of this type. See <var>PtrInt</var>
+It is advisable to use unsigned variants of this type. See <link id="PtrUInt"/>
 for details.
 </descr>
 <seealso>
-<link id="PtrInt"/>
+<link id="PtrUInt"/>
 <link id="NativeUInt"/>
 </seealso>
 </element>

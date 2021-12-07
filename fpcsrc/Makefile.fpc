@@ -4,7 +4,7 @@
 
 [package]
 name=fpc
-version=3.2.0
+version=3.2.2
 
 [target]
 dirs=compiler rtl utils packages installer tests
@@ -199,7 +199,7 @@ INSTALLOPTS=FPC=$(PPNEW) ZIPDESTDIR=$(BASEDIR) FPCMAKE=$(FPCMAKENEW)
 BuildOnlyBaseCPUs=jvm
 
 ifneq ($(wildcard utils),)
-NOUTILSTARGETS=embedded gba nds msdos win16 macos $(BuildOnlyBaseCPUs)
+NOUTILSTARGETS=embedded gba nds msdos win16 macosclassic $(BuildOnlyBaseCPUs)
 ifeq ($(findstring $(OS_TARGET),$(NOUTILSTARGETS)),)
 ifdef BUILDFULLNATIVE
 UTILS=1

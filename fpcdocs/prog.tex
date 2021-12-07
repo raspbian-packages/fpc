@@ -43,7 +43,7 @@
 \begin{document}
 \title{Free Pascal \\ Programmer's Guide}
 \docdescription{Programmer's Guide for \fpc, Version \fpcversion}
-\docversion{3.2.0}
+\docversion{3.2.2}
 \input{date.inc}
 \author{Micha\"el Van Canneyt}
 \maketitle
@@ -126,7 +126,9 @@ Thus \verb|{$I+}| is equivalent to \verb|{$IOCHECKS ON}| or
 The long forms of the switches are the same as their Delphi
 counterparts.
 
-
+It is worth mentioning that when defaults are indicated, this means defaults
+in the absence of a configuration file. The configuration files distributed
+with FPC will change some of the defaults mentioned here.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Local switches
@@ -195,9 +197,8 @@ of the following:
 \item [att\ ] Indicates that \var{asm} blocks contain AT\&T syntax assembler.
 \item [intel\ ] Indicates that \var{asm} blocks contain Intel syntax
 assembler.
-\item [direct\ ] Tells the compiler that asm blocks should be copied
-directly to the assembler file. It is not possible to use such assembler
-blocks when the internal assembler of the compiler is used.
+\item [default\ ] Tells the compiler to use the default assembler style for
+the current platform.
 \end{description}
 These switches are local, and retain their value to the end of the unit that
 is compiled, unless they are replaced by another directive of the same type.
@@ -1324,6 +1325,39 @@ The following strings are supported:
 \item[REMOVEEMPTYPROCS] remove calls to empty procedures.
 \item[CSE] Use common subexpression elimination
 \item[DFA] Use DFA (Data Flow Analysis).
+\item[AUTOINLINE] Try to automatically inline procedures where appropriate.
+\item[LEVEL1] Level 1 optimizations.
+\item[LEVEL2] Level 2 optimizations.
+\item[LEVEL3] Level 3 optimizations.
+\item[LEVEL4] Level 4 optimizations.
+\item[SCHEDULE] ARM CPU only: perform instruction scheduling. Enabled by default at -O3 and higher. 
+\item[USEEBP] i8086 and i386 CPUs only: use the (E)BP register for register variables when
+it is not used to hold the frame pointer. Enabled by default when using
+level 4 optimizations.
+\item[USERBP] x86-64 CPU only: use the RBP register for register variables when it
+is not used to hold the frame pointer. Enabled by default when using
+level 4 optimizations.
+\item[DEADVALUES] Allow removing expressions whose result is not used, even when this can
+change program behaviour. For example, range check errors can disappear when
+indexing an array and not doing anything with the loaded value, or
+access violations due to invalid pointer dereferences can disappear.\\
+{\em Note:} it does not (and must not) remove expressions that have explicit
+side-effects.  Enabled by default when using level 4 optimizations.
+\item[CONSTPROP]  Perform constant propagation across statements. Enabled by default when using level
+3 optimizations or higher.
+\item[DEADSTORE] Remove stores to variables if the value of that variable is no longer
+used afterwards. This optimization is not enabled by default at any optimization level.
+Requires DFA (Data Flow Analysis) to be active (otherwise it won't do anything), which itself
+is enabled by default when using level 3 optimizations or higher.
+\item[FORCENOSTACKFRAME]  ARM and Xtensa CPU only (currently the switch is
+not yet used there). Do not use a separate frame pointer register if a
+procedure/function has no nested pure assembler procedures/functions.
+This requires the compiler to estimate the size of the stack frame in
+advance, and if that estimate is wrong this will result in an internal
+compiler error. For this reason it is not enabled by default at any optimization level.
+\item[USELOADMODIFYSTORE] Optimize expressions of the form "x := x <op> y" by directly modifying
+the value of x rather than loading, modifying and then storing it. This is
+not enabled by default at any optimization level.
 \end{description}
 You can disable a certain optimization by prefixing the value with \var{NO}.
 
@@ -1339,7 +1373,7 @@ Multiple optimizations can be specified with:
 \begin{verbatim}
 {$OPTIMIZATION REGVAR,SIZE,LEVEL2}
 \end{verbatim}
-Dusable loop unrolling with:
+Disable loop unrolling with:
 \begin{verbatim}
 {$OPTIMIZATION NOLOOPUNROLL}
 \end{verbatim}
@@ -1368,8 +1402,8 @@ The default enumeration size depends on the compiler mode:
 \end{itemize}
 
 As an alternative form one can use \var{\{\$Z1\}}, \var{\{\$Z2\}}
-\var{\{\$Z4\}}. The \var{\{\$Z\}} form takes a boolean argument, 
-where \var{ON} is equivalent to \var{\{\$Z4\}} and \var{OFF} is 
+\var{\{\$Z4\}}. The \var{\{\$Z\}} form takes a +/- argument, 
+where \var{+} is equivalent to \var{\{\$Z4\}} and \var{-} is 
 equivalent to \var{\{\$Z1\}}.
 
 So the following code
@@ -1389,7 +1423,7 @@ Type
 \end{verbatim}
 or equivalent to
 \begin{verbatim}
-{$Z OFF}
+{$Z-}
 Type
   Days = (monday, tuesday, wednesday, thursday, friday,
           saturday, sunday);
@@ -1474,9 +1508,10 @@ to check for overflow when doing computations with integers.
 When an overflow occurs, the run-time library will generate a run-time error 215: 
 it prints a message \var{Overflow at xxx}, and exits the program with exit code 215.
 
-\begin{remark}Overflow checking behavior is not the same as in
+\begin{remark}
+Overflow checking behavior is not the same as in
 Turbo Pascal since all arithmetic operations are done via 32-bit or
-64-bit values. Furthermore, the \var{Inc()} and \var{Dec} standard system
+64-bit values. Furthermore, the \var{Inc()} and \var{Dec()} standard system
 procedures {\em are} checked for overflow in \fpc, while in Turbo
 Pascal they are not.
 \end{remark}
@@ -1487,7 +1522,7 @@ The generation of overflow checking code can also be controlled
 using the \var{-Co} command line compiler option (see the \userref).
 
 In Delphi, overflow checking is only switchable at the procedure level. 
-In Free Pascal, the \var{\{\$Q \}} directive can be used at the expression level.
+In Free Pascal, the \var{\{\$Q\}} directive can be used at the expression level.
 
 \begin{remark}
 Overflow checking and range checking (see the next section) are basically the same error, 
@@ -1570,12 +1605,13 @@ the location where the instruction was executed
 
 \subsection{\var{\protect\$SCOPEDENUMS} Control use of scoped enumeration types}
 The boolean \var{\$SCOPEDENUMS} directive controls how enumeration type values 
-are inserted in the symbol tables. In its default state (OFF) the
-enumeration values are inserted directly in the symbol table of the current
-scope. If the directive is set to \var{ON} then the values are inserted
-inside a scope with the name of the enumeration type.
+are inserted in the symbol tables. The enumeration values are always
+inserted in a scoped manner. 
 
-Practically this means that the following is the default behavior:
+In its default state (\var{OFF}) the enumeration values are additionally inserted 
+directly in the symbol table of the current scope. That means that the
+following 2 assignments are valid: 
+
 \begin{verbatim}
 {$SCOPEDENUMS OFF}
 Type
@@ -1586,17 +1622,14 @@ Var
 
 begin
   A:=one;
-end.
-\end{verbatim}
-The value \var{one} can be referenced directly. The following will give an
-error:
-\begin{verbatim}
-begin
   A:=TMyEnum.one;
 end.
 \end{verbatim}
-However, if the \var{SCOPEDENUMS} directive is set to \var{ON}, then the
-assignment must be made as follows:
+
+If the directive is set to \var{ON} then the enumeration values are {\em
+not} inserted in the global scope.
+
+This means the assignment must be made as follows:
 \begin{verbatim}
 {$SCOPEDENUMS ON}
 Type
@@ -1607,9 +1640,11 @@ Var
 
 begin
   A:=TMyEnum.one;
+  // The following will give an error
+  // A:=one;
 end.
 \end{verbatim}
-i.e. the value must be prefixed with the type name.
+i.e. in the \var{ON} state of the directive, the value must always be prefixed with the type name.
 
 \subsection{\var{\protect\$SETC} : Define and assign a value to a symbol}
 
@@ -1663,15 +1698,6 @@ be kept running correctly, neither in a production environment, nor under
 debugging. 
 \end{remark}
 
-\subsection{\var{\protect\$STATIC} : Allow use of \var{Static} keyword.}
-
-If you specify the \var{\{\$STATIC ON\}} directive, then \var{Static}
-methods are allowed for objects. \var{Static} objects methods do not require
-a \var{Self} variable. They are equivalent to \var{Class} methods for
-classes. By default, \var{Static} methods are not allowed. Class methods
-are always allowed. Note that also static fields can be defined.
-
-This directive is equivalent to the \var{-St} command line option.
 
 \subsection{\var{\protect\$STOP} : Generate fatal error message}
 
@@ -2279,6 +2305,9 @@ The feature \var{XXX} can be one of the following:
 \item[PROPERTIES] Allow use of properties.
 \item[REPEATFORWARD] Implementation and Forward declaration must match completely.
 \item[RESULT] Enable the \var{Result} identifier for function results.
+\item[SYSTEMCODEPAGE] Set the codepage to the code page of the platform on
+which the compiler is running. This is automatically enabled if you selected
+delphiunicode mode: \var{\{\$mode delphiunicode\}}.  
 \item[TYPEHELPERS] Allow the use of type helpers.
 \item[UNICODESTRINGS] string is by default unicode string.
 \end{description}
@@ -2384,20 +2413,21 @@ tells the compiler to compile \file{myunit} using PIC code.
 
 \subsection{\var{\protect\$POINTERMATH} : Allow use of pointer math}
 
+By default, pointer arithmetic is enabled in FPC/OBJFPC modes and disabled in DELPHI mode. 
+The directive {\$POINTERMATH ON/OFF} can be used to toggle pointer arithmetic support. 
+Types declared while {\$POINTERMATH ON} is in effect also support pointer arithmetic. 
+
 This boolean directive enables or disables the use of pointer arithmetic in
-expressions involving pointers. When enabled, the
-difference of 2 pointers is a valid integer expression, and an integer value 
+expressions involving pointers. 
+When enabled, the difference of 2 pointers is a valid integer expression, and an integer value 
 can be added to a pointer value.
-By default, POINTERMATH is on.
 
 The following 
 \begin{verbatim}
 {$POINTERMATH OFF}
 unit MyUnit;
 \end{verbatim}
-tells the compiler to give an error whenever pointer math appears in an
-expression.
-
+tells the compiler to give an error whenever pointer math appears in an expression.
 
 \subsection{\var{\protect\$PROFILE} : Profiling}
 
@@ -2486,7 +2516,8 @@ Uses strings;
 \end{verbatim}
 
 will add the directories \file{../units} and \file{../i386/units} to the unit
-path of the compiler. The compiler will look for the file \file{strings.ppu}
+path of the compiler: these directories are relative to the unit file in
+which the directive appears. The compiler will look for the file \file{strings.ppu}
 in both these directories, and will link the first found file in the
 program. This directive is equivalent to the \var{-Fu} command line switch.
 
@@ -2499,7 +2530,18 @@ of the locations where the files reside. If you are not sure, it is better
 practice to use makefiles and makefile variables.
 
 Note that this switch does not propagate to other units, i.e. its scope
-is limited to the current unit.
+is limited to the current unit (this is in line with the fact that the paths
+are relative to the current unit.)
+
+The \var{uses} clause construct \var{uses a in 'sub/a.pp'} is relative to the 
+current working directory of the compiler. By adding a directive to your
+program:
+\begin{verbatim}
+{$UNITPATH sub}
+
+uses a in 'sub/a.pp';
+\end{verbatim}
+you will make sure the compiler will always find the sources.
 
 \subsection{\var{\protect\$VARPROPSETTER} : Enable use of var/out/constref
 parameters for property setters.}
@@ -2551,7 +2593,8 @@ The compiler will issue a warning when it is encountered.
 
 \subsection{\var{\protect\$X} or \var{\protect\$EXTENDEDSYNTAX} : Extended syntax}
 
-Extended syntax allows you to drop the result of a function. This means that
+Extended syntax allows you to drop the result of a function and perform
+pointer arithmetic. This means that
 you can use a function call as if it were a procedure. By default this feature
 is on. You can switch it off using the \var{\{\$X-\}} or
 \var{\{\$EXTENDEDSYNTAX OFF\}}directive.
@@ -2573,11 +2616,27 @@ function for certain side-effects it has, but you don't need the function
 result. In this case you don't need to assign the function result, saving
 you an extra variable.
 
+Similarly, the pointer math wil be disabled:
+\begin{verbatim}
+{$x-}
+var
+  x,p : pointer;
+
+begin
+  p:=pbyte(x)+1;
+  p:=pdouble(x)+4;
+end;
+\end{verbatim}
+will result in an error for both lines:
+\begin{verbatim}
+ex.pp(13,14) Error: Operation "+" not supported for types "PByte" and "ShortInt"                                                            
+ex.pp(15,16) Error: Operation "+" not supported for types "PDouble" and "ShortInt"
+\end{verbatim}
+
 The command line compiler switch \var{-Sa1} has the same effect as the
 \var{\{\$X+\}} directive.
 
 By default, extended syntax is assumed.
-
 
 \subsection{\var{\protect\$Y} or \var{\protect\$REFERENCEINFO} : Insert Browser information}
 
@@ -2713,7 +2772,8 @@ will be replaced immediately by \var{expr}. This replacement works
 recursively, meaning that when the compiler expanded one macro, it
 will look at the resulting expression again to see if another replacement
 can be made. This means that care should be taken when using macros, 
-because an infinite loop can occur in this manner.
+because an infinite loop can occur in this manner (recent compiler 
+versions will warn about this).
 
 Here are two examples which illustrate the use of macros:
 \begin{verbatim}
@@ -2737,8 +2797,9 @@ sum          { will be expanded to 'a:=a+b;'
 sum          { Will be infinitely recursively expanded... }
 ...
 \end{verbatim}
-On my system, the last example results in a heap error, causing the compiler
-to exit with a run-time error 203.
+As of version 3.3.1, the compiler will warn about recursive macros, but
+previous versions of the compiler would recursively expand the macros till
+it runs out of memory .
 
 \begin{remark}
 Macros defined in the interface part of a unit are not
@@ -3616,7 +3677,7 @@ unit:
 \end{enumerate}
 
 The detailed contents and structure of this file are described in appendix
-\ref{ch:AppA}, on page \pageref{ch:AppD}.
+\ref{ch:AppA}, on page \pageref{ch:AppA}.
 You can examine a unit description file using the \file{ppudump}
 program, which shows the contents of the file.
 
@@ -4125,7 +4186,7 @@ creating shared libraries, \seec{libraries}.
 \section{Calling mechanism}
 \label{se:CallingConventions}
 
-By default, the calling mechanism the compiler uses is \var{register}, 
+By default, the calling mechanism the compiler uses on I386 is \var{register}, 
 that is, the compiler will try to pass as many parameters as possible by 
 storing them in a free register. Not all registers are used, because
 some registers have a special meaning, but this depends on the CPU.
@@ -4185,6 +4246,11 @@ platform can be specified with
 The \var{popstack} modifier is no longer supported as of version 2.0, 
 but has been renamed to \var{oldfpccall}. The \var{saveregisters} modifier
 can no longer be used.
+\end{remark}
+
+\begin{remark}
+There are more calling conventions than listed here, please see the
+reference guide, section on modifiers for additional calling conventions.
 \end{remark}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -5064,8 +5130,8 @@ point value.
 The \var{single} type occupies 4 bytes of storage space,
 and its memory structure is the same as the IEEE-754 single
 type. This type is the only type which is guaranteed to
-be available on all platforms (either emulated via software
-or directly via hardware).
+be available on all platforms that have hardware or software emulation.
+This means that the AVR platform for example does not have this type.
 
 The memory format of the \var{single} format looks like
 what is shown in \seefig{single}.
@@ -5280,7 +5346,8 @@ A static array is stored as a contiguous sequence of variables
 of the components of the array. The components with the
 lowest indexes are stored first in memory. No alignment
 is done between each element of the array. A multi-dimensional
-array is stored with the rightmost dimension increasing first.
+array is stored with the rightmost dimension increasing first
+(row-major order).
 
 \subsection{Dynamic array types}
 
@@ -6049,17 +6116,32 @@ way of internationalization.
 
 For each unit that is compiled and that contains a resourcestring section,
 the compiler generates a file that has the name of the unit, and an
-extension \file{.rst}. The format of this file is as follows:
+extension \file{.rsj}. The format of this file is a JSON file (in codepage UTF8), 
+structured as follows (formatting added for clarity):
+\begin{verbatim}
+{ "version":1,
+  "strings":[
+    {"hash":53831826,
+     "name":"custapp.serrinvalidoption",
+     "sourcebytes":[73,110,118,97,108,105,100,32,111,112,116,105,
+                    111,110,32,97,116,32,112,111,115,105,116,105,
+                    111,110,32,37,100,58,32,34, 37,115,37],
+      "value":"Invalid option at position %d: \"%s\""
+   }
+  ]
+}
+\end{verbatim}
+The global JSON  object contains 2 elements: a version number and an array
+called \var{strings}. The array contains an element (a JSON object) for every resource string in the
+unit. This JSON object contains the following properties:
 \begin{enumerate}
-\item An empty line.
-\item A line starting with a hash sign (\var{\#}) and the hash value of the
-  string, preceded by the text \var{hash value =}.
-\item A third line, containing the name of the resource string in the format
-\var{unitname.constantname}, all lowercase, followed by an equal sign, and
-the string value, in a format equal to the pascal representation of this
-string. The line may be continued on the next line, in that case it reads as
-a pascal string expression with a plus sign in it.
-\item Another empty line.
+\item \var{hash}: a has value of the string, for fast lookup.
+\item \var{name}: the fully qualified name of the sresource string, in all lowercase letters. 
+The name is composed of the unit name, a dot and the resource string
+identifier.
+\item \var{sourcebytes}: The sourcebytes are the bytes that compose the string as they
+were read from the source file.
+\item \var{value} the value of the resource string, in UTF8.
 \end{enumerate}
 If the unit contains no \var{resourcestring} section, no file is generated.
 
@@ -6084,15 +6166,29 @@ end.
 \end{verbatim}
 Will result in the following resource string file:
 \begin{verbatim}
-
-# hash value = 5048740
-rsdemo.first='First'
-
-
-# hash value = 171989989
-rsdemo.second='A Second very long string that should cover more than 1 li'+
-'ne'
-
+{ 
+  "version":1,
+  "strings":[
+    {"hash":5048740,
+     "name":"rsdemo.first",
+      "sourcebytes":[70,105,114,115,116],
+      "value":
+    "First"
+    },
+    {"hash":171989989,
+     "name":"rsdemo.second",
+     "sourcebytes":[65,32,83,101,99,111,110,100,32,
+                    118,101,114,121,32,108,111,110,
+                    103,32,115,116,114,105,110,103,
+                    32,116,104,97,116,32,115,104,
+                    111,117,108,100,32,99,111,118,
+                    101,114,32,109,111,114,101,32,
+                    116,104,97,110,32,49,32,108,
+                    105,110,101],
+     "value":"A Second very long string that 
+              should cover more than 1 line"}
+  ]
+}
 \end{verbatim}
 The hash value is calculated with the function \var{Hash}. It is present in
 the \file{objpas} unit. The value is the same value that the GNU gettext
@@ -6135,84 +6231,47 @@ program, if it contains a \var{resourcestring} section as well. Each
 resourcestring is stored with its name, hash value, default value, and
 the current value, all as \var{AnsiStrings}.
 
-The objpas unit offers methods to retrieve the number of resourcestring
-tables, the number of strings per table, and the above information for each
-string. It also offers a method to set the current value of the strings.
-
-Here are the declarations of all the functions:
+The objpas unit offers 2 methods to set the current value of the strings:
 \begin{verbatim}
-Function ResourceStringTableCount : Longint;
-Function ResourceStringCount(TableIndex: longint): longint;
-Function GetResourceStringName(TableIndex,
-                               StringIndex: Longint): Ansistring;
-Function GetResourceStringHash(TableIndex,
-                               StringIndex: Longint): Longint;
-Function GetResourceStringDefaultValue(TableIndex,
-                               StringIndex: Longint): AnsiString;
-Function GetResourceStringCurrentValue(TableIndex,
-                               StringIndex: Longint): AnsiString;
-Function SetResourceStringValue(TableIndex,
-                                StringIndex : longint;
-                                Value: Ansistring): Boolean;
-Procedure SetResourceStrings (SetFunction: TResourceIterator);
+type
+  TResourceIterator = 
+    Function (Name,Value : AnsiString;  
+              Hash : Longint; 
+              arg:pointer) : AnsiString;
+
+Procedure SetResourceStrings (SetFunction: TResourceIterator;
+                              arg: pointer);
+Procedure SetUnitResourceStrings (UnitName: string;
+                               SetFunction: TResourceIterator;
+                               arg: pointer);
 \end{verbatim}
 Two other function exist, for convenience only:
 \begin{verbatim}
 Function Hash(S: AnsiString): longint;
 Procedure ResetResourceTables;
+Procedure FinalizeResourceTables;
 \end{verbatim}
 Here is a short explanation of what each function does. A more detailed
 explanation of the functions can be found in the \refref.
 \begin{description}
-\item[ResourceStringTableCount] returns the number of resource string tables
-in the program.
-\item[ResourceStringCount] returns the number of resource string entries in
-a given table (tables are denoted by a zero-based index).
-\item[GetResourceStringName] returns the name of a resource string in a
-resource table. This is the name of the unit, a dot (.) and the name of
-the string constant, all in lowercase. The strings are denoted by index,
-also zero-based.
-\item[GetResourceStringHash] returns the hash value of a resource string, as
-calculated by the compiler with the \var{Hash} function.
-\item[GetResourceStringDefaultValue] returns the default value of a resource
-string, i.e. the value that appears in the resource string declaration, and
-that is stored in the binary.
-\item[GetResourceStringCurrentValue] returns the current value of a resource
-string, i.e. the value set by the initialization (the default value), or the
-value set by some previous internationalization routine.
-\item[SetResourceStringValue] sets the current value of a resource string.
-This function must be called to initialize all strings.
 \item[SetResourceStrings] giving this function a callback will cause the
-calback to be called for all resource strings, one by one, and set the value
-of the string to the return value of the callback.
-\end{description}
-Two other functions exist, for convenience only:
-\begin{description}
+calback to be called for all resource strings, one by one. On return of the
+callback the value of the resource string will be set to the return value 
+of the callback. 
+The \var{arg} pointer is passed to the callback (this can be used to pass e.g. an object
+instance).
+\item[SetUnitResourceStrings] Is identical in behaviour to
+\var{SetResourceStrings}, but only calls the callback for the resource
+strings of unit \var{UnitName}.
 \item [Hash] can be used to calculate the hash value of a string. The hash
 value stored in the tables is the result of this function, applied on the
 default value. That value is calculated at compile time by the compiler:
 having the value available can speed up translation operations. 
 \item[ResetResourceTables] will reset all the resource strings to their
 default values. It is called by the initialization code of the objpas unit.
+\item[FinalizeResourceTables] will remove all the resource string values
+(i.e. make them empty)
 \end{description}
-
-Given some \var{Translate} function, the following code would initialize
-all resource strings:
-\begin{verbatim}
-Var I,J : Longint;
-    S : AnsiString;
-
-begin
-  For I:=0 to ResourceStringTableCount-1 do
-    For J:=0 to ResourceStringCount(i)-1 do
-      begin
-      S:=Translate(GetResourceStringDefaultValue(I,J));
-      SetResourceStringValue(I,J,S);
-      end;
-end;
-\end{verbatim}
-Other methods are of course possible, and the \var{Translate} function
-can be implemented in a variety of ways.
 \section{GNU gettext}
 The unit \file{gettext} provides a way to internationalize an application
 with the GNU \file{gettext} utilities. This unit is supplied with  the
@@ -6967,10 +7026,10 @@ require a lot of code overhead.
 \label{se:WPO}
 
 \subsection{Overview}
-Traditionally, compilers optimise a program procedure by procedure, or at
-best compilation unit per compilation unit. Whole program optimisation (WPO)
+Traditionally, compilers optimize a program procedure by procedure, or at
+best compilation unit per compilation unit. Whole program optimization (WPO)
 means that the compiler considers all compilation units that make up a
-program or library and optimises them using the combined knowledge of how
+program or library and optimizes them using the combined knowledge of how
 they are used together in this particular case. 
 
 The way WPO generally works is as follows: 
@@ -6994,7 +7053,7 @@ implementation of WPO:
 \item All information necessary to generate a WPO feedback file for a program is
 always stored in the ppu files. This means that it is possible to use a 
 generic RTL for WPO (or, in general, any compiled unit). It does mean that 
-the RTL itself will then not be optimised, the compiled program code and 
+the RTL itself will then not be optimized, the compiled program code and 
 its units can be correctly optimized because the compiler knows everything 
 it has to know about all RTL units.
 \item The generated WPO feedback file is plain text. The idea is that it should
@@ -7038,8 +7097,8 @@ the feedback file generated in the previous step. The compiler will then
 read the information collected about the program during the previous compiler 
 run, and use it during the current compilation of units and/or program/library. 
 
-Units not recompiled during the second pass will obviously not be optimised,
-but they will still work correctly when used together with the optimised
+Units not recompiled during the second pass will obviously not be optimized,
+but they will still work correctly when used together with the optimized
 units and program/library.
 
 \begin{remark}
@@ -7053,12 +7112,12 @@ The \var{-OW} and \var{-Ow} command-line options require a comma-separated list 
 whole-program-optimization options. These are strings, each string denotes
 an option. The following is a list of available options:
 \begin{description}
-\item[all] This enables all available whole program optimisations.
+\item[all] This enables all available whole program optimizations.
 
 \item[devirtcalls] Changes virtual method calls into normal (static) method
 calls when the compiler can determine that a virtual method call will always
 go to the same static method. This makes such code both smaller and faster.
-In general, it is mainly an enabling optimisation for other optimisations,
+In general, it is mainly an enabling optimization for other optimizations,
 because it makes the program easier to analyse due to the fact that it reduces
 indirect control flow. 
 
@@ -7075,7 +7134,7 @@ them via a class instance.
 \end{enumerate}
 
 \item[optvmts]
-This optimisation looks at which class types can be instantiated and which
+This optimization looks at which class types can be instantiated and which
 virtual methods can be called in a program, and based on this information it
 replaces virtual method table (VMT) entries that can never be called with
 references to FPC\_ABSTRACTERROR. This means that such methods, unless they
@@ -7088,25 +7147,25 @@ This option has 2 limitations:
 \item Methods that are published, or getters/setters of published properties, can
 never be optimized in this way, because they can always be referred to and
 called via the RTTI (which the compiler cannot detect). 
-\item Such optimisations are not yet done for virtual class methods.
+\item Such optimizations are not yet done for virtual class methods.
 \end{enumerate}
 
 \item[wsymbolliveness]
-This parameter does not perform any optimisation by itself. It simply tells
+This parameter does not perform any optimization by itself. It simply tells
 the compiler to record which functions/procedures were kept by the linker in
 the final program. During a subsequent wpo pass, the compiler can then
 ignore the removed functions/procedures as far as WPO is concerned (e.g., if
 a particular class type is only constructed in one unused procedure, then
 ignoring this procedure can improve the effectiveness of the previous two
-optimisations). 
+optimizations). 
 
 Again, there are some limitations:
 \begin{enumerate}
-\item This optimisation requires that the nm utility is installed on the system.
+\item This optimization requires that the nm utility is installed on the system.
 For Linux binaries, objdump will also work. In the future, this information
 could also be extracted from the internal linker for the platforms that it
 supports. 
-\item Collecting information for this optimisation (using -OWsymbolliveness)
+\item Collecting information for this optimization (using -OWsymbolliveness)
 requires that smart linking is enabled (-XX) and that symbol stripping is
 disabled (-Xs-). When only using such previously collected information,
 these limitations do not apply.
@@ -7182,7 +7241,8 @@ itself. It can also be declared in the interface section of a unit that
 is used by the library.
 
 Compilation of this source will result in the creation of a library called
-\file{libsubs.so} on \unix systems, or \file{subs.dll} on \windows or \ostwo.
+\file{libsubs.dylib} on MacOS, \file{libsubs.so} on other \unix systems, 
+or \file{subs.dll} on \windows or \ostwo.
 The compiler will take care of any additional linking that is required to create a
 shared library.
 
@@ -7215,9 +7275,14 @@ modifier, then you can still tell the compiler to link to that library using
 the \var{\{\$Linklib\}} directive.}.
 
 For example, to use the library as defined above from a pascal program, you can use
-the following pascal program:
+the following pascal program (except on Macos):
 \FPCexample{psubs}
-As is shown in the example, you must declare the function as \var{external}.
+As is shown in the example, you must declare the function as \var{external},
+followed by the library name. On mac, you must also add the
+\var{\{\$linklib \}} directive, as in the following example:
+\FPCexample{psubsm}
+
+
 Here also, it is necessary to specify the correct calling convention (it
 should always match the convention as used by the function in the library),
 and to use the correct casing for your declaration. Also notice, that
@@ -7241,7 +7306,7 @@ executed.
 \item Both libraries must be exactly the same.
 \end{enumerate}
 Or it may simply be that you don't know the name of the function to
-be called, you just know the arguments it expects.
+ be called, you just know the arguments it expects.
 
 It is therefore also possible to load the library at run-time, store
 the function address in a procedural variable, and use this procedural
@@ -7334,11 +7399,11 @@ when it creates a library or executable, it looks for all the resource
 files for which it encountered a directive, and tries to link them in.
 
 The default extension for resource files is \file{.res}. When the
-filename has as the first character an asterix (\var{*}), the
-compiler will replace the asterix with the name of the current unit,
+filename has as the first character an asterisk (\var{*}), the
+compiler will replace the asterisk with the name of the current unit,
 library or program.
 
-\begin{remark}This means that the asterix may only be used after a \var{unit},
+\begin{remark}This means that the asterisk may only be used after a \var{unit},
 \var{library} or \var{program} clause.
 \end{remark}
 

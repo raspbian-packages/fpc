@@ -1,3 +1,4 @@
+../packages/rtl-generics/tests/testrunner.rtlgenerics
 test/opt/tdfa11
 test/opt/tdfa8
 test/packages/webtbs/tw14265
@@ -37,6 +38,7 @@ webtbs/tw2886
 webtbs/tw30329
 webtbs/tw3157
 webtbs/tw36179
+webtbs/tw36863
 webtbs/tw3930
 webtbs/tw3964b
 webtbs/tw4809

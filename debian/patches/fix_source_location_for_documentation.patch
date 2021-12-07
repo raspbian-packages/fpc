@@ -143,7 +143,7 @@ Index: fpc/fpcdocs/rtl-project.xml
 -        <unit file="{{FPCDIR}}/rtl/unix/x86.pp" options=""/>
 -        <unit file="{{FPCDIR}}/rtl/inc/dynlibs.pas" options="-Fi{{FPCDIR}}/rtl/unix -Fi{{FPCDIR}}/rtl/linux"/>
 -        <unit file="{{FPCDIR}}/rtl/linux/linux.pp" options="-dclone_implemented -Fi{{FPCDIR}}/rtl/linux -Fi{{FPCDIR}}/rtl/unix"/>
--        <unit file="{{FPCDIR}}/rtl/objpas/math.pp" options="-dFPDOC_MATH -Fi{{FPCDIR}}/rtl/i386 -dFPC_HAS_TYPE_EXTENDED"/>
+-        <unit file="{{FPCDIR}}/rtl/objpas/math.pp" options="-dFPDOC_MATH -Fi{{FPCDIR}}/rtl/i386 "/>
 -        <unit file="{{FPCDIR}}/packages/rtl-extra/src/inc/matrix.pp" options="-Fi{{FPCDIR}}/packages/rtl-extra/src/inc"/>
 -        <unit file="{{FPCDIR}}/packages/rtl-objpas/src/inc/dateutils.pp" options="-Fi{{FPCDIR}}/packages/rtl-objpas/src/inc"/>
 -        <unit file="{{FPCDIR}}/packages/rtl-objpas/src/inc/variants.pp" options="-Fi{{FPCDIR}}/packages/rtl-objpas/src/inc"/>
@@ -233,7 +233,7 @@ Index: fpc/fpcdocs/rtl-project.xml
 +        <unit file="../fpcsrc/rtl/unix/x86.pp" options=""/>
 +        <unit file="../fpcsrc/rtl/inc/dynlibs.pas" options="-Fi../fpcsrc/rtl/unix -Fi../fpcsrc/rtl/linux"/>
 +        <unit file="../fpcsrc/rtl/linux/linux.pp" options="-dclone_implemented -Fi../fpcsrc/rtl/linux -Fi../fpcsrc/rtl/unix"/>
-+        <unit file="../fpcsrc/rtl/objpas/math.pp" options="-dFPDOC_MATH -Fi../fpcsrc/rtl/i386 -dFPC_HAS_TYPE_EXTENDED"/>
++        <unit file="../fpcsrc/rtl/objpas/math.pp" options="-dFPDOC_MATH -Fi../fpcsrc/rtl/i386 "/>
 +        <unit file="../fpcsrc/packages/rtl-extra/src/inc/matrix.pp" options="-Fi../fpcsrc/packages/rtl-extra/src/inc"/>
 +        <unit file="../fpcsrc/packages/rtl-objpas/src/inc/dateutils.pp" options="-Fi../fpcsrc/packages/rtl-objpas/src/inc"/>
 +        <unit file="../fpcsrc/packages/rtl-objpas/src/inc/variants.pp" options="-Fi../fpcsrc/packages/rtl-objpas/src/inc"/>

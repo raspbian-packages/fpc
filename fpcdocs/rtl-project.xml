@@ -47,7 +47,7 @@
         <unit file="../fpcsrc/rtl/unix/x86.pp" options=""/>
         <unit file="../fpcsrc/rtl/inc/dynlibs.pas" options="-Fi../fpcsrc/rtl/unix -Fi../fpcsrc/rtl/linux"/>
         <unit file="../fpcsrc/rtl/linux/linux.pp" options="-dclone_implemented -Fi../fpcsrc/rtl/linux -Fi../fpcsrc/rtl/unix"/>
-        <unit file="../fpcsrc/rtl/objpas/math.pp" options="-dFPDOC_MATH -Fi../fpcsrc/rtl/i386 -dFPC_HAS_TYPE_EXTENDED"/>
+        <unit file="../fpcsrc/rtl/objpas/math.pp" options="-dFPDOC_MATH -Fi../fpcsrc/rtl/i386 "/>
         <unit file="../fpcsrc/packages/rtl-extra/src/inc/matrix.pp" options="-Fi../fpcsrc/packages/rtl-extra/src/inc"/>
         <unit file="../fpcsrc/packages/rtl-objpas/src/inc/dateutils.pp" options="-Fi../fpcsrc/packages/rtl-objpas/src/inc"/>
         <unit file="../fpcsrc/packages/rtl-objpas/src/inc/variants.pp" options="-Fi../fpcsrc/packages/rtl-objpas/src/inc"/>

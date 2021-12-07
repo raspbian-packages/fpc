@@ -1,5 +1,5 @@
 {
-    Implementation of mathematical routines for x86_64
+    Implementation of mathematical routines for AArch64
 
     This file is part of the Free Pascal run time library.
     Copyright (c) 1999-2005 by the Free Pascal development team
@@ -55,7 +55,7 @@
     {$define FPC_SYSTEM_HAS_INT}
     function fpc_int_real(d : ValReal) : ValReal;assembler;nostackframe;compilerproc;
       asm
-        { round as floating point towards zero }
+        // { round as floating point towards zero }
         frintz d0,d0
       end;
     {$endif FPC_SYSTEM_HAS_INT}

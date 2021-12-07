@@ -177,6 +177,8 @@ end;
 function TFieldDef.GetCharSize: Word;
 begin
   case FDataType of
+   ftGuid:
+     Result := 1;
    ftString, ftFixedChar:
      case FCodePage of
        CP_UTF8: Result := 4;
@@ -3348,11 +3350,6 @@ begin
   SetAsString(GuidToString(AValue));
 end;
 
-function TVariantField.GetDefaultWidth: Integer;
-begin
-  Result := 15;
-end;
-
 { TVariantField }
 
 constructor TVariantField.Create(AOwner: TComponent);
@@ -3364,6 +3361,11 @@ end;
 class procedure TVariantField.CheckTypeSize(aValue: Integer);
 begin
   { empty }
+end;
+
+function TVariantField.GetDefaultWidth: Integer;
+begin
+  Result := 15;
 end;
 
 function TVariantField.GetAsBoolean: Boolean;

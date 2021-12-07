@@ -655,6 +655,12 @@ begin
 {$include tosunits/fpmake.pp}
 end;
 
+procedure add_tplylib(const ADirectory: string);
+begin
+  with Installer do
+{$include tplylib/fpmake.pp}
+end;
+
 procedure add_univint(const ADirectory: string);
 begin
   with Installer do

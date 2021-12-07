@@ -47,6 +47,63 @@ begin
   end;
 end;
 {$else}
+
+
+const
+  fpu_nx = 1 shl 0;
+  fpu_uf = 1 shl 1;
+  fpu_of = 1 shl 2;
+  fpu_dz = 1 shl 3;
+  fpu_nv = 1 shl 4;
+
+function getfpscr: sizeuint; nostackframe; assembler;
+  asm
+    fmrx r0,fpscr
+  end;
+
+
+procedure setfpscr(flags : sizeuint); nostackframe; assembler;
+  asm
+    fmxr fpscr,r0
+  end;
+
+
+const
+  FPSCR_IOC = 1;
+  FPSCR_DZC = 1 shl 1;
+  FPSCR_OFC = 1 shl 2;
+  FPSCR_UFC = 1 shl 3;
+  FPSCR_IXC = 1 shl 4;
+  FPSCR_IDC = 1 shl 7;
+
+
+procedure fpc_throwfpuexception;[public,alias:'FPC_THROWFPUEXCEPTION'];
+  var
+    fpscr : longint;
+    f: TFPUException;
+  begin
+    { at this point, we know already, that an exception will be risen }
+    fpscr:=getfpscr;
+
+    if (fpscr and FPSCR_DZC) <> 0 then
+      float_raise(exZeroDivide);
+    if (fpscr and FPSCR_OFC) <> 0 then
+      float_raise(exOverflow);
+    if (fpscr and FPSCR_UFC) <> 0 then
+      float_raise(exUnderflow);
+    if (fpscr and FPSCR_IOC) <> 0 then
+      float_raise(exInvalidOp);
+    if (fpscr and FPSCR_IXC) <> 0 then
+      float_raise(exPrecision);
+    if (fpscr and FPSCR_IDC) <> 0 then
+      float_raise(exDenormalized);
+
+    { now the soft float exceptions }
+    for f in softfloat_exception_flags do
+      float_raise(f);
+  end;
+
+
 Procedure SysInitFPU;{$ifdef SYSTEMINLINE}inline;{$endif}
 begin
   { Enable FPU exceptions, but disable INEXACT, UNDERFLOW, DENORMAL }
@@ -1077,13 +1134,13 @@ function SwapEndian(const AValue: SmallInt): SmallInt;{$ifdef SYSTEMINLINE}inlin
     { is turned into "longint(AValue) shr 8", so if AValue < 0 then    }
     { the sign bits from the upper 16 bits are shifted in rather than  }
     { zeroes.                                                          }
-    Result := SmallInt((Word(AValue) shr 8) or (Word(AValue) shl 8));
+    Result := SmallInt(((Word(AValue) shr 8) or (Word(AValue) shl 8)) and $ffff);
   end;
 
 
 function SwapEndian(const AValue: Word): Word;{$ifdef SYSTEMINLINE}inline;{$endif}
   begin
-    Result := Word((AValue shr 8) or (AValue shl 8));
+    Result := ((AValue shr 8) or (AValue shl 8)) and $ffff;
   end;
 
 (*

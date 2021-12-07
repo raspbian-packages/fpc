@@ -7,7 +7,7 @@ Index: fpc/fpcsrc/Makefile.fpc
 --- fpc.orig/fpcsrc/Makefile.fpc
 +++ fpc/fpcsrc/Makefile.fpc
 @@ -7,7 +7,7 @@ name=fpc
- version=3.2.0
+ version=3.2.2
  
  [target]
 -dirs=compiler rtl utils packages installer
@@ -21,7 +21,7 @@ Index: fpc/fpcsrc/packages/ide/Makefile.fpc
 +++ fpc/fpcsrc/packages/ide/Makefile.fpc
 @@ -5,6 +5,9 @@
  name=ide
- version=3.2.0
+ version=3.2.2
  
 +[target]
 +dirs=fakegdb compiler
@@ -63,7 +63,7 @@ Index: fpc/fpcsrc/utils/fpcm/fpmake.pp
 +++ fpc/fpcsrc/utils/fpcm/fpmake.pp
 @@ -215,7 +215,7 @@ begin
  {$endif ALLPACKAGES}
-     P.Version:='3.2.0';
+     P.Version:='3.2.2';
  
 -    P.Dependencies.Add('fcl-base');
 +    //P.Dependencies.Add('fcl-base');

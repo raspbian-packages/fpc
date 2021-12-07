@@ -73,7 +73,9 @@ library calls, consult the Free Pascal manuals. Topics covered in this document
      3. Dynamic libraries
      4. Profiling
      5. Using DOS generated applications under OS/2
-     6. INSTALL.EXE complains about a missing TZ variable under OS/2
+     6. INSTALL.EXE of version 1.0.6 or below returns an unknown error (-1) under OS/2
+          or
+        INSTALL.EXE of version 1.0.6 or above complains about missing TZ variable under OS/2
      7. OS/2 compiler not working after upgrading to 1.9.6 or newer
      8. Compilation under OS/2 fails with error "Can't call the assembler"
  7. DOS-related information
@@ -133,11 +135,12 @@ library calls, consult the Free Pascal manuals. Topics covered in this document
           ☆ 02/2017: 3.0.2 released 
           ☆ 11/2017: 3.0.4 released
           ☆ 04/2020: 3.2.0 released
+          ☆ 05/2021: 3.2.2 released
      2. Which versions exist, and which one should I use?
 
-        The latest official version is 3.2.0, the first release in the 3.2.x
-        series. New development is performed in the 3.3.x series, which will
-        eventually be released as 3.4.0 or 4.0.0, depending on milestones
+        The latest official version is 3.2.2, the first minor update in the
+        3.2.x series. New development is performed in the 3.3.x series, which
+        will eventually be released as 3.4.0 or 4.0.0, depending on milestones
         achieved.
 
         Historic versions
@@ -200,7 +203,7 @@ library calls, consult the Free Pascal manuals. Topics covered in this document
             on as many platforms as possible. GNU Pascal tries to implement a
             portable pascal compiler based on POSIX.
         Version:
-            Currently, Free Pascal is at version 3.2.0 (April 2020). GNU
+            Currently, Free Pascal is at version 3.2.2 (May 2021). GNU
             Pascal is stopped version 2.1 (from 2002, which can be built with
             several different GCC's as backend; their Mac OS X version is an
             exception though, as it follows the GCC version number).
@@ -210,8 +213,8 @@ library calls, consult the Free Pascal manuals. Topics covered in this document
             to the last version a few times a year, and there are regular
             snapshot for OS X and Windows, made by users.
         Operating systems:
-            Free Pascal runs on a large number of platforms, inlcuding DOS (16/
-            32-bit), Win32 (no UNIX porting layer needed), Linux, FreeBSD,
+            Free Pascal runs on a large number of platforms, including DOS (16/
+            32-bit), Win32/Win64 (no UNIX porting layer needed), Linux, FreeBSD,
             NetBSD, OS/2, BeOS, Mac OS X, on the following architectures: x86
             (32 and 64 bit), SPARC, PowerPC (32 and 64 bit), ARM, Java Virtual
             Machine (under development), and MIPS (under development). GNU
@@ -1046,7 +1049,9 @@ library calls, consult the Free Pascal manuals. Topics covered in this document
         You should use native OS/2 applications under OS/2 (including the
         native OS/2 compiler) or try installing a new OS/2 fixpack to see if it
         solves the problem.
-     6. INSTALL.EXE complains about a missing TZ variable under OS/2
+     6. INSTALL.EXE of version 1.0.6 or below fails with an unknown error (-1) under OS/2
+            or
+        INSTALL.EXE of version 1.0.6 or above complains about missing TZ variable under OS/2
 
         You are most probably using an older version of OS/2 (like OS/2 Warp
         3.0) and do not have TZ variable in your environment. The easiest

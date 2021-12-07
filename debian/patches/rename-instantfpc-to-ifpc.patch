@@ -141,7 +141,7 @@ Index: fpc/fpcsrc/utils/instantfpc/Makefile.fpc
  [package]
 -name=instantfpc
 +name=ifpc
- version=3.2.0
+ version=3.2.2
  
  [require]
 Index: fpc/fpcsrc/utils/instantfpc/ifpc.pas
@@ -154,18 +154,9 @@ Index: fpc/fpcsrc/utils/instantfpc/fpmake.pp
 ===================================================================
 --- fpc.orig/fpcsrc/utils/instantfpc/fpmake.pp
 +++ fpc/fpcsrc/utils/instantfpc/fpmake.pp
-@@ -15,7 +15,7 @@ begin
-   With Installer do
-     begin
-     P:=AddPackage('utils-instantfpc');
--    P.ShortName:='instantfpc';
-+    P.ShortName:='ifpc';
-     P.OSes:=AllOSes-[embedded,msdos,win16,macos,palmos];
-     if Defaults.CPU=jvm then
-       P.OSes := P.OSes - [java,android];
 @@ -35,7 +35,7 @@ begin
  
-     P.OSes := [win32,win64,wince,haiku,linux,freebsd,openbsd,netbsd,darwin,iphonesim,solaris,aix];
+     P.OSes := [win32,win64,wince,haiku,linux,freebsd,openbsd,netbsd,darwin,iphonesim,ios,solaris,aix];
  
 -    T:=P.Targets.AddProgram('instantfpc.pas');
 +    T:=P.Targets.AddProgram('ifpc.pas');

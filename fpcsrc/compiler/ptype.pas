@@ -359,7 +359,7 @@ implementation
          if checkcurrentrecdef and
             try_parse_structdef_nested_type(def,current_structdef,isforwarddef) then
            exit;
-         if not allowunitsym and (idtoken=_SPECIALIZE) then
+         if not allowunitsym and not (m_delphi in current_settings.modeswitches) and (idtoken=_SPECIALIZE) then
            begin
              consume(_ID);
              is_specialize:=true;
@@ -490,7 +490,7 @@ implementation
 
                _ID:
                  begin
-                   if try_to_consume(_SPECIALIZE) then
+                   if not (m_delphi in current_settings.modeswitches) and try_to_consume(_SPECIALIZE) then
                      begin
                        if ([stoAllowSpecialization,stoAllowTypeDef] * options = []) then
                          begin
@@ -1567,7 +1567,7 @@ implementation
             if is_func then
               begin
                 consume(_COLON);
-                single_type(pd.returndef,[]);
+                single_type(pd.returndef,[stoAllowSpecialization]);
               end;
             if try_to_consume(_OF) then
               begin

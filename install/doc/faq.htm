@@ -109,7 +109,9 @@
     <li><a href="#os2-dll">Dynamic libraries</a>
     <li><a href="#os2-profile">Profiling</a>
     <li><a href="#os2-dos">Using DOS generated applications under OS/2</a>
-    <li><a href="#instal106os2">INSTALL.EXE complains about a missing TZ variable under OS/2</a>
+    <li><a href="#instal106os2">INSTALL.EXE of version 1.0.6 or below returns an unknown error (-1) under OS/2</a>
+    <br>or<br>
+    <a href="#instal106os2">INSTALL.EXE of version 1.0.6 or above complains about missing TZ variable under OS/2</a>
     <li><a href="#os2-fp">OS/2 compiler not working after upgrading to 1.9.6 or newer</a>
     <li><a href="#os2-as-failing">Compilation under OS/2 fails with error "Can't call the assembler"</a>
    </OL>
@@ -203,13 +205,14 @@
 	      <li>02/2017: 3.0.2 released  
 	      <li>11/2017: 3.0.4 released  
 	      <li>04/2020: 3.2.0 released  
+	      <li>05/2021: 3.2.2 released  
             </ul>
             
 
         <li><a name='versions'></a>
           <h3>Which versions exist, and which one should I use?</h3>
           
-            <p>The latest official version is 3.2.0, the first release in the 3.2.x series.
+            <p>The latest official version is 3.2.2, the first minor update in the 3.2.x series.
             New development is performed in the 3.3.x series, which will eventually
             be released as 3.4.0 or 4.0.0, depending on milestones achieved.
 
@@ -279,7 +282,7 @@
             compiler on as many platforms as possible. GNU Pascal tries to
             implement a portable pascal compiler based on POSIX.
             <DT><b>Version:</b>
-            <DD>Currently, Free Pascal is at version 3.2.0 (April 2020). GNU Pascal is stopped
+            <DD>Currently, Free Pascal is at version 3.2.2 (May 2021). GNU Pascal is stopped
             version 2.1 (from 2002, which can be built with several different GCC's as backend;
             their Mac OS X version is an exception though, as it follows the GCC version number).</DD>
             <DT><b>Tracking:</b>
@@ -288,7 +291,7 @@
             a year, and there are regular snapshot for OS X and Windows, made by users.
             <DT><b>Operating systems:</b>
             <DD>Free Pascal runs on a large number of platforms,
-            inlcuding DOS (16/32-bit), Win32 (no UNIX porting layer needed), Linux, FreeBSD,
+            including DOS (16/32-bit), Win32/Win64 (no UNIX porting layer needed), Linux, FreeBSD,
             NetBSD, OS/2, BeOS, Mac OS X, on the following architectures:
             x86 (32 and 64 bit),
             SPARC, PowerPC (32 and 64 bit), ARM, Java Virtual Machine (under development), and
@@ -1447,7 +1450,11 @@
             problem. 
         
 
-        <li><a name="instal106os2"></a><h3>INSTALL.EXE complains about a missing TZ variable under OS/2</h3>
+        <li><a name="instal106os2"></a><h3>INSTALL.EXE of version 1.0.6 or below fails with an unknown error (-1) under OS/2</h3>
+            <p>
+            or
+            
+            <h3>INSTALL.EXE of version 1.0.6 or above complains about missing TZ variable under OS/2</h3>
 
             <p>
             You are most probably using an older version of OS/2 (like OS/2 Warp 3.0)
@@ -1466,7 +1473,7 @@
             limitations regarding supported configurations, because this libc needs recent version
             of OS/2 Unicode support libraries (LIBUNI.DLL and UCONV.DLL) not available in base OS/2 Warp 3.0
             and OS/2 Warp 4.0. The updated versions were distributed by IBM in corrective packages (fixpaks)
-            - see e.g. <a href="http://www.warpupdates.mynetcologne.de/english/basesystem.html">WarpUpdates site</a>
+            - see e.g. <a href="http://web.archive.org/web/20080103002005/http://www.warpupdates.mynetcologne.de/english/basesystem.html">WarpUpdates site</a>
             for information about OS/2 fixpaks and links for downloading them.
             This issue isn't valid for WarpServer for e-Business, MCP and eComStation - these already have
             the correct version.

@@ -1,8 +1,8 @@
-version=4
-# Original line if repacking is needed...
+version=3
 opts=uversionmangle=s/(RC)/\L$1/;\
-s/(\d)((rc|pre|dev|beta|alpha|b|a))/$1~$2/;\
+s/(\d)-?((rc|pre|dev|beta|alpha|b|a))/$1~$2/;\
 s/\-\d//;\
 s/\-src//,\
 dversionmangle=s/\+dfsg// \
-ftp://ftp.freepascal.org/pub/fpc/(beta|dist)/@ANY_VERSION@/source/fpcbuild-@ANY_VERSION@@ARCHIVE_EXT@ debian debian/orig-tar.sh
+https://qa.debian.org/watch/sf.php/freepascal/fpcbuild-(.+\..+)\.(?:tgz|tbz2|txz|tar\.(?:gz|bz2|xz)) \
+debian debian/orig-tar.sh

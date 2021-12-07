@@ -529,7 +529,10 @@ end;
 Procedure THandleStream.SetSize(const NewSize: Int64);
 
 begin
-  FileTruncate(FHandle,NewSize);
+  // We set the position afterwards, because the size can also be larger.
+  if not FileTruncate(FHandle,NewSize) then
+    Raise EInOutError.Create(SStreamSetSize);
+  Position:=NewSize;
 end;
 
 
@@ -936,6 +939,7 @@ begin
   NewLen:=Size-FPosition;
   If NewLen>Count then NewLen:=Count;
   Result:=FEncoding.GetAnsiString(FBytes,FPosition,NewLen);
+  Inc(FPosition,NewLen);
 end;
 
 procedure TStringStream.WriteAnsiString(const AString: AnsiString);
@@ -985,6 +989,7 @@ begin
     begin
     SetLength(Result, NewLen);
     Move(FBytes[FPosition],Result[1],NewLen);
+    inc(FPosition,Newlen);
     end;
 end;
 

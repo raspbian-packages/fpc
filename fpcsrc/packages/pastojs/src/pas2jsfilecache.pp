@@ -27,7 +27,7 @@ interface
 uses
   {$IFDEF Pas2js}
     {$IFDEF NodeJS}
-    JS, NodeJSFS,
+    JS, node.fs,
     {$ENDIF}
   {$ENDIF}
   Classes, SysUtils,
@@ -925,7 +925,7 @@ begin
       Filename:=ChompPathDelim(ResolveDots(Filename));
       if not FilenameIsAbsolute(Filename) then
         Filename:=WorkingDirectory+Filename;
-      Result:={$IFDEF pas2js}NodeJSFS{$ELSE}SysUtils{$ENDIF}.DirectoryExists(Filename);
+      Result:={$IFDEF pas2js}Node.FS{$ELSE}SysUtils{$ENDIF}.DirectoryExists(Filename);
       end;
     end;
 end;
@@ -939,7 +939,7 @@ begin
   if Info.Dir<>nil then
     Result:=Info.Dir.IndexOfFile(Info.ShortFilename)>=0
   else
-    Result:={$IFDEF pas2js}NodeJSFS{$ELSE}SysUtils{$ENDIF}.FileExists(Info.Filename);
+    Result:={$IFDEF pas2js}Node.FS{$ELSE}SysUtils{$ENDIF}.FileExists(Info.Filename);
 end;
 
 function TPas2jsCachedDirectories.FileExistsI(var Filename: string): integer;
@@ -952,7 +952,7 @@ begin
   if not GetFileInfo(Info) then exit;
   if Info.Dir=nil then
   begin
-    if {$IFDEF pas2js}NodeJSFS{$ELSE}SysUtils{$ENDIF}.FileExists(Info.Filename) then
+    if {$IFDEF pas2js}Node.FS{$ELSE}SysUtils{$ENDIF}.FileExists(Info.Filename) then
       Result:=1;
   end
   else
@@ -1988,11 +1988,18 @@ var
 
   function SearchInDir(Dir: string; var Filename: string): boolean;
   // search in Dir for pp, pas, p times given case, lower case, upper case
+  var
+    CurFile : String;
   begin
     Dir:=IncludeTrailingPathDelimiter(Dir);
     if IndexOfFile(SearchedDirs,Dir)>=0 then exit(false);
     SearchedDirs.Add(Dir);
-    if SearchLowUpCase(Filename) then exit(true);
+    CurFile:=Dir+Filename;
+    if SearchLowUpCase(CurFile) then
+      begin
+      FileName:=CurFile;
+      exit(true);
+      end;
     Result:=false;
   end;
 

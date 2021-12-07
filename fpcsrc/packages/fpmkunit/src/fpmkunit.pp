@@ -119,10 +119,10 @@ Type
   TOS=(osNone,
     linux,go32v2,win32,os2,freebsd,beos,netbsd,
     amiga,atari, solaris, qnx, netware, openbsd,wdosx,
-    palmos,macos,darwin,emx,watcom,morphos,netwlibc,
+    palmos,macosclassic,darwin,emx,watcom,morphos,netwlibc,
     win64,wince,gba,nds,embedded,symbian,haiku,iphonesim,
     aix,java,android,nativent,msdos,wii,aros,dragonfly,
-    win16
+    win16,ios
   );
   TOSes = Set of TOS;
 
@@ -175,14 +175,14 @@ Const
 
   AllOSes = [Low(TOS)..High(TOS)];
   AllCPUs = [Low(TCPU)..High(TCPU)];
-  AllUnixOSes  = [Linux,FreeBSD,NetBSD,OpenBSD,Darwin,QNX,BeOS,Solaris,Haiku,iphonesim,aix,Android,dragonfly];
-  AllBSDOSes      = [FreeBSD,NetBSD,OpenBSD,Darwin,iphonesim,dragonfly];
+  AllUnixOSes  = [Linux,FreeBSD,NetBSD,OpenBSD,Darwin,QNX,BeOS,Solaris,Haiku,iphonesim,ios,aix,Android,dragonfly];
+  AllBSDOSes      = [FreeBSD,NetBSD,OpenBSD,Darwin,iphonesim,ios,dragonfly];
   AllWindowsOSes  = [Win32,Win64,WinCE];
   AllAmigaLikeOSes = [Amiga,MorphOS,AROS];
   AllLimit83fsOses = [go32v2,os2,emx,watcom,msdos,win16,atari];
 
   AllSmartLinkLibraryOSes = [Linux,msdos,win16,palmos]; // OSes that use .a library files for smart-linking
-  AllImportLibraryOSes = AllWindowsOSes + [os2,emx,netwlibc,netware,watcom,go32v2,macos,nativent,msdos,win16];
+  AllImportLibraryOSes = AllWindowsOSes + [os2,emx,netwlibc,netware,watcom,go32v2,macosclassic,nativent,msdos,win16];
 
   { This table is kept OS,Cpu because it is easier to maintain (PFV) }
   OSCPUSupported : array[TOS,TCpu] of boolean = (
@@ -203,8 +203,8 @@ Const
     { openbsd } ( false, true,  true,  false, false, true,  false, false, false, false, false, false, false, false, false, false),
     { wdosx }   ( false, true,  false, false, false, false, false, false, false, false, false, false, false, false, false, false),
     { palmos }  ( false, false, true,  false, false, false, true,  false, false, false, false, false, false, false, false, false),
-    { macos }   ( false, false, true,  true,  false, false, false, false, false, false, false, false, false, false, false, false),
-    { darwin }  ( false, true,  false, true,  false, true,  true,  true,  false, false, false, false, false, false, true , false),
+{ macosclassic }( false, false, true,  true,  false, false, false, false, false, false, false, false, false, false, false, false),
+    { darwin }  ( false, true,  false, true,  false, true,  false, true,  false, false, false, false, false, false, true , false),
     { emx }     ( false, true,  false, false, false, false, false, false, false, false, false, false, false, false, false, false),
     { watcom }  ( false, true,  false, false, false ,false, false, false, false, false, false, false, false, false, false, false),
     { morphos } ( false, false, false, true,  false ,false, false, false, false, false, false, false, false, false, false, false),
@@ -225,7 +225,8 @@ Const
     { wii }     ( false, false, false, true , false, false, false, false, false, false, false, false, false, false, false, false),
     { aros }    ( false, true,  false, false, false, true,  true,  false, false, false, false, false, false, false, false, false),
     { dragonfly}( false, false, false, false, false, true,  false, false, false, false, false, false, false, false, false, false),
-    { win16 }   ( false, false, false, false, false, false, false, false, false, false, false, false, false, true , false, false)
+    { win16 }   ( false, false, false, false, false, false, false, false, false, false, false, false, false, true , false, false),
+    { ios }     ( false, false, false, false, false, false,  true, false, false, false, false, false, false, false, true , false)
   );
 
   // Useful
@@ -481,7 +482,7 @@ Type
     Function GetValue(AName : String) : String;
     Function GetValue(const AName,Args : String) : String; virtual;
     Function ReplaceStrings(Const ASource : String; Const MaxDepth: Integer = 10) : String; virtual;
-    Function Substitute(Const Source : String; Macros : Array of string) : String; virtual;
+    Function Substitute(Const Source : String; const Macros : Array of string) : String; virtual;
   end;
 
   { TPackageDictionary }
@@ -819,7 +820,7 @@ Type
     FOptions: TStrings;
     FTransmitOptions: TStrings;
     FFileName: String;
-    FShortName: String;
+    FShortName: String; { Used to generate the short 8.3 zip file name, must be 4 characters at most }
     FAuthor: String;
     FLicense: String;
     FHomepageURL: String;
@@ -846,6 +847,9 @@ Type
     // Is set when all sourcefiles are found
     FAllFilesResolved: boolean;
     FPackageVariants: TFPList;
+{$ifndef NO_THREADING}
+    FResolveDirsCS: TRTLCriticalSection;
+{$endif}
     Function GetDescription : string;
     function GetDictionary: TDictionary;
     Function GetFileName : string;
@@ -885,6 +889,8 @@ Type
     procedure SetDefaultPackageVariant;
     procedure LoadUnitConfigFromFile(Const AFileName: String);
     procedure SaveUnitConfigToFile(Const AFileName: String;ACPU:TCPU;AOS:TOS);
+    procedure EnterResolveDirsCS;
+    procedure LeaveResolveDirsCS;
     Property Version : String Read GetVersion Write SetVersion;
     Property FileName : String Read GetFileName Write FFileName;
     Property ShortName : String Read GetShortName Write FShortName;
@@ -1249,7 +1255,7 @@ Type
     Procedure Clean(APackage : TPackage; ACPU:TCPU; AOS : TOS);
     Procedure CompileDependencies(APackage : TPackage);
     function CheckDependencies(APackage : TPackage; ErrorOnFailure: boolean): TCheckDependencyResult;
-    Function  CheckExternalPackage(Const APackageName : String; ErrorOnFailure: boolean):TPackage;
+    Function  CheckExternalPackage(Const APackageName, ForPackageName : String; ErrorOnFailure: boolean):TPackage;
     procedure CreateOutputDir(APackage: TPackage);
     // Packages commands
     Procedure Compile(Packages : TPackages);
@@ -1295,9 +1301,9 @@ Type
     Procedure CheckPackages; virtual;
     Procedure CreateBuildEngine; virtual;
     Procedure Error(const Msg : String);
-    Procedure Error(const Fmt : String; Args : Array of const);
+    Procedure Error(const Fmt : String; const Args : Array of const);
     Procedure AnalyzeOptions;
-    Procedure Usage(const FMT : String; Args : Array of const);
+    Procedure Usage(const FMT : String; const Args : Array of const);
     Procedure Compile(Force : Boolean); virtual;
     Procedure Clean(AllTargets: boolean); virtual;
     Procedure Install(ForceBuild : Boolean); virtual;
@@ -1658,7 +1664,7 @@ ResourceString
   SErrNoDictionaryValue = 'The item "%s" in the dictionary is not a value';
   SErrNoDictionaryFunc  = 'The item "%s" in the dictionary is not a function';
   SErrInvalidFPCInfo    = 'Compiler returns invalid information, check if fpc -iV works';
-  SErrDependencyNotFound = 'Could not find unit directory for dependency package "%s"';
+  SErrDependencyNotFound = 'Could not find unit directory for dependency package "%s" required for package "%s"';
   SErrAlreadyInitialized = 'Installer can only be initialized once';
   SErrInvalidState      = 'Invalid state for target %s';
   SErrCouldNotCompile   = 'Could not compile target %s from package %s';
@@ -1682,8 +1688,6 @@ ResourceString
   SWarnStartCompilingPackage = 'Start compiling package %s for target %s.';
   SWarnCompilingPackagecompleteProgress = '[%3.0f%%] Compiled package %s';
   SWarnCompilingPackagecomplete = 'Compiled package %s';
-  SWarnSkipPackageTargetProgress = '[%3.0f%%] Skipped package %s which has been disabled for target %s';
-  SWarnSkipPackageTarget = 'Skipped package %s which has been disabled for target %s';
   SWarnInstallationPackagecomplete = 'Installation package %s for target %s succeeded';
   SWarnCanNotGetAccessRights = 'Warning: Failed to copy access-rights from file %s';
   SWarnCanNotSetAccessRights = 'Warning: Failed to copy access-rights to file %s';
@@ -1699,6 +1703,8 @@ ResourceString
   SWarnRemovedNonEmptyDirectory = 'Warning: Removed non empty directory "%s"';
 
   SInfoPackageAlreadyProcessed = 'Package %s is already processed';
+  SInfoSkipPackageTargetProgress = '[%3.0f%%] Skipped package %s which has been disabled for target %s';
+  SInfoSkipPackageTarget = 'Skipped package %s which has been disabled for target %s';
   SInfoCompilingTarget    = 'Compiling target %s';
   SInfoExecutingCommand   = 'Executing command "%s %s"';
   SInfoCreatingOutputDir  = 'Creating output dir "%s"';
@@ -2645,7 +2651,7 @@ function AddLibraryExtension(const LibraryName: string; AOS : TOS): string;
 begin
   if AOS in [Go32v2,Win32,Win64,Wince,OS2,EMX,Watcom] then
     Result:=LibraryName+DLLExt
-  else if aOS in [darwin,macos,iphonesim] then
+  else if aOS in [darwin,macosclassic,iphonesim,ios] then
     Result:=LibraryName+DyLibExt
   else if aOS = Aix then
     Result:=LibraryName+AIXSharedLibExt
@@ -2659,7 +2665,7 @@ begin
     Result := 'libimp'+UnitName
   else if AOS in [os2,emx] then
     Result := UnitName
-  else if AOS in [netware,netwlibc,macos] then
+  else if AOS in [netware,netwlibc,macosclassic] then
     Result := 'lib'+UnitName
   else
     Result := 'libimp'+UnitName;
@@ -3147,10 +3153,11 @@ end;
 
 constructor TCompileWorkerThread.Create(ABuildEngine: TBuildEngine; NotifyMainThreadEvent: PRTLEvent);
 begin
-  inherited Create(false);
+  inherited Create(true);
   FNotifyStartTask := RTLEventCreate;
   FBuildEngine := ABuildEngine;
   FNotifyMainThreadEvent:=NotifyMainThreadEvent;
+  Start;
 end;
 
 destructor TCompileWorkerThread.Destroy;
@@ -3174,8 +3181,8 @@ begin
     RTLeventWaitFor(FNotifyStartTask,500);
     if not FDone then
       begin
-      { synchronise with WriteBarrier in mainthread for same reason as above }
-      ReadBarrier;
+      { synchronise with ReadWriteBarrier in mainthread for same reason as above }
+      ReadWriteBarrier;
       FBuildEngine.log(vlInfo,'Compiling: '+APackage.Name);
       FCompilationOK:=false;
       try
@@ -3648,6 +3655,9 @@ begin
   // Implicit dependency on RTL
   FDependencies.Add('rtl');
   FSupportBuildModes:=[bmBuildUnit, bmOneByOne];
+{$ifndef NO_THREADING}
+  InitCriticalSection(FResolveDirsCS);
+{$endif}
 end;
 
 
@@ -3655,6 +3665,9 @@ destructor TPackage.destroy;
 var
   i: integer;
 begin
+{$ifndef NO_THREADING}
+  DoneCriticalSection(FResolveDirsCS);
+{$endif}
   FreeAndNil(FDictionary);
   FreeAndNil(FDependencies);
   FreeAndNil(FInstallFiles);
@@ -4279,6 +4292,20 @@ begin
     L.Free;
     F.Free;
   end;
+end;
+
+procedure TPackage.EnterResolveDirsCS;
+begin
+{$ifndef NO_THREADING}
+   EnterCriticalSection(FResolveDirsCS);
+{$endif}
+end;
+
+procedure TPackage.LeaveResolveDirsCS;
+begin
+{$ifndef NO_THREADING}
+   LeaveCriticalSection(FResolveDirsCS);
+{$endif}
 end;
 
 
@@ -5019,7 +5046,7 @@ begin
 end;
 
 
-procedure TCustomInstaller.Error(const Fmt: String; Args: array of const);
+procedure TCustomInstaller.Error(const Fmt: String; const Args: array of const);
 begin
   Raise EInstallerError.CreateFmt(Fmt,Args);
 end;
@@ -5356,7 +5383,7 @@ begin
 end;
 
 
-procedure TCustomInstaller.Usage(const FMT: String; Args: array of const);
+procedure TCustomInstaller.Usage(const FMT: String; const Args: array of const);
 
   Procedure LogCmd(const LC,Msg : String);
   begin
@@ -5818,6 +5845,18 @@ Var
   FileStat: stat;
 {$endif UNIX}
 begin
+{$ifdef DARWIN}
+  { First delete file on Darwin OS to avoid codesign issues }
+  D:=IncludeTrailingPathDelimiter(Dest);
+  If DirectoryExists(D) then
+    begin
+      D:=D+ExtractFileName(Src);
+      if FileExists(D) then
+        SysDeleteFile(D);
+    end
+  else if FileExists(Dest) then
+    SysDeleteFile(Dest);
+{$endif DARWIN}
   Log(vlInfo,SInfoCopyingFile,[Src,Dest]);
   FIn:=TFileStream.Create(Src,fmopenRead or fmShareDenyNone);
   Try
@@ -6581,27 +6620,36 @@ var
   i: Integer;
   Continue: Boolean;
 begin
-  if APackage.UnitDir='' then
-    begin
-      Log(vldebug, SDbgSearchExtDepPath, [APackage.Name]);
-      GetPluginManager.BeforeResolvePackagePath(Self, APackage, Continue);
-      if Continue then
-        begin
-        for I := 0 to Defaults.SearchPath.Count-1 do
+{$ifndef NO_THREADING}
+  APackage.EnterResolveDirsCS;
+  try
+{$endif}
+    if APackage.UnitDir='' then
+      begin
+        Log(vldebug, SDbgSearchExtDepPath, [APackage.Name]);
+        GetPluginManager.BeforeResolvePackagePath(Self, APackage, Continue);
+        if Continue then
           begin
-            if Defaults.SearchPath[i]<>'' then
-              GetPluginManager.ResolvePackagePath(Self, APackage, Defaults.SearchPath[i], Continue);
-            if not Continue then
-              Break
+          for I := 0 to Defaults.SearchPath.Count-1 do
+            begin
+              if Defaults.SearchPath[i]<>'' then
+                GetPluginManager.ResolvePackagePath(Self, APackage, Defaults.SearchPath[i], Continue);
+              if not Continue then
+                Break
+            end;
+
+          if Continue then
+            GetPluginManager.AfterResolvePackagePath(Self, APackage, Continue);
           end;
 
-        if Continue then
-          GetPluginManager.AfterResolvePackagePath(Self, APackage, Continue);
-        end;
-
-      if APackage.UnitDir = '' then
-        APackage.UnitDir := DirNotFound
-    end;
+        if APackage.UnitDir = '' then
+          APackage.UnitDir := DirNotFound
+      end;
+{$ifndef NO_THREADING}
+  finally
+    APackage.LeaveResolveDirsCS;
+  end;
+{$endif}
 end;
 
 
@@ -6789,29 +6837,41 @@ begin
   FreeAndNil(L);
 
   // libc-linker path
-  if APackage.NeedLibC then
+  // Do not add it if -Xd option is used
+  if APackage.NeedLibC and
+     ((not Defaults.HaveOptions) or (Defaults.Options.IndexOf('-Xd')=-1)) then
     begin
-    if FCachedlibcPath='' then
-      begin
-      s:=GetDefaultLibGCCDir(Defaults.CPU, Defaults.OS,ErrS);
-      if s='' then
-        Log(vlWarning, SWarngcclibpath +' '+ErrS)
-      else
+      if FCachedlibcPath='' then
         begin
+          s:=GetDefaultLibGCCDir(Defaults.CPU, Defaults.OS,ErrS);
+          if s='' then
+            Log(vlWarning, SWarngcclibpath +' '+ErrS)
+          else
+            begin
 {$ifndef NO_THREADING}
-        EnterCriticalsection(FGeneralCriticalSection);
-        try
+              EnterCriticalsection(FGeneralCriticalSection);
+              { prevent FCachedlibcPath getting freed by thread 2 while thread 1 is
+                concatenating it to -Fl below }
+              try
+                if FCachedlibcPath='' then
+                  begin
 {$endif NO_THREADING}
-          FCachedlibcPath:=s;
+                    FCachedlibcPath:=s;
 {$ifndef NO_THREADING}
-        finally
-          LeaveCriticalsection(FGeneralCriticalSection);
-        end;
+                  end;
+              finally
+                LeaveCriticalsection(FGeneralCriticalSection);
+              end;
 {$endif NO_THREADING}
-        end;
-      end;
+            end;
+        end
+      else
+        { make sure we don't access the contents of the string before they've been
+          synchronised from the thread that wrote them; the critical section there
+          acts as a read/write barrier }
+        ReadBarrier;
 
-    Args.Add('-Fl'+FCachedlibcPath);
+      Args.Add('-Fl'+FCachedlibcPath);
     end;
 
   // Custom options which are added by dependencies
@@ -7089,7 +7149,7 @@ begin
         end
       else
         begin
-          S:=GetCompilerCommand(APackage,ATarget,Env);
+          S:=GetCompilerCommand(APackage,ATarget,nil);
           ExecuteCommand(GetCompiler,S,nil);
         end;
       If Assigned(ATarget.AfterCompile) then
@@ -7228,7 +7288,7 @@ begin
 end;
 
 
-function TBuildEngine.CheckExternalPackage(Const APackageName : String; ErrorOnFailure: boolean):TPackage;
+function TBuildEngine.CheckExternalPackage(Const APackageName, ForPackageName : String; ErrorOnFailure: boolean):TPackage;
 var
   S : String;
   F : String;
@@ -7262,7 +7322,7 @@ begin
       CompileDependencies(Result);
     end
   else if ErrorOnFailure then
-    Error(SErrDependencyNotFound,[APackageName]);
+    Error(SErrDependencyNotFound,[APackageName,ForPackageName]);
 end;
 
 
@@ -7295,7 +7355,7 @@ begin
             end
           else
             begin
-              D.Target:=CheckExternalPackage(D.Value, true);
+              D.Target:=CheckExternalPackage(D.Value, APackage.Name, true);
               P:=TPackage(D.Target);
             end;
           if (D.RequireChecksum<>$ffffffff) and (D.RequireChecksum<>0) and
@@ -7337,7 +7397,7 @@ begin
             end
           else
             begin
-              D.Target:=CheckExternalPackage(D.Value, ErrorOnFailure);
+              D.Target:=CheckExternalPackage(D.Value, APackage.Name, ErrorOnFailure);
               P:=TPackage(D.Target);
             end;
           if (D.RequireChecksum<>$ffffffff) and
@@ -8162,7 +8222,7 @@ procedure TBuildEngine.Compile(Packages: TPackages);
         else
           begin
             inc(FProgressCount);
-            log(vlWarning,SWarnSkipPackageTargetProgress,[(FProgressCount)/FProgressMax * 100, APackage.Name, Defaults.Target]);
+            log(vlInfo,SInfoSkipPackageTargetProgress,[(FProgressCount)/FProgressMax * 100, APackage.Name, Defaults.Target]);
             APackage.FTargetState:=tsNoCompile;
           end;
       end;
@@ -8171,7 +8231,7 @@ procedure TBuildEngine.Compile(Packages: TPackages);
 Var
   I : integer;
 {$ifndef NO_THREADING}
-  Thr : Integer;
+  Thr, ThreadCount : Integer;
   Finished : boolean;
   ErrorState: boolean;
   ErrorMessage: string;
@@ -8189,8 +8249,10 @@ Var
   begin
     if AThread.Done then
       begin
-        { synchronise with the WriteBarrier in the thread }
-        ReadBarrier;
+        { synchronise with the WriteBarrier in the thread (-> ReadBarrier), and prevent
+          any writes we do here afterwards to be reordered before that (so the compile
+          thread won't see these writes either -> also WriteBarrier) }
+        ReadWriteBarrier;
         if assigned(AThread.APackage) then
           begin
             // The thread has completed compiling the package
@@ -8199,7 +8261,7 @@ Var
             else // A problem occurred, stop the compilation
               begin
               ErrorState:=true;
-              ErrorMessage:=AThread.ErrorMessage;
+              ErrorMessage:='Error inside worker thread for package '+Athread.APackage.Name+': '+AThread.ErrorMessage;
               Finished:=true;
               end;
             AThread.APackage := nil;
@@ -8253,7 +8315,7 @@ begin
           else
             begin
             inc(FProgressCount);
-            log(vlWarning,SWarnSkipPackageTargetProgress,[(FProgressCount)/FProgressMax * 100, P.Name, Defaults.Target]);
+            log(vlInfo,SInfoSkipPackageTargetProgress,[(FProgressCount)/FProgressMax * 100, P.Name, Defaults.Target]);
             end;
         end;
     end
@@ -8264,34 +8326,71 @@ begin
       ErrorState := False;
       Finished := False;
       I := 0;
+      ThreadCount:=0;
       // This event is set by the worker-threads to notify the main/this thread
       // that a package finished it's task.
       NotifyThreadWaiting := RTLEventCreate;
       SetLength(Threads,Defaults.ThreadsAmount);
-      // Create all worker-threads
-      for Thr:=0 to Defaults.ThreadsAmount-1 do
-        Threads[Thr] := TCompileWorkerThread.Create(self,NotifyThreadWaiting);
-      try
-        // When a thread notifies this thread that it is ready, loop on all
-        // threads to check their state and if possible assign a new package
-        // to them to compile.
-        while not Finished do
-          begin
-            RTLeventWaitFor(NotifyThreadWaiting);
-            for Thr:=0 to Defaults.ThreadsAmount-1 do if not Finished then
-              ProcessThreadResult(Threads[Thr]);
-          end;
-        // Compilation finished or aborted. Wait for all threads to end.
-        for thr:=0 to Defaults.ThreadsAmount-1 do
-          begin
-            Threads[Thr].Terminate;
-            RTLeventSetEvent(Threads[Thr].NotifyStartTask);
-            Threads[Thr].WaitFor;
-          end;
+      try 
+        // Create all worker-threads
+        try
+          for Thr:=0 to Defaults.ThreadsAmount-1 do
+            begin
+              Threads[Thr] := TCompileWorkerThread.Create(self,NotifyThreadWaiting);
+              if assigned(Threads[Thr]) then
+                inc(ThreadCount);
+            end;
+        except
+          on E: Exception do
+            begin
+              ErrorMessage := E.Message;
+              ErrorState:=true;
+            end;
+        end;
+        try
+          // When a thread notifies this thread that it is ready, loop on all
+          // threads to check their state and if possible assign a new package
+          // to them to compile.
+          while not Finished do
+            begin
+              RTLeventWaitFor(NotifyThreadWaiting);
+              for Thr:=0 to Defaults.ThreadsAmount-1 do
+                if assigned(Threads[Thr]) and not Finished then
+                  ProcessThreadResult(Threads[Thr]);
+            end;
+        except
+          on E: Exception do
+            begin
+              if not ErrorState then
+                ErrorMessage := E.Message;
+              ErrorState:=true;
+            end;
+        end;
+        try
+          // Compilation finished or aborted. Wait for all threads to end.
+          for thr:=0 to Defaults.ThreadsAmount-1 do
+            if assigned(Threads[Thr]) then
+              begin
+                Threads[Thr].Terminate;
+                RTLeventSetEvent(Threads[Thr].NotifyStartTask);
+                Threads[Thr].WaitFor;
+              end;
+        except
+          on E: Exception do
+            begin
+              if not ErrorState then
+                ErrorMessage := E.Message;
+              ErrorState:=true;
+            end;
+        end;
       finally
         RTLeventdestroy(NotifyThreadWaiting);
         for thr:=0 to Defaults.ThreadsAmount-1 do
-          Threads[Thr].Free;
+          if assigned(Threads[Thr]) then
+            begin
+              Threads[Thr].Free;
+              dec(ThreadCount);
+            end;
       end;
     if ErrorState then
       raise Exception.Create(ErrorMessage);
@@ -8316,7 +8415,7 @@ begin
           log(vlWarning, SWarnInstallationPackagecomplete, [P.Name, Defaults.Target]);
         end
       else
-        log(vlWarning,SWarnSkipPackageTarget,[P.Name, Defaults.Target]);
+        log(vlInfo,SInfoSkipPackageTarget,[P.Name, Defaults.Target]);
     end;
   NotifyEventCollection.CallEvents(neaAfterInstall, Self);
 end;
@@ -8345,7 +8444,7 @@ begin
             log(vlWarning, SWarnInstallationPackagecomplete, [P.Name, Defaults.Target]);
           end
         else
-          log(vlWarning,SWarnSkipPackageTarget,[P.Name, Defaults.Target]);
+          log(vlInfo,SInfoSkipPackageTarget,[P.Name, Defaults.Target]);
       end;
   finally
     FinishArchive(P);
@@ -8668,7 +8767,7 @@ begin
     Result := Name+LibExt
   else if AOS in [java] then
     Result:=Name+'.jar'
-  else if AOS in [macos] then
+  else if AOS in [macosclassic] then
     Result:=Name+'Lib'
   else
     Result:='libp'+Name+LibExt;
@@ -9404,7 +9503,7 @@ begin
 end;
 
 
-Function TDictionary.Substitute(Const Source : String; Macros : Array of string) : String;
+Function TDictionary.Substitute(Const Source : String; const Macros : Array of string) : String;
 Var
   I : Integer;
 begin
@@ -9415,6 +9514,7 @@ begin
       Inc(I,2);
     end;
   Result:=ReplaceStrings(Source);
+  I:=0;
   While I<High(Macros) do
     begin
       RemoveItem(Macros[i]);

@@ -566,6 +566,10 @@ None.
 <p>
 Note that if the time part is 0 (i.e. midnight), no time is appended.
 </p>
+<p>
+Note that on unix systems, the localization support must be enabled explicitly, see <link id="Localization"/>.
+</p>
+
 </descr>
 <errors>
 None.
@@ -573,6 +577,7 @@ None.
 <seealso>
 <link id="FormatDateTime"/>
 <link id="DefaultFormatSettings"/>
+<link id="Localization"/>
 </seealso>
 <example file="sysutex/ex3"/>
 </element>
@@ -593,6 +598,10 @@ string, see <link id="formatchars"/>.
 <p>
 Note that for 'c', if the time part is 0 (i.e. midnight), no time is appended.
 </p>
+<p>
+Note that on unix systems, the localization support must be enabled explicitly, see <link id="Localization"/>.
+</p>
+
 </descr>
 <errors>
 In case a wrong formatting character is found, an <link id="EConvertError"/> is
@@ -602,6 +611,7 @@ raised.
 <link id="FormatDateTime"/>
 <link id="formatchars"/>.
 <link id="EConvertError"/>
+<link id="Localization"/>
 </seealso>
 <example file="sysutex/ex4"/>
 </element>
@@ -647,9 +657,14 @@ None.
 <element name="DateToStr">
 <short>Converts a <var>TDateTime</var> value to a date string with a predefined format.</short>
 <descr>
+<p>
 <var>DateToStr</var> converts <var>Date</var> to a string representation. It uses
 <var>ShortDateFormat</var> as it's formatting string. It is hence completely
 equivalent to a <var>FormatDateTime('ddddd', Date)</var>.
+</p>
+<p>
+Note that on unix systems, the localization support must be enabled explicitly, see <link id="Localization"/>.
+</p>
 </descr>
 <errors>
 None.
@@ -659,6 +674,7 @@ None.
 <link id="DateTimeToStr"/>
 <link id="FormatDateTime"/>,
 <link id="StrToDate"/>
+<link id="Localization"/>
 </seealso>
 <example file="sysutex/ex7"/>
 </element>
@@ -797,9 +813,17 @@ None.
 <short>Return a string representation of a <var>TDateTime</var> value with a given
 format.</short>
 <descr>
+<p>
 <var>FormatDateTime</var> formats the date and time encoded in <var>DateTime</var>
 according to the formatting given in <var>FormatStr</var>. The complete list
 of formatting characters can be found in <link id="formatchars"/>.
+</p>
+<p>
+When the format string is empty, 'c' is used instead.
+</p>
+<p>
+Note that on unix systems, the localization support must be enabled explicitly, see <link id="Localization"/>.
+</p>
 </descr>
 <errors>
 On error (such as an invalid character in the formatting string), and
@@ -811,6 +835,7 @@ On error (such as an invalid character in the formatting string), and
 <link id="TimeToStr"/>
 <link id="StrToDateTime"/>
 <link id="EConvertError"/>
+<link id="Localization"/>
 </seealso>
 <example file="sysutex/ex14"/>
 </element>
@@ -1046,10 +1071,16 @@ None.
 <element name="TimeToStr">
 <short>Convert a <var>TDateTime</var> time to a string using a predefined format.</short>
 <descr>
+<p>
 <var>TimeToStr</var> converts the time in <var>Time</var> to a string. It uses
 the <var>LongTimeFormat</var> variable to see what formatting needs to be
 applied. It is therefor entirely equivalent to a
 <var>FormatDateTime('tt',Time)</var> call.
+</p>
+<p>
+Note that on unix systems, the localization support must be enabled explicitly, see <link id="Localization"/>.
+</p>
+
 </descr>
 <errors>
 None.
@@ -1650,8 +1681,11 @@ returns <var>THandle(-1)</var>.
 <var>FileExists</var> returns <var>True</var> if a file with name <var>FileName</var>
 exists on the disk, <var>False</var> otherwise. On windows, this function
 will return <var>False</var> if a directory is passed as <var>FileName</var>.
-On Unixes, passing a directory name will result in <var>True</var>. The
-rationale is that on UNIX, a directory is a file as well.
+</p>
+<p>
+On Unixes, passing a directory name used to result in <var>True</var>. (The
+rationale is that on UNIX, a directory is a file as well). 
+As of version 3.2.0, this behaviour has been changed for a Delphi-compatible approach.
 </p>
 <p>
 Note that this function accepts a single filename as an argument, without
@@ -2879,6 +2913,9 @@ More information on these formats can be found in <link id="FloatToStrF"/>.
 <code>
 FloatToStrF(Value, ffGeneral,15, 0);
 </code>
+<p>
+Note that on unix systems, the localization support must be enabled explicitly, see <link id="Localization"/>.
+</p>
 </descr>
 <errors>
 None.
@@ -4780,6 +4817,9 @@ is equivalent to calling <link id="FloatToStrF"/>:
 <code>
   FloatToStrF(Value,ffNumber,15,2);
 </code>
+<p>
+Note that on unix systems, the localization support must be enabled explicitly, see <link id="Localization"/>.
+</p>
 </descr>
 <errors>
 None.
@@ -8588,21 +8628,27 @@ and returns the result. If the conversion fails, the function returns the value 
 <element name="CurrToStrF">
 <short>Format a currency to a string</short>
 <descr>
+<p>
 <var>CurrToStrF</var> formats the currency <var>Value</var> according to the value in <var>Format</var>, using 
 the number of digits specified in <var>Digits</var>, and a precision of 19. This function simply calls <link id="FloatToStrF"/>.
+</p>
+<p>
+Note that on unix systems, the localization support must be enabled explicitly, see <link id="Localization"/>.
+</p>
 </descr>
 <seealso>
 <link id="FloatToStrF"/>
+<link id="Localization"/>
 </seealso>
 </element>
 
 <element name="SScanf">
-<short>Scan a string for substrings and return the substrings</short>
+<short>Scan a string for substrings and return the content of these substrings as typed values</short>
 <descr>
 <p>
-<var>SSCanF</var> scans the string <var>S</var> for the elements specified in <var>Fmt</var>, 
-and returns the elements in the pointers in <var>Pointers</var>. The <var>Fmt</var> can 
-contain placeholders of the form <var>%X</var> where <var>X</var> can be one of the 
+<var>SScanF</var> does in essence the opposite of <link id="Format"/>: it scans the string <var>S</var> for the elements specified in <var>Fmt</var>, 
+and returns the value of the found elements in the memory locations pointed to by the addresses in <var>Pointers</var>. 
+The <var>Fmt</var> can  contain placeholders of the form <var>%X</var> where <var>X</var> can be one of the 
 following characters:
 </p>
 <dl>
@@ -8621,6 +8667,10 @@ memory location of a type that corresponds to the type of placeholder in that po
 <dt>s</dt><dd>A pointer to an ansistring.</dd>
 <dt>c</dt><dd>A pointer to a single character.</dd>
 </dl>
+<p>
+On return, these locations will be filled with the actual values found in <var>S</var> for the placeholders in <var>fmt</var>.
+The return value of the function is the number of found values.
+</p>
 </descr>
 <errors>
 No error checking is performed on the type of the memory location.
@@ -8628,6 +8678,7 @@ No error checking is performed on the type of the memory location.
 <seealso>
 <link id="Format"/>
 </seealso>
+<example file="sysutex/ex98"/>
 </element>
 
 <!-- pointer type Visibility: default -->
@@ -10555,9 +10606,14 @@ This is the difference between UTC time and local time:
 UTC = LocalTime + GetLocalTimeOffset
 </pre> 
 <p>
-Note that on Linux/Unix, this information may be inaccurate around the DST
-time changes (for optimization). In that case, the <link id="#rtl.unix.ReReadLocalTime">unix.ReReadLocalTime</link> 
+The TDateTime-overloads return the offset at the specified DateTime. In case the TDateTime-aware function is not supported on the current platform, False is returned or it falls back to the offset to current time (depending on the overload used).
+</p>
+<p>
+Note that on Linux/Unix, the information returned from the TDateTime-unaware function may be inaccurate around the DST time changes (for optimization). In that case, the <link id="#rtl.unix.ReReadLocalTime">unix.ReReadLocalTime</link> 
 unit must be used to re-initialize the timezone information.
+</p>
+<p>
+The TDateTime-aware overloads are supported currently only on Windows Vista and newer.
 </p>
 </descr>
 <errors>
@@ -14309,11 +14365,16 @@ value.
 <element name="TUseBoolStrs">
 <short>Use boolean strings</short>
 <descr>
+<p>
 <var>TUseBoolStrs</var> is an enumerated type which indicates whether bool
 strs must be used when converting boolean to strings.
+</p>
+<p>
+Because the identifiers <var>True</var> and <var>False</var> are already used for the system boolean type,
+You must use the scoped identifiers to get the <var>TUseBoolStrs</var> versions of these 2 identifiers.
+Failure to do so will result in an error.
+</p>
 </descr>
-<seealso>
-</seealso>
 </element>
 
 <!-- enumeration value Visibility: default -->

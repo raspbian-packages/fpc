@@ -47,7 +47,7 @@
 \begin{document}
 \title{Free Pascal\\ Reference guide}
 \docdescription{Reference guide for Free Pascal, version \fpcversion}
-\docversion{3.2.0}
+\docversion{3.2.2}
 \input{date.inc}
 \author{Micha\"el Van Canneyt}
 \maketitle
@@ -919,17 +919,21 @@ e.\,g. in for loops.
 
 \subsubsection{Integers}
 \index{Types!Integer}
-A list of predefined integer types is presented in \seet{integerstyp}.
-
-\keywordlink{Integer}    \keywordlink{Shortint}
-\keywordlink{SmallInt}   \keywordlink{Longint}
-\keywordlink{Longword}   \keywordlink{Int64}
-\keywordlink{Byte}	 \keywordlink{Word}
-\keywordlink{Cardinal}   \keywordlink{QWord}
-\keywordlink{Boolean}    \keywordlink{ByteBool}
+\keywordlink{Integer}    
+\keywordlink{Shortint}
+\keywordlink{SmallInt}   
+\keywordlink{Longint}
+\keywordlink{Longword}
+\keywordlink{Int64}
+\keywordlink{Byte}	 
+\keywordlink{Word}
+\keywordlink{Cardinal}   
+\keywordlink{QWord}
+\keywordlink{ByteBool}
 \keywordlink{WordBool}
-\keywordlink{LongBool}   \keywordlink{Char}
-\keywordlink{QWordBool}   \keywordlink{Char}
+\keywordlink{LongBool}
+\keywordlink{QWordBool}   
+A list of predefined integer types is presented in \seet{integerstyp}.
 
 %\index{Keyword!Integer}
 %
@@ -950,12 +954,10 @@ Byte \\
 Word \\
 Cardinal \\
 QWord \\
-Boolean \\
 ByteBool \\
 WordBool \\
 LongBool \\
-QWordBool \\
-Char \\ \hline
+QWordBool \\ \hline
 \end{tabular}
 \end{center}
 \end{table}
@@ -1143,6 +1145,13 @@ A C-style enumeration type looks as follows:
 Type
   EnumType = (one, two, three, forty := 40,fortyone);
 \end{verbatim}
+or you can use
+\begin{verbatim}
+Type
+  EnumType = (one, two, three, forty = 40,fortyone);
+\end{verbatim}
+The latter notation is mandatory in mode \var{DELPHI}.
+
 As a result, the ordinal number of \var{forty} is \var{40}, and not \var{3},
 as it would be when the \var{':= 40'} wasn't present.
 The ordinal value of \var{fortyone} is then {41}, and not \var{4}, as it
@@ -1204,7 +1213,7 @@ Some of the predefined \var{integer} types are defined as subrange types:
 Type
   Longint  = $80000000..$7fffffff;
   Integer  = -32768..32767;
-  shortint = -128..127;
+  shortint = -128..127;  
   byte     = 0..255;
   Word     = 0..65535;
 \end{verbatim}
@@ -1216,12 +1225,31 @@ Type
   WorkDays = monday .. friday;
   WeekEnd = Saturday .. Sunday;
 \end{verbatim}
+
+%
+\subsubsection{Character types}
+\index{Types!Char}
+A character type is also an ordinal type: characters are ordered, can be
+counted. There are 2 character types:
+\begin{description}
+\item[AnsiChar] This is a 1-byte character. 
+The interpretation of the character depends on the codepage.
+\item[WideChar] This is a 2-byte character. The interpretation of the
+character depends on the codepage.
+\end{description}
+Characters can be used in a loop, one can use \var{prev} and \var{succ} on
+it, as well as \var{ord}.
+
+For more information on characters, see \sees{charactertypes}.
+
+%
+%
 %
 \subsection{Real types}
 \index{Types!Real}
 \fpc uses the math coprocessor (or emulation) for all its floating-point
-calculations. The Real native type is processor dependent,
-but it is either Single or Double. Only the IEEE floating point types are
+calculations. The \var{Real} native type is processor dependent,
+but it is either a \var{Single} or a \var{Double}. Only the IEEE floating point types are
 supported, and these depend on the target processor and emulation options.
 The true \tp compatible types are listed in
 \seet{Reals}.\index{Real}\index{Single}\index{Double}\index{Extended}\index{Comp}\index{Currency}
@@ -1245,9 +1273,18 @@ minimizes rounding errors. This type should be used with care: when used in
 expressions using e.g. multiplication, the evaluation of the expression may
 go wrong (losing precision) if intermediate results fall outside the currency range. 
 
+Note that not all float types are available on all platforms. The
+\var{single} float type is the only one guaranteed to be available on all
+platforms that have floating point support (so e.g. AVR does not have it). 
+The \var{double} type is available on all platforms with coprocessor, 
+and the \var{extended} type is available on all Intel x86 processors,
+except on the Windows 64-bit platform.  More details on availability can be
+found in the \progref.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Character types
 \section{Character types}
+\label{se:charactertypes}
 \index{Types!Char}
 \subsection{Char or AnsiChar}
 \index{Char} \keywordlink{char}
@@ -2307,6 +2344,27 @@ begin
   Writeln('Length ',length(A));
 end.
 \end{verbatim}
+
+\subsubsection{Dynamic array constant expressions}
+As of version 3.2 of the compiler, an array can be constructed using an
+array expression in an explicit assignment or in an initialized variable.
+However, the expression is different. In an assignment statement, it
+resembles a set expression, in an initializd variable, the same syntax as
+for a constant array of fixed length must be used:
+\begin{verbatim}
+Type
+  TIntegerArray = Array of Integer;
+
+var
+  A : TIntegerArray = (1,2,3);
+  B : TIntegerArray;
+
+begin
+  B:=[3,4,5];
+end.
+\end{verbatim}
+
+
 \subsubsection{Packing and unpacking an array}
 Arrays can be packed and bitpacked. Two array types which have the same index
 type and element type, but which are differently packed are not assignment
@@ -3385,9 +3443,12 @@ Var
   tt : array [1..3] of string[20] = ('ikke', 'gij', 'hij');
   ti : array [1..3] of Longint = (1,2,3);
 \end{verbatim}
-For constant records, each element of the record should be specified, in
-the form \var{Field: Value}, separated by semicolons, and surrounded by round
-brackets.\index{Record!Constant}
+For constant records, each element of the record that you wish to initialize
+must be specified in the form \var{Field: Value}, separated by semicolons, 
+and surrounded by round brackets.\index{Record!Constant}. You can omit
+fields that you don't wish to initialize, in fact you can skip all fields.
+If you skip fields, the compiler will emit a warning.
+
 As an example:
 \begin{verbatim}
 Type
@@ -3396,9 +3457,17 @@ Type
     end;
 Var
   Origin : Point = (X:0.0; Y:0.0);
+  Partial : Point = (X:0.0);
+  Empty : Point = ();
 \end{verbatim}
+The above declarations will result in the following warnings:
+\begin{verbatim}
+iv.pp(7,27) Warning: Some fields coming after "X" were not initialized
+iv.pp(8,20) Warning: Some fields coming after "" were not initialized
+\end{verbatim}
+
 The order of the fields in a constant record needs to be the same as in the type
-declaration, otherwise a compile-time error will occur.
+declaration, otherwise a compile-time error will occur. 
 
 \begin{remark}
 It should be stressed that initialized variables are initialized when they
@@ -3712,6 +3781,36 @@ Similarly, the \var{\{\$PackRecords \}} directive acts on objects as well.
 \end{remark}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Abstract and sealed
+\section{Abstract and sealed objects}
+\index{Objects, abstract}\index{Objects, sealed}\index{abstract}\index{sealed}
+
+An object can be declared as sealed. In that case, it is not possible to declare a descendent
+object. The compiler will return an error if it encounters a declaration of a descendent:
+\begin{verbatim} 
+Type  
+  TMyClass = object Sealed  
+    x : integer;  
+  end;  
+ 
+  TMyClass2 = object(TMyClass)  
+    Y : Integer;  
+  end;  
+ 
+begin  
+end.
+\end{verbatim} 
+
+This will result in the following error:
+\begin{verbatim} 
+Error: Cannot create a descendant of the sealed class "TMyClass"
+\end{verbatim} 
+
+An abstract class is a class that cannot be used directly. 
+Instead, a descendent class must always be used. 
+However, for Delphi compatibility, the compiler ignores this directive.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Fields
 \section{Fields}
 \index{Fields}
@@ -3770,15 +3869,14 @@ identifiers. More about this in \sees{With}.
 An object can contain class or static fields: these fields are global to the object type,
 and act like global variables, but are known only in the scope of the object.
 The difference between static and class variables is purely the mode in which they work:
-The \var{static} keyword will always work, the \var{class} keyword will need \var{\{\$MODE DELPHI\}}.
+The \var{static} keyword will always work, the \var{class} keyword will need \var{\{\$MODE DELPHI\}}  or \var{\{\$MODE OBJFPC\}}.
 
 They can be referenced from within the objects methods, but can also be referenced from
 outside the object by providing the fully qualified name.
 
 For instance, the output of the following program:
 \begin{verbatim}
-{$mode delphi}
-{$static on}
+{$mode objfpc}
 type
   cl=object
     l : longint; static;
@@ -5377,17 +5475,17 @@ be used for a property or field definition in a published section. The
 information is present to describe for example arguments of procedures or functions.
 
 \subsection{Storage information}
-The compiler offers two mechanisms to control whether a property is streamed
+The compiler offers two specifiers to control whether a property is streamed
 using a streaming mechanism, such as the one implemented in the classes
-unit. These mechanisms write extra information to the generated RTTI, which
+unit. These specifiers write extra information to the generated RTTI, which
 is later used in the streaming system:
 
 \begin{enumerate}
 \item The {\em stored} specifier.
 \item The {\em default} specifier and its counterpart {\em nodefault}.
 \end{enumerate}
-These two specifiers can both be evaluated to decide whether a property must be
-streamed, and they are independent of each other.
+These two specifiers are both evaluated to decide whether a property must be
+streamed.
 
 The argument to the \var{stored} specifier should be either a boolean constant,
 a boolean field of the class, or a parameterless function which returns a boolean
@@ -5401,19 +5499,19 @@ Absence of a \var{stored} specifier is equivalent to \var{stored True}.
 If the evaluation of \var{Stored} resulted in \var{True}, the default for a
 property is considered:
 
-The {\em default specifier} can be specified for ordinal types and sets.
-properties that have as value this default value, will not be written to
-the stream by the streaming system, even if \var{Stored} was \var{True}.
+The \var{default} specifier can be specified for ordinal types and sets.
+Properties that have as value this default value, will not be written to
+the stream by the streaming system, even if \var{Stored} is \var{True}.
 The default value is stored in the RTTI that is generated for the class.
 
 String, floating-point and pointer properties have implicit \var{default}
 value of empty string, 0 or nil, respectively.
 Ordinal and set properties have no implicit \var{default} value.
 
-The {\em nodefault specifier} (\var{nodefault}) must be used to indicate
+The \var{nodefault} specifier must be used to indicate
 that a property has no default value. The effect is that the value of this
 property is always written to the stream when streaming the property, if
-stored was \var{True}.
+stored is \var{True}.
 
 \begin{remark}
 \begin{enumerate}
@@ -5428,25 +5526,57 @@ internally to denote \var{nodefault}.
 \begin{verbatim}
 property Test stored False;
 \end{verbatim}
-\item The {\em nodefault specifier} can be used to override the implicit
-{\em default specifier} of string, floating-point and pointer properties.
+\item The \var{nodefault} specifier can be used to override the implicit
+\var{default} specifier of string, floating-point and pointer properties.
 \item The streaming mechanism described here is the one implemented in the
 \file{classes} unit of the RTL. Other streaming mechanisms can be
 implemented, and they can use the RTTI information in a different way.
 \end{enumerate}
 \end{remark}
 
-\subsection{Overriding properties}
-Properties can be overridden in descendent classes, just like methods. The
-difference is that for properties, the overriding can always be done:
-properties should not be marked ``virtual'' so they can be overridden, they
-are always overridable (in this sense, properties are always ``virtual'').
-The type of the overridden property does not have to be the same as the
-parents class property type.
+\subsection{Overriding and redeclaring properties}
+Properties can be both overridden and redeclared in descendent classes.
 
-Since they can be overridden, the keyword ``inherited'' \index{inherited} can
-also be used to refer to the parent definition of the property. For example
-consider the following code:
+Property {\em redeclaration} takes action if the property type is declared, otherwise it is property {\em override}.
+The only difference is that property {\em override} replaces or extends the inherited modifiers with the new modifiers,
+whereas property {\em redeclaration} hides all inherited modifiers that are not present in the redeclaration.
+The type of the redeclared property does not have to be the same as the parent''s class property type.
+
+The example below demonstrates the difference between property {\em override} and {\em redeclaration}.
+\begin{verbatim}
+type
+  TAncestor = class
+  private
+    FP1 : Integer;
+  public
+    property P: integer Read FP1 write FP1;
+  end;
+
+  TP1 = class(TAncestor)
+  public
+    // property override
+    property P default 1;
+  end;
+
+  TPReadOnly = class(TAncestor)
+  public
+    // property redeclaration
+    property P: integer Read FP1;
+  end;
+\end{verbatim}
+
+\var{TP1} extends \var{property P} with a default value, \var{TPReadOnly} redeclares \var{property P} as read-only.
+
+\begin{remark}
+\var{TP1} should set the default value of \var{P} to \var{1} in its constructor.
+\end{remark}
+
+In case of both property {\em redeclaration} and property {\em override}, the access
+to the getter and setter is always static.
+I.e. property {\em override} acts only on the RTTI of the object and is not to be confused with method override.
+
+The keyword ``inherited'' \index{inherited} can be used to refer to the parent
+definition of the property. For example consider the following code:
 \begin{verbatim}
 type
   TAncestor = class
@@ -5478,7 +5608,7 @@ begin
 end;
 \end{verbatim}
 TClassA redefines \var{P} as a character property instead of an integer
-property, but uses the parents \var{P} property to store the value.
+property, but uses the parent''s \var{P} property to store the value.
 
 Care must be taken when using virtual get/set routines for a property:
 setting the inherited property still observes the normal rules of inheritance
@@ -5516,6 +5646,15 @@ then this must be called explicitly:
 constructor TClassA.Create;
 begin
   inherited SetP1(3);
+end;
+\end{verbatim}
+
+The redeclared ancestor properties are also available from inside and outside
+the descendant object with a direct cast to the ancestor:
+\begin{verbatim}
+function GetP(const AClassA: TClassA): Integer;
+begin
+  Result := TAncestor(AClassA).P;
 end;
 \end{verbatim}
 
@@ -5810,7 +5949,9 @@ Error: No matching implementation for interface method
 \end{verbatim}
 
 Normally, the names of the methods that implement an interface, must
-equal the names of the methods in the interface definition.
+equal the names of the methods in the interface definition. The compiler
+will look for matching methods in all visible methods: the methods of the
+class, and in parent classes methods with visibility protected or higher. 
 
 However, it is possible to provide aliases for methods that make up an
 interface: that is, the compiler can be told that a method of an interface
@@ -6166,6 +6307,7 @@ containers and classes. For example the \file{fgl} unit.
 A generic type definition is much like a type definition, with the exception that it contains a list of placeholders for types,
 as can be seen in the following syntax diagram:
 \input{syntax/generic.syn}
+\index{generic}\index{Type!Generics}\keywordlink{generic} 
 For classes, objects, procedural types and extended records, the generic
 type declaration should be followed by a type implementation.
 It is the same as a normal class implementation with a single exception,
@@ -6234,6 +6376,8 @@ when the generic class is specialized.
     procedure Sort(compare: TCompareFunc);
   end;
 \end{verbatim}
+\item Note that the type parameter names in declaration and implementation must be the
+same.
 \end{enumerate}
 
 Not only generic classes can be defined, but also other types:
@@ -6307,6 +6451,7 @@ placeholders filled in with actual type definitions.
 This can be done in any \var{Type} definition block. The specialized type
 looks as follows:
 \input{syntax/specialize.syn}
+\index{specialize}\index{Type!Specializing}\keywordlink{specialize} 
 Which is a very simple definition. Given the declaration of \var{TList} in
 the previous section, the following would be a valid type definition:
 \begin{verbatim}
@@ -6319,6 +6464,9 @@ As of version 3.0 of Free Pascal, the specialize keyword can also be used in a v
 Var
   P : specialize TList<Pointer>;
 \end{verbatim}
+The \var{specialize} keyword is part of the specialized type, so when using
+fully qualified names, the specialize keyword must be after the unit name
+and parent type names.
 
 The type in the specialize statement must be known, except in another generic type definition.
 Given the two generic class definitions:
@@ -6357,12 +6505,9 @@ In these definitions, the specialization is only performed when the generic type
 and at that time, the types are known.
 
 \begin{remark}
-As of version 3.0, it is possible to make a forward definition of a generic class.
-In prior versions the compiler would generate an error if a forward declaration of a class was
-later defined as a generic specialization. This means that the following is now possible:
+It is not possible to make a forward definition of a class which is a specialization
+of a generic, i.e. the following will not compile:
 \begin{verbatim}
-{$mode objfpc}
-Type
   TMyClass = Class;
 
   // Other declarations
@@ -7299,7 +7444,15 @@ end;
 This will allow the code to run as well.
 
 \section{Record operators}
-FPC supports the Delphi syntax for operators on extended records:
+Operator overloading is treated in detail in the chapter on operator overloading \seec{operatoroverloading}.
+However, since Delphi implemented operator overloading as part of advanced
+records, a few words need to be said about it here. 
+
+As can be seen in the syntax diagram for extended records, FPC supports the Delphi syntax for operators on extended
+records. This syntax is available in both \var{ObjFPC} and \var{Delphi} mode.
+
+In \var{objfpc} mode, the operators must be defined with their symbolic
+names, just as regular operator overloads:
 \begin{verbatim}
 {$mode objfpc}
 {$modeswitch advancedrecords}
@@ -7316,24 +7469,86 @@ begin
   Result.im:=A.im+B.im;
 end;
 \end{verbatim}
-The operators work just as they would if they were defined using the regular FPC syntax for operators.
-Note that they have the \var{class} keyword prefixed.
+The operators work just as they would if they were defined using the regular FPC syntax for
+operators, but this syntax is of course limited to record types.
+Note that they have the \var{class} keyword prefixed, and have the record type
+name prepended in the implementation.
 
-In Delphi mode, the names of the operators can also be used, similar to the syntax in Delphi:
+
+As indicated above, in \var{ObjFPC} mode, the operators must be indicated with their symbol names. 
+By contrast, in \var{Delphi} mode, the names of the operators can also be used, similar to the syntax in Delphi:
 \begin{verbatim}
 {$mode delphi}
 Type
-TComplex = record
-Re,Im : Double;
-class operator add(a,b : TComplex) : TComplex;
-end;
+  TComplex = record
+    Re,Im : Double;
+    class operator add(a,b : TComplex) : TComplex;
+  end;
 
 class operator TComplex.add (a,b : TComplex) : TComplex;
 begin
-Result.re:=A.re+B.re;
-Result.im:=A.im+B.im;
+  Result.re:=A.re+B.re;
+  Result.im:=A.im+B.im;
 end;
 \end{verbatim}
+This is of course because the syntax must be compatible with Delphi.
+
+Below is a table that links the symbolic operator names to the plain-text
+name. Note that some FPC operators do not have an equivalent usin a Delphi
+name.
+
+\begin{FPCltable}{cl}{Operator names}{operatornames}
+Symbol & Name \\ \hline
+\var{+} & add or positive \\
+\var{-} & subtract or negative \\
+\var{*} & multiply \\
+\var{/} & divide \\
+\var{**} & (no equivalent) \\
+\var{><} & (no equivalent) \\
+\var{=} & equal \\
+\var{<} & lessthan \\
+\var{<=} & lessthanorequal \\
+\var{>} & greaterthan \\
+\var{>=} & greaterthanorequal \\
+\var{<>} & notequal \\
+\var{:=} & implicit \\
+\var{in} & in \\
+\var{shr} & rightshift \\
+\var{shl} & leftshift \\
+\var{div} & intdivide \\
+\var{mod} & modulus \\
+\var{and} & bitwiseand or logicaland \\
+\var{or} & bitwiseor or logicalor \\
+\var{xor} & bitwisexor \\
+\var{not} & logicalnot \\
+\end{FPCltable}
+
+For example, the power operator (**) can be used in \var{Delphi} mode using its
+symbolic name:
+\begin{verbatim}
+{$mode delphi}  
+{$modeswitch advancedrecords}  
+ 
+Type  
+  TComplex = record  
+    Re,Im : Double;  
+    class operator **(a,b : TComplex) : TComplex;  
+  end;  
+ 
+class operator TComplex.** (a,b : TComplex) : TComplex;  
+begin  
+  Result.re:=-B.re;  
+  Result.im:=-B.im;  
+end; 
+
+Var
+  a,b : TComplex;
+begin
+  a:=a**b;
+end.
+\end{verbatim}
+More information on operator overloading can be found in the chapter on
+operator overloading \seec{operatoroverloading}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Class helpers
@@ -8891,6 +9106,49 @@ constant strings; by default, they are short strings (and thus limited to
 255 characters).
 
 %
+\subsection{Dynamic array operators}
+\index{Operators!Dynamic arrays}
+There is only one dynamic array operator: \var{+}. This operator is
+available in Delphi mode, but must be enabled explicily using the modeswitch
+arrayoperators in objfpc mode:
+\begin{verbatim}
+{$mode objfpc}
+{$modeswitch arrayoperators}
+\end{verbatim}
+When enabled, its action is similar to
+the concation for strings: to concatenate the contents of the two arrays it acts on.
+The array element type must of course be identical for both arrays, i.e. the
+following will work:
+\begin{verbatim}
+{$mode objfpc}
+{$modeswitch arrayoperators}
+var
+  a,b, c : array of byte;
+
+begin
+  a:=[0,1,2];
+  b:=[3,4,5];
+  c:=a+b;
+  writeln('C has ',length(c),' elements');
+\end{verbatim}
+But the following will not work:
+\begin{verbatim}
+{$mode objfpc}
+{$modeswitch arrayoperators}
+
+var
+  b, c : array of byte;
+  a : array of integer;
+
+begin
+  a:=[0,1,2];
+  b:=[3,4,5];
+  c:=a+b;
+  writeln('C has ',length(c),' elements');
+\end{verbatim}
+The compiler will give an error when compiling this code.
+
+%
 \subsection{Set operators}
 \label{se:setoperators}
 \index{Operators!Set}
@@ -8907,6 +9165,7 @@ Operator & Action \\ \hline
 \var{*} & Intersection \\
 \var{$><$} & Symmetric difference \\
 \var{$<=$} & Contains \\
+\var{$>=$} & Left hand side set is a superset of the one on the right \\
 \var{include} & include an element in the set\\
 \var{exclude} & exclude an element from the set\\
 \var{in} & check whether an element is in a set\\ \hline
@@ -8939,6 +9198,10 @@ begin
   Writeln('[',S,']');
 end;
 
+Const
+  WorkWeek = [mon,tue,wed,thu,fri];
+  WeekEnd = [sat,sun];
+
 Var
   W : Days;
 
@@ -8953,6 +9216,10 @@ begin
    PrintDays(W);
    W:=[mon,tue,wed]><[wed,thu,fri]; // equals [mon,tue,thu,fri]
    PrintDays(W);
+   if [mon,tue]<=WorkWeek then
+     Writeln('Must work on monday and tuesday');
+   if Weekend>=[sun] then
+     Writeln('Can rest on sunday');
 end.
 \end{verbatim}
 As can be seen, the union is equivalent to a binary OR, while the
@@ -9283,7 +9550,7 @@ should be executed repeatedly, conditionally  or sequentially:
 \input{syntax/struct.syn}
 Conditional statements come in two flavors:
 \input{syntax/conditio.syn}
-Repetitive statements come in three flavors:
+Repetitive statements come in four flavors:
 \input{syntax/repetiti.syn}
 The following sections deal with each of these statements.
 
@@ -9489,23 +9756,24 @@ value then \var{Statement} will never be executed.
 \end{enumerate}
 After this check, the statement after \var{Do} is executed. After the
 execution of the statement, the control variable is increased or decreased
-with 1, depending on whether \var{To} or \var{Downto} is used.
+by 1, depending on whether \var{To} or \var{Downto} is used.
 The control variable must be an ordinal type, no other
 types can be used as counters in a loop.
 
 \begin{remark}
 \begin{itemize}
-\item \fpc always calculates the upper bound before initializing
+\item \fpc always calculates the upper bound exactly once before initializing
 the counter variable with the initial value.
 \item It is not allowed to change (i.\,e. assign a value to) the value of a
 loop variable inside the loop.
-\item The value of the loop variable is undefined after a loop has
-completed or if a loop is not executed at all. If the loop was terminated prematurely with an exception or a
-\var{break} statement, the loop variable retains the value it had when the
-loop was exited.
+\item The value of the loop variable is undefined after a loop has completed or if a loop is not executed at all. 
+However, if the loop was terminated prematurely with an exception or a \var{break} or \var{goto} statement, 
+the loop variable retains the value it had when the loop was exited.
 \item For nested procedures, a loop variable must be a local variable.
 If you declare a loop variable outside the nested procedure where the loop is, the compiler will
 complain. It is however allowed to use a global variable in a procedure.
+\item The compiler does not expliticly forbid jumping with a \var{goto} statement into a for loop block, 
+but doing so will result in unpredictable behaviour. 
 \end{itemize}
 \end{remark}
 
@@ -9550,7 +9818,8 @@ end;
 begin
 end.
 \end{verbatim}
-because the variable \var{I} is not defined in \var{Nested}.
+because the variable \var{I} is not defined in \var{Nested} and it's not
+a global variable either.
 
 But the following will compile:
 \begin{verbatim}
@@ -11297,6 +11566,12 @@ available, and can be imported from other programs. For more information
 on this modifier, consult the section on ``Making libraries''
 in the \progref.
 
+\subsection{hardfloat}\keywordlink{hardfloat}
+\index{hardfloat}\index{Modifiers!hardfloat}
+The \var{hardfloat} modifier is used to indicate that the compiler must
+use a calling convention that passes certain floating point parameters in VFP registers.
+(Used on ARM only)
+
 \subsection{inline}\keywordlink{inline}
 \index{inline}\index{Modifiers!inline}
 \label{se:inline}
@@ -11358,6 +11633,32 @@ cannot be exported from a library.
 
 On Linux, the local directive results in some optimizations. On Windows, it
 has no effect. It was introduced for Kylix compatibility.
+
+\subsection{MS\_ABI\_Default}\keywordlink{MS\_ABI\_Default}
+\index{MS\_ABI\_Default}\index{Modifiers!MS\_ABI\_Default}
+The \var{MS\_ABI\_Default} modifier is used to indicate that the compiler must
+use the Microsoft version of the x86-64 calling convention. This is the default
+calling convention Win64, and is only supported on x86-64.
+
+
+\subsection{MS\_ABI\_CDecl}\keywordlink{MS\_ABI\_CDecl}
+\index{MS\_ABI\_CDecl}\index{Modifiers!MS\_ABI\_CDecl}
+The \var{MS\_ABI\_CDecl} modifier is used to indicate that the compiler must
+use the Microsoft version of the x86-64 calling convention, with the
+exception that 'array of const' are interpreted as cdecl varargs parameters,
+instead of the regular pascal array of const.
+
+
+
+
+\subsection{MWPascal}\keywordlink{MWPascal}
+\index{MWPascal}\index{Modifiers!MWPascal}
+The \var{MWPascal} modifier is used to indicate that the compiler must
+use the Metrowerks Pascal calling convention. This calling convention behaves the same as
+cdecl, except that const record parameters are passed by reference
+instead of by value. Supported on all platforms.
+
+
 
 \subsection{noreturn}
 \label{se:noreturn}\index{noreturn}\index{Modifiers!noreturn}\keywordlink{noreturn}
@@ -11525,10 +11826,13 @@ be ``second'', in all lowercase letters.
 
 \subsection{register}
 \label{se:register}\index{register}\index{Modifiers!register}\keywordlink{register}
-The \var{register} keyword is used for compatibility with Delphi. In
-version 1.0.x of the compiler, this directive has no effect on the
-generated code. As of the 1.9.X versions, this directive is supported. The
-first three arguments are passed in registers EAX, ECX and EDX.
+The \var{register} keyword is used for compatibility with Delphi.
+In version 1.0.x of the compiler, this directive has no effect on the
+generated code. As of the 1.9.X versions, this directive is supported.
+For the Intel i386 platform, the first three arguments are passed in registers EAX, EDX and ECX.
+For other platforms, this keyword has no effect, the default platform ABI calling
+convention is used. In general, the use of this directive is not
+recommended, unless you know what you're doing.
 
 \subsection{safecall}
 \index{safecall}\index{Modifiers!safecall}\keywordlink{savecall}
@@ -11548,6 +11852,10 @@ entirely on the CPU.
 \subsection{softfloat}
 \index{softfloat}\index{Modifiers!softfloat}\keywordlink{softfloat}
 The \var{softfloat}  modifier makes sense only on the ARM architecture.
+Tells the compiler to se the (platform-specific) calling convention for passing floating
+point values when software-emulated floating point support is active.
+(Not supported on all platforms: currently only ARM).
+
 
 \subsection{stdcall}
 \index{stdcall}\index{Modifiers!stdcall}\keywordlink{stdcall}
@@ -11556,6 +11864,30 @@ it also aligns all the parameters to a default alignment.
 
 More information about this modifier can be found in the \progref, in the
 section on the calling mechanism and the chapter on linking.
+
+\subsection{SYSV\_ABI\_Default}\keywordlink{SYSV\_ABI\_Default}
+\index{SYSV\_ABI\_Default}\index{Modifiers!SYSV\_ABI\_Default}
+The \var{SYS\_ABI\_Default} modifier is used to indicate that the compiler must
+use the x86-64-specific calling convention that conforms to the System V AMD64
+ABI
+This is the default calling convention all x86-64 platforms except Win64, 
+and is only supported on x86-64.
+
+
+\subsection{SYSV\_ABI\_CDecl}\keywordlink{SYSV\_ABI\_CDecl}
+\index{SYSV\_ABI\_CDecl}\index{Modifiers!SYSV\_ABI\_CDecl}
+The \var{SYSV\_ABI\_CDecl} modifier is used to indicate that the compiler must
+use the x86-64-specific calling convention that conforms to the System V AMD64
+ABI, with the exception that 'array of const' are interpreted as cdecl varargs parameters,
+instead of the regular pascal array of const.
+
+\subsection{VectorCall}\keywordlink{VectorCall}
+\index{VectorCall}\index{Modifiers!VectorCall}
+The \var{VectorCall} modifier is used to indicate that the compiler must
+use vector call calling convention. This is a variant of the
+\var{MS\_ABI\_Default} calling convention that passes certain
+floating point parameters in vector registers. only supported on
+on x86-64 CPUs.
 
 \subsection{varargs}
 \index{varargs}\index{Modifiers!varargs}\keywordlink{varargs}
@@ -11635,50 +11967,41 @@ obtained with regular function calls. When using operator overloading,
 it is important to keep in mind that some implicit rules may produce
 some unexpected results. This will be indicated.
 
+There are 2 ways to declare operator overloads. The first way is the
+original way as implemented in Free Pascal, and is the most powerful.
+It is discussed in this chapter. There is also a second way, which can only
+be implemented for Advanced (or extended) records, it is discussed in the
+chapter on extended records.
+
 \section{Operator declarations}
 \index{operators}
 To define the action of an operator is much like defining a function:
 \input{syntax/operator.syn}
 The parameter list for a comparison operator or an arithmetic operator
-must always contain two parameters, with the exception of the unary minus,
-where only one parameter is needed. The result type of the comparison
-operator must be \var{Boolean}.
+must always contain two parameters, with the exception of the unary minus or
+plus, where only one parameter is needed. The result type of the comparison
+operator(s) must be \var{Boolean}.
 
-For Delphi compatibility, the symbolic operator names can also be replaced by a plain-text
-name:
-\begin{FPCltable}{cl}{Operator names}{operatornames}
-Symbol & Name \\ \hline
-\var{+} & add \\
-\var{-} & subtract \\
-\var{*} & multiply \\
-\var{/} & divide \\
-\var{**} & power \\
-\var{><} & symmetricaldifference \\
-\var{=} & equal \\
-\var{<} & lessthan \\
-\var{<=} & lessthanorequal \\
-\var{>} & greaterthan \\
-\var{>=} & greaterthanorequal \\
-\var{<>} & notequal \\
-\var{:=} & assign \\
-\var{shr} & rightshift \\
-\var{shl} & leftshift \\
-\var{div} & intdivide \\
-\var{mod} & modulus \\
-\var{and} & bitwiseand or logicaland \\
-\var{or} & bitwiseor or logicalor \\
-\var{xor} & bitwisexor \\
-\var{not} & bitwisenot or logicalnot \\
-\end{FPCltable}
-\begin{remark}
-When compiling in \var{Delphi} mode the names of the operators {\em must} be used,
-not the symbols.
-\end{remark}
+
+
+User-defined simple types can be used for operators, as well as records and arrays.
+There are some limitations on operator overloading:
+\begin{itemize}
+\item This way of declaring operators is only supported in \var{ObjFPC} and
+\var{FPC} modes.
+\item It is not possible to define operators on classes. 
+\item The + and - operators cannot be defined on enumerated types. 
+\item When the \var{ArrayOperators} modeswitch is in effect:
+\begin{verbatim}
+{$modeSwitch ArrayOperators}
+\end{verbatim} 
+then the + operator cannot be overloaded on dynamic arrays, because it is handled internally
+by the compiler.
+\end{itemize}
 
 \begin{remark}
-When compiling in \var{Delphi} mode or \var{Objfpc} mode, the result
-identifier may be dropped. The result can then be accessed through
-the standard \var{Result} symbol.
+When compiling in \var{Objfpc} mode, the result identifier may be dropped. 
+The result can then be accessed through the standard \var{Result} symbol.
 
 If the result identifier is dropped and the compiler is not in one
 of these modes, a syntax error will occur.
@@ -11939,7 +12262,9 @@ operator must be overloaded.
 \item[division] To divide two types, the \var{/} division
 operator must be overloaded.
 \item[addition] To add two types, the \var{+} addition
-operator must be overloaded.
+operator must be overloaded. Note that the \var{+} can not be used for
+dynamic arrays, as this is an internal compiler operation for array
+concatenation (see also the modeswitch ARRAYOPERATORS).
 \item[subtraction] To subtract two types, the \var{-} subtraction
 operator must be overloaded.
 \item[exponentiation] To exponentiate two types, the \var{**} exponentiation
@@ -12344,8 +12669,10 @@ program programb;
 
 uses unita in '..\unita.pp';
 \end{verbatim}
-\file{unita} is searched in the parent directory of the \file{programb} source
-file.
+\file{unita} is searched in the parent directory of the current working
+directory of the compiler. You can add a \var{\{\$UNITPATH ..\}} directive
+to make sure that the unit will be found no matter where the compiler's
+current working directory is.
 
 
 When the compiler looks for unit files, it adds the extension \file{.ppu}

@@ -437,23 +437,30 @@ implementation
           { can't hardcode the position of the '$', e.g. on darwin an underscore
             is added }
           hashedid.id:=copy(defaultname,2,255);
-          { the default sym is always part of the current procedure/function }
-          srsymtable:=current_procinfo.procdef.localst;
-          srsym:=tsym(srsymtable.findwithhash(hashedid));
-          if not assigned(srsym) then
+          { in case of a previous error, current_procinfo might not be set
+            so avoid a crash in this case }
+          if assigned(current_procinfo) then
             begin
-              { no valid default variable found, so create it }
-              srsym:=clocalvarsym.create(defaultname,vs_const,def,[]);
-              srsymtable.insert(srsym);
-              { mark the staticvarsym as typedconst }
-              include(tabstractvarsym(srsym).varoptions,vo_is_typed_const);
-              include(tabstractvarsym(srsym).varoptions,vo_is_default_var);
-              { The variable has a value assigned }
-              tabstractvarsym(srsym).varstate:=vs_initialised;
-              { the variable can't be placed in a register }
-              tabstractvarsym(srsym).varregable:=vr_none;
-            end;
-          result:=cloadnode.create(srsym,srsymtable);
+              { the default sym is always part of the current procedure/function }
+              srsymtable:=current_procinfo.procdef.localst;
+              srsym:=tsym(srsymtable.findwithhash(hashedid));
+              if not assigned(srsym) then
+                begin
+                  { no valid default variable found, so create it }
+                  srsym:=clocalvarsym.create(defaultname,vs_const,def,[]);
+                  srsymtable.insert(srsym);
+                  { mark the staticvarsym as typedconst }
+                  include(tabstractvarsym(srsym).varoptions,vo_is_typed_const);
+                  include(tabstractvarsym(srsym).varoptions,vo_is_default_var);
+                  { The variable has a value assigned }
+                  tabstractvarsym(srsym).varstate:=vs_initialised;
+                  { the variable can't be placed in a register }
+                  tabstractvarsym(srsym).varregable:=vr_none;
+                end;
+              result:=cloadnode.create(srsym,srsymtable);
+            end
+          else
+            result:=cerrornode.create;
         end;
 
       var
@@ -718,7 +725,7 @@ implementation
           readfunctype:=nil;
 
           { can't read/write types }
-          if (para.left.nodetype=typen) and not(ttypenode(para.left).typedef.typ=undefineddef) then
+          if (para.left.nodetype=typen) and not(is_typeparam(ttypenode(para.left).typedef)) then
             begin
               CGMessagePos(para.fileinfo,type_e_cant_read_write_type);
               error_para := true;
@@ -735,126 +742,124 @@ implementation
           if inlinenumber in [in_write_x,in_writeln_x] then
             { prefer strings to chararrays }
             maybe_convert_to_string(para.left);
-
-          case para.left.resultdef.typ of
-            stringdef :
-              name:=procprefixes[do_read]+tstringdef(para.left.resultdef).stringtypname;
-            pointerdef :
-              begin
-                if (not is_pchar(para.left.resultdef)) or do_read then
-                  begin
-                    CGMessagePos(para.fileinfo,type_e_cant_read_write_type);
-                    error_para := true;
-                  end
-                else
-                  name:=procprefixes[do_read]+'pchar_as_pointer';
-              end;
-            floatdef :
-              begin
-                is_real:=true;
-                if Tfloatdef(para.left.resultdef).floattype=s64currency then
-                  name := procprefixes[do_read]+'currency'
-                else
-                  begin
-                    name := procprefixes[do_read]+'float';
-                    readfunctype:=pbestrealtype^;
-                  end;
-                { iso pascal needs a different handler }
-                if (m_isolike_io in current_settings.modeswitches) and do_read then
-                  name:=name+'_iso';
-              end;
-            enumdef:
-              begin
-                name:=procprefixes[do_read]+'enum';
-                readfunctype:=s32inttype;
-              end;
-            orddef :
-              begin
-                case Torddef(para.left.resultdef).ordtype of
-                  s8bit,
-                  s16bit,
-                  s32bit,
-                  s64bit,
-                  u8bit,
-                  u16bit,
-                  u32bit,
-                  u64bit:
+          if is_typeparam(para.left.resultdef) then
+            error_para:=true
+          else
+            case para.left.resultdef.typ of
+              stringdef :
+                name:=procprefixes[do_read]+tstringdef(para.left.resultdef).stringtypname;
+              pointerdef :
+                begin
+                  if (not is_pchar(para.left.resultdef)) or do_read then
                     begin
-                      get_read_write_int_func(para.left.resultdef,func_suffix,readfunctype);
-                      name := procprefixes[do_read]+func_suffix;
-                      if (m_isolike_io in current_settings.modeswitches) and do_read then
-                        name:=name+'_iso';
-                    end;
-                  uchar :
+                      CGMessagePos(para.fileinfo,type_e_cant_read_write_type);
+                      error_para := true;
+                    end
+                  else
+                    name:=procprefixes[do_read]+'pchar_as_pointer';
+                end;
+              floatdef :
+                begin
+                  is_real:=true;
+                  if Tfloatdef(para.left.resultdef).floattype=s64currency then
+                    name := procprefixes[do_read]+'currency'
+                  else
                     begin
-                      name := procprefixes[do_read]+'char';
-                      { iso pascal needs a different handler }
-                      if (m_isolike_io in current_settings.modeswitches) and do_read then
-                        name:=name+'_iso';
-                      readfunctype:=cansichartype;
+                      name := procprefixes[do_read]+'float';
+                      readfunctype:=pbestrealtype^;
                     end;
-                  uwidechar :
-                    begin
-                      name := procprefixes[do_read]+'widechar';
-                      readfunctype:=cwidechartype;
-                    end;
-                  scurrency:
-                    begin
-                      name := procprefixes[do_read]+'currency';
-                      { iso pascal needs a different handler }
-                      if (m_isolike_io in current_settings.modeswitches) and do_read then
-                        name:=name+'_iso';
-                      readfunctype:=s64currencytype;
-                      is_real:=true;
-                    end;
-                  pasbool1,
-                  pasbool8,
-                  pasbool16,
-                  pasbool32,
-                  pasbool64,
-                  bool8bit,
-                  bool16bit,
-                  bool32bit,
-                  bool64bit:
-                    if do_read then
+                  { iso pascal needs a different handler }
+                  if (m_isolike_io in current_settings.modeswitches) and do_read then
+                    name:=name+'_iso';
+                end;
+              enumdef:
+                begin
+                  name:=procprefixes[do_read]+'enum';
+                  readfunctype:=s32inttype;
+                end;
+              orddef :
+                begin
+                  case Torddef(para.left.resultdef).ordtype of
+                    s8bit,
+                    s16bit,
+                    s32bit,
+                    s64bit,
+                    u8bit,
+                    u16bit,
+                    u32bit,
+                    u64bit:
+                      begin
+                        get_read_write_int_func(para.left.resultdef,func_suffix,readfunctype);
+                        name := procprefixes[do_read]+func_suffix;
+                        if (m_isolike_io in current_settings.modeswitches) and do_read then
+                          name:=name+'_iso';
+                      end;
+                    uchar :
+                      begin
+                        name := procprefixes[do_read]+'char';
+                        { iso pascal needs a different handler }
+                        if (m_isolike_io in current_settings.modeswitches) and do_read then
+                          name:=name+'_iso';
+                        readfunctype:=cansichartype;
+                      end;
+                    uwidechar :
+                      begin
+                        name := procprefixes[do_read]+'widechar';
+                        readfunctype:=cwidechartype;
+                      end;
+                    scurrency:
+                      begin
+                        name := procprefixes[do_read]+'currency';
+                        { iso pascal needs a different handler }
+                        if (m_isolike_io in current_settings.modeswitches) and do_read then
+                          name:=name+'_iso';
+                        readfunctype:=s64currencytype;
+                        is_real:=true;
+                      end;
+                    pasbool1,
+                    pasbool8,
+                    pasbool16,
+                    pasbool32,
+                    pasbool64,
+                    bool8bit,
+                    bool16bit,
+                    bool32bit,
+                    bool64bit:
+                      if do_read then
+                        begin
+                          CGMessagePos(para.fileinfo,type_e_cant_read_write_type);
+                          error_para := true;
+                        end
+                      else
+                        begin
+                          name := procprefixes[do_read]+'boolean';
+                          readfunctype:=pasbool1type;
+                        end
+                    else
                       begin
                         CGMessagePos(para.fileinfo,type_e_cant_read_write_type);
                         error_para := true;
-                      end
-                    else
-                      begin
-                        name := procprefixes[do_read]+'boolean';
-                        readfunctype:=pasbool1type;
-                      end
+                      end;
+                  end;
+                end;
+              variantdef :
+                name:=procprefixes[do_read]+'variant';
+              arraydef :
+                begin
+                  if is_chararray(para.left.resultdef) then
+                    name := procprefixes[do_read]+'pchar_as_array'
                   else
                     begin
                       CGMessagePos(para.fileinfo,type_e_cant_read_write_type);
                       error_para := true;
-                    end;
+                    end
                 end;
-              end;
-            variantdef :
-              name:=procprefixes[do_read]+'variant';
-            arraydef :
-              begin
-                if is_chararray(para.left.resultdef) then
-                  name := procprefixes[do_read]+'pchar_as_array'
-                else
-                  begin
-                    CGMessagePos(para.fileinfo,type_e_cant_read_write_type);
-                    error_para := true;
-                  end
-              end;
-            { generic parameter }
-            undefineddef:
-              { don't try to generate any code for a writeln on a generic parameter }
-              error_para:=true;
-            else
-              begin
-                CGMessagePos(para.fileinfo,type_e_cant_read_write_type);
-                error_para := true;
-              end;
-          end;
+              else
+                begin
+                  CGMessagePos(para.fileinfo,type_e_cant_read_write_type);
+                  error_para := true;
+                end;
+            end;
 
           { iso pascal needs a different handler }
           if (m_isolike_io in current_settings.modeswitches) and not(do_read) then
@@ -1783,12 +1788,49 @@ implementation
 
 
     function tinlinenode.handle_copy: tnode;
+
+      procedure do_error(typemismatch:boolean;func:string;fi:tfileposinfo);
+
+        procedure write_dynarray_copy;
+          begin
+            MessagePos1(fileinfo,sym_e_param_list,'Copy(Dynamic Array;'+sizesinttype.typename+'=`<low>`;'+sizesinttype.typename+'=`<length>`);');
+          end;
+
+        begin
+          if typemismatch then
+            CGMessagePos(fi,type_e_mismatch)
+          else
+            CGMessagePos1(fi,parser_e_wrong_parameter_size,'Copy');
+          if func='' then
+            begin
+              write_system_parameter_lists('fpc_shortstr_copy');
+              write_system_parameter_lists('fpc_char_copy');
+              write_system_parameter_lists('fpc_unicodestr_copy');
+              if tf_winlikewidestring in target_info.flags then
+                write_system_parameter_lists('fpc_widestr_copy');
+              write_system_parameter_lists('fpc_ansistr_copy');
+              write_dynarray_copy;
+            end
+          else if func='fpc_dynarray_copy' then
+            write_dynarray_copy
+          else
+            write_system_parameter_lists(func);
+        end;
+
       var
         paras   : tnode;
         ppn     : tcallparanode;
         paradef : tdef;
         counter : integer;
+        minargs,
+        maxargs : longint;
+        func : string;
       begin
+        if not assigned(left) then
+          begin
+            do_error(false,'',fileinfo);
+            exit(cerrornode.create);
+          end;
         result:=nil;
         { determine copy function to use based on the first argument,
           also count the number of arguments in this loop }
@@ -1803,44 +1845,63 @@ implementation
          end;
         set_varstate(ppn.left,vs_read,[vsf_must_be_valid]);
         paradef:=ppn.left.resultdef;
+        { the string variants all require 2 or 3 args, only the array one allows less }
+        minargs:=2;
+        maxargs:=3;
         if is_ansistring(paradef) then
-          // set resultdef to argument def
-          resultdef:=paradef
+          begin
+            // set resultdef to argument def
+            resultdef:=paradef;
+            func:='fpc_ansistr_copy';
+          end
         else if (is_chararray(paradef) and (paradef.size>255)) or
            ((cs_refcountedstrings in current_settings.localswitches) and is_pchar(paradef)) then
-          // set resultdef to ansistring type since result will be in ansistring codepage
-          resultdef:=getansistringdef
-        else
-         if is_widestring(paradef) then
-           resultdef:=cwidestringtype
-        else
-         if is_unicodestring(paradef) or
+          begin
+            // set resultdef to ansistring type since result will be in ansistring codepage
+            resultdef:=getansistringdef;
+            func:='fpc_ansistr_copy';
+          end
+        else if is_widestring(paradef) then
+          begin
+           resultdef:=cwidestringtype;
+           func:='fpc_widestr_copy';
+          end
+        else if is_unicodestring(paradef) or
             is_widechararray(paradef) or
             is_pwidechar(paradef) then
-           resultdef:=cunicodestringtype
+          begin
+            resultdef:=cunicodestringtype;
+            func:='fpc_unicodestr_copy';
+          end
         else
          if is_char(paradef) then
-           resultdef:=cshortstringtype
+           begin
+             resultdef:=cshortstringtype;
+             func:='fpc_char_copy';
+           end
         else
          if is_dynamic_array(paradef) then
           begin
-            { Only allow 1 or 3 arguments }
-            if not(counter in [1..3]) then
-             begin
-               CGMessage1(parser_e_wrong_parameter_size,'Copy');
-               exit;
-             end;
+            minargs:=1;
             resultdef:=paradef;
+            func:='fpc_dynarray_copy';
+          end
+        else if counter in [2..3] then
+          begin
+            resultdef:=cshortstringtype;
+            func:='fpc_shortstr_copy';
           end
         else
-         begin
-           { generic fallback that will give an error if a wrong
-             type is passed }
-           if (counter=3) then
-             resultdef:=cshortstringtype
-           else
-             CGMessagePos(ppn.left.fileinfo,type_e_mismatch);
-         end;
+          begin
+            do_error(true,'',ppn.left.fileinfo);
+            exit(cerrornode.create);
+          end;
+
+        if (counter<minargs) or (counter>maxargs) then
+          begin
+            do_error(false,func,fileinfo);
+            exit(cerrornode.create);
+          end;
       end;
 
 {$maxfpuregisters 0}
@@ -2856,9 +2917,11 @@ implementation
 
               in_sizeof_x:
                 begin
-                  { the constant evaluation of in_sizeof_x happens in pexpr where possible }
+                  { the constant evaluation of in_sizeof_x happens in pexpr where possible,
+                    though for generics it can reach here as well }
                   set_varstate(left,vs_read,[]);
                   if (left.resultdef.typ<>undefineddef) and
+                      assigned(current_procinfo) and
                       paramanager.push_high_param(vs_value,left.resultdef,current_procinfo.procdef.proccalloption) then
                    begin
                      { this should be an open array or array of const, both of
@@ -3338,7 +3401,7 @@ implementation
                       inserttypeconv(tcallparanode(tcallparanode(left).right).left,
                         tsetdef(left.resultdef).elementdef);
                     end
-                  else
+                  else if left.resultdef.typ<>undefineddef then
                     CGMessage(type_e_mismatch);
                 end;
               in_pack_x_y_z,
@@ -4058,21 +4121,27 @@ implementation
       begin
         { create the call to the helper }
         { on entry left node contains the parameter }
-        first_arctan_real := ccallnode.createintern('fpc_arctan_real',
+        result := ccallnode.createintern('fpc_arctan_real',
                 ccallparanode.create(left,nil));
         left := nil;
       end;
 
      function tinlinenode.first_abs_real : tnode;
+      var
+         callnode : tcallnode;
       begin
         { create the call to the helper }
         { on entry left node contains the parameter }
-        first_abs_real := ctypeconvnode.create(ccallnode.createintern('fpc_abs_real',
-                ccallparanode.create(left,nil)),resultdef);
+        callnode:=ccallnode.createintern('fpc_abs_real',
+                    ccallparanode.create(left,nil));
+        result := ctypeconvnode.create(callnode,resultdef);
+        include(callnode.callnodeflags,cnf_check_fpu_exceptions);
         left := nil;
       end;
 
      function tinlinenode.first_sqr_real : tnode;
+      var
+         callnode : tcallnode;
       begin
 {$ifndef cpufpemu}
         { this procedure might be only used for cpus definining cpufpemu else
@@ -4081,8 +4150,10 @@ implementation
 {$endif cpufpemu}
         { create the call to the helper }
         { on entry left node contains the parameter }
-        first_sqr_real := ctypeconvnode.create(ccallnode.createintern('fpc_sqr_real',
-                ccallparanode.create(left,nil)),resultdef);
+        callnode:=ccallnode.createintern('fpc_sqr_real',
+                    ccallparanode.create(left,nil));
+        result := ctypeconvnode.create(callnode,resultdef);
+        include(callnode.callnodeflags,cnf_check_fpu_exceptions);
         left := nil;
       end;
 
@@ -4090,6 +4161,7 @@ implementation
       var
         fdef: tdef;
         procname: string[31];
+        callnode: tcallnode;
       begin
         if ((cs_fp_emulation in current_settings.moduleswitches)
 {$ifdef cpufpemu}
@@ -4114,15 +4186,17 @@ implementation
             else
               internalerror(2014052101);
             end;
-            first_sqrt_real:=ctypeconvnode.create_internal(ccallnode.createintern(procname,ccallparanode.create(
+            result:=ctypeconvnode.create_internal(ccallnode.createintern(procname,ccallparanode.create(
                ctypeconvnode.create_internal(left,fdef),nil)),resultdef);
           end
         else
           begin
             { create the call to the helper }
             { on entry left node contains the parameter }
-            first_sqrt_real := ctypeconvnode.create(ccallnode.createintern('fpc_sqrt_real',
-                ccallparanode.create(left,nil)),resultdef);
+            callnode := ccallnode.createintern('fpc_sqrt_real',
+                ccallparanode.create(left,nil));
+            result := ctypeconvnode.create(callnode,resultdef);
+            include(callnode.callnodeflags,cnf_check_fpu_exceptions);
           end;
         left := nil;
       end;
@@ -4131,8 +4205,9 @@ implementation
       begin
         { create the call to the helper }
         { on entry left node contains the parameter }
-        first_ln_real := ccallnode.createintern('fpc_ln_real',
+        result := ccallnode.createintern('fpc_ln_real',
                 ccallparanode.create(left,nil));
+        include(tcallnode(result).callnodeflags,cnf_check_fpu_exceptions);
         left := nil;
       end;
 
@@ -4140,8 +4215,9 @@ implementation
       begin
         { create the call to the helper }
         { on entry left node contains the parameter }
-        first_cos_real := ccallnode.createintern('fpc_cos_real',
+        result := ccallnode.createintern('fpc_cos_real',
                 ccallparanode.create(left,nil));
+        include(tcallnode(result).callnodeflags,cnf_check_fpu_exceptions);
         left := nil;
       end;
 
@@ -4149,8 +4225,9 @@ implementation
       begin
         { create the call to the helper }
         { on entry left node contains the parameter }
-        first_sin_real := ccallnode.createintern('fpc_sin_real',
+        result := ccallnode.createintern('fpc_sin_real',
                 ccallparanode.create(left,nil));
+        include(tcallnode(result).callnodeflags,cnf_check_fpu_exceptions);
         left := nil;
       end;
 
@@ -4159,6 +4236,7 @@ implementation
         { create the call to the helper }
         { on entry left node contains the parameter }
         result := ccallnode.createintern('fpc_exp_real',ccallparanode.create(left,nil));
+        include(tcallnode(result).callnodeflags,cnf_check_fpu_exceptions);
         left := nil;
       end;
 
@@ -4167,6 +4245,7 @@ implementation
         { create the call to the helper }
         { on entry left node contains the parameter }
         result := ccallnode.createintern('fpc_int_real',ccallparanode.create(left,nil));
+        include(tcallnode(result).callnodeflags,cnf_check_fpu_exceptions);
         left := nil;
       end;
 
@@ -4175,6 +4254,7 @@ implementation
         { create the call to the helper }
         { on entry left node contains the parameter }
         result := ccallnode.createintern('fpc_frac_real',ccallparanode.create(left,nil));
+        include(tcallnode(result).callnodeflags,cnf_check_fpu_exceptions);
         left := nil;
       end;
 
@@ -4183,6 +4263,7 @@ implementation
         { create the call to the helper }
         { on entry left node contains the parameter }
         result := ccallnode.createintern('fpc_round_real',ccallparanode.create(left,nil));
+        include(tcallnode(result).callnodeflags,cnf_check_fpu_exceptions);
         left := nil;
       end;
 
@@ -4191,6 +4272,7 @@ implementation
         { create the call to the helper }
         { on entry left node contains the parameter }
         result := ccallnode.createintern('fpc_trunc_real',ccallparanode.create(left,nil));
+        include(tcallnode(result).callnodeflags,cnf_check_fpu_exceptions);
         left := nil;
       end;
 
