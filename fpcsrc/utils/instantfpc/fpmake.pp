@@ -35,7 +35,7 @@ begin
 
     P.OSes := [win32,win64,wince,haiku,linux,freebsd,openbsd,netbsd,darwin,iphonesim,ios,solaris,aix];
 
-    T:=P.Targets.AddProgram('instantfpc.pas');
+    T:=P.Targets.AddProgram('ifpc.pas');
     T.Dependencies.AddUnit('instantfptools');
 
     P.Targets.AddUnit('instantfptools.pas').Install:=False;
