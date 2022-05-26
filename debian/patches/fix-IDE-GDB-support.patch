@@ -1,0 +1,4339 @@
+From: Abou Al Montacir <abou.almontacir@sfr.fr>
+Date: Sun, 07 Jan 2018 12:40:45 +0100
+Description: Fix IDE GDB support by importing MI supoort from upstream trunk.
+ (Closes: Bug##528855)
+
+diff --git a/fpcsrc/ide/Makefile.fpc b/fpcsrc/ide/Makefile.fpc
+index 2be4d0d4..1bfdbb4f 100644
+--- a/fpcsrc/ide/Makefile.fpc
++++ b/fpcsrc/ide/Makefile.fpc
+@@ -31,6 +31,8 @@ FPMAKE_BIN_CLEAN=$(wildcard ./fpmake$(SRCEXEEXT))
+ LOCALFPMAKE=./fpmake$(SRCEXEEXT)
+ # do not add -d$(CPU_TARGET)
+ override NOCPUDEF=1
++# This list should be the same as in fpcbuild/Makefile.fpc and in fpcsrc/Makefile.fpc
++GDBMI_DEFAULT_OS_LIST=aix darwin freebsd haiku linux netbsd openbsd solaris win32 win64
+ 
+ [rules]
+ # Do not pass the Makefile's unit and binary target locations. Fpmake uses it's own.
+@@ -48,15 +50,37 @@ FPMAKE_OPT+=$(FPC_TARGETOPT)
+ FPMAKE_OPT+=$(addprefix -o ,$(FPCOPT))
+ FPMAKE_OPT+=--compiler=$(FPC)
+ FPMAKE_OPT+=-bu
+-ifndef BUILDFULLNATIVE
+-FPMAKE_OPT+=-sp
+-endif
+ ifdef NOGDB
+ FPMAKE_OPT+=--NoGDB=1
++else
++ifndef NOGDBMI
++ifneq ($(findstring $(OS_TARGET),$(GDBMI_DEFAULT_OS_LIST)),)
++GDBMI=1
++endif
++endif # NOGDBMI
++
++ifdef GDBMI
++FPMAKE_OPT+=--GDBMI=1
++# If the rtl does not require libc, then
++# IDE compiled with GDBMI should be a static executable
++# and can thus be cross-compiled 
++ifeq ($(findstring $(OS_TARGET),aix beos darwin haiku solaris),)
++GDBMI_IS_STATIC=1
++endif
+ endif
++endif # NOGDB
++
++ifndef GDBMI_IS_STATIC
++ifndef BUILDFULLNATIVE
++# Omit executable is only required if generated executable is not static
++FPMAKE_OPT+=-scp
++endif
++endif # GDBMI_IS_STATIC
++
+ ifdef PPC_TARGET
+ FPMAKE_OPT+=--CompilerTarget=$(PPC_TARGET)
+ endif
++
+ .NOTPARALLEL:
+ 
+ fpmake$(SRCEXEEXT): fpmake.pp
+diff --git a/fpcsrc/ide/Makefile.fpc.fpcmake b/fpcsrc/ide/Makefile.fpc.fpcmake
+index 01fba71b..3e331dec 100644
+--- a/fpcsrc/ide/Makefile.fpc.fpcmake
++++ b/fpcsrc/ide/Makefile.fpc.fpcmake
+@@ -6,7 +6,7 @@
+ 
+ [package]
+ name=ide
+-version=3.0.4
++version=3.1.1
+ 
+ [target]
+ dirs=compiler
+diff --git a/fpcsrc/ide/compiler/Makefile.fpc b/fpcsrc/ide/compiler/Makefile.fpc
+index e0d0ded2..7985b2df 100644
+--- a/fpcsrc/ide/compiler/Makefile.fpc
++++ b/fpcsrc/ide/compiler/Makefile.fpc
+@@ -5,6 +5,9 @@
+ [package]
+ main=ide
+ 
++[require]
++packages=rtl-extra
++
+ [target]
+ units=compunit
+ 
+@@ -51,6 +54,9 @@ endif
+ ifeq ($(PPC_TARGET),x86_64)
+ override FPCOPT+= -Fu$(COMPILERDIR)/x86 -dNOOPT
+ endif
++ifeq ($(PPC_TARGET),i8086)
++override FPCOPT+= -Fu$(COMPILERDIR)/x86
++endif
+ ifeq ($(PPC_TARGET),powerpc)
+ override FPCOPT+= -Fu$(COMPILERDIR)/ppcgen
+ endif
+@@ -61,6 +67,14 @@ endif
+ ifeq ($(PPC_TARGET),mipsel)
+ override FPCOPT+= -Fu$(COMPILERDIR)/mips
+ endif
++# sparc specific
++ifeq ($(PPC_TARGET),sparc)
++override FPCOPT+= -Fu$(COMPILERDIR)/sparcgen -Fi$(COMPILERDIR)/sparcgen
++endif
++# sparc64 specific
++ifeq ($(PPC_TARGET),sparc64)
++override FPCOPT+= -Fu$(COMPILERDIR)/sparcgen -Fi$(COMPILERDIR)/sparcgen
++endif
+ 
+ 
+ [rules]
+diff --git a/fpcsrc/ide/fp.pas b/fpcsrc/ide/fp.pas
+index 005ff19f..36bc227b 100644
+--- a/fpcsrc/ide/fp.pas
++++ b/fpcsrc/ide/fp.pas
+@@ -63,7 +63,11 @@ uses
+   Dos,Objects,
+   BrowCol,Version,
+ {$ifndef NODEBUG}
+-  gdbint,
++  {$ifdef GDBMI}
++    gdbmiint,
++  {$else GDBMI}
++    gdbint,
++  {$endif GDBMI}
+ {$endif NODEBUG}
+   FVConsts,
+   Drivers,Views,App,Dialogs,HistList,
+@@ -79,6 +83,9 @@ uses
+   FPTools,
+ {$ifndef NODEBUG}
+   FPDebug,FPRegs,
++{$ifdef GDBMI}
++  gdbmiproc,
++{$endif GDBMI}
+ {$endif}
+   FPTemplt,FPRedir,FPDesk,
+   FPCodTmp,FPCodCmp,
+@@ -196,6 +203,16 @@ begin
+                 Delete(Param,1,1); { eat optional separator }
+               IniFileName:=Param;
+             end;
++{$ifdef GDBMI}
++          'G' : { custom GDB exec file (GDBMI mode only) }
++           if BeforeINI then
++            begin
++              delete(param,1,1); // delete C
++              if (length(Param)>=1) and (Param[1] in['=',':']) then
++                Delete(Param,1,1); { eat optional separator }
++              GDBProgramName:=Param;
++            end;
++{$endif def GDBMI}
+           'R' : { enter the directory last exited from (BP comp.) }
+             begin
+               Param:=copy(Param,2,255);
+@@ -359,18 +376,26 @@ BEGIN
+   { Startup info }
+   writeln(bullet+' Free Pascal IDE Version '+VersionStr+' ['+{$i %date%}+']');
+   writeln(bullet+' Compiler Version '+Full_Version_String);
++
++  { Process params before printing GDB version because of /G option }
++  ProcessParams(true);
++
+ {$ifndef NODEBUG}
+   writeln(bullet+' GDB Version '+GDBVersion);
+  {$ifdef Windows}
+   {$ifndef USE_MINGW_GDB}
+-   writeln(bullet+' Cygwin "',GetCygwinFullName,'" version ',GetCygwinVersionString);
+-   CheckCygwinVersion;
++   {$ifdef GDBMI}
++   { No reason to talk about cygwin DLL if we don't use it }
++   if using_cygwin_gdb then
++   {$endif GDBMI}
++     begin
++       writeln(bullet+' Cygwin "',GetCygwinFullName,'" version ',GetCygwinVersionString);
++       CheckCygwinVersion;
++     end;
+   {$endif}
+  {$endif Windows}
+ {$endif NODEBUG}
+ 
+-  ProcessParams(true);
+-
+ {$ifdef DEBUG}
+   StartTime:=getrealtime;
+ {$endif DEBUG}
+diff --git a/fpcsrc/ide/fpcompil.pas b/fpcsrc/ide/fpcompil.pas
+index 9a0bd7f8..54d0ffd1 100644
+--- a/fpcsrc/ide/fpcompil.pas
++++ b/fpcsrc/ide/fpcompil.pas
+@@ -620,7 +620,7 @@ begin
+         else
+           begin
+             if Status.CurrentSource='' then
+-              StatusS:=''
++              StatusS:='      '
+             else
+               begin
+                 StatusS:=ShrinkPath(SmartPath(DirAndNameOf(Status.Currentsourcepath+Status.CurrentSource)),
+diff --git a/fpcsrc/ide/fpconst.pas b/fpcsrc/ide/fpconst.pas
+index 1d1f2235..07f9480f 100644
+--- a/fpcsrc/ide/fpconst.pas
++++ b/fpcsrc/ide/fpconst.pas
+@@ -55,9 +55,11 @@ const
+     {$endif cpu68k}
+   {$endif i386}
+   {$ifdef SUPPORT_REMOTE}
+-      {$define USE_SPECIAL_BASENAME}
+-      { this uses PPC_TARGET env. variable from Makefile }
+-       FPBaseName = 'fp_'+{$i %PPC_TARGET%};
++      {$ifndef USE_SPECIAL_BASENAME}
++        { this uses PPC_TARGET env. variable from Makefile }
++         FPBaseName = 'fp_'+{$i %PPC_TARGET%};
++        {$define USE_SPECIAL_BASENAME}
++      {$endif ndef USE_SPECIAL_BASENAME}
+   {$endif SUPPORT_REMOTE}
+ {$endif not USE_FPBASENAME}
+ {$ifndef USE_SPECIAL_BASENAME}
+diff --git a/fpcsrc/ide/fpdebug.pas b/fpcsrc/ide/fpdebug.pas
+index 6222d449..64d93490 100644
+--- a/fpcsrc/ide/fpdebug.pas
++++ b/fpcsrc/ide/fpdebug.pas
+@@ -26,7 +26,11 @@ uses
+ {$endif Windows}
+   Objects,Dialogs,Drivers,Views,
+ {$ifndef NODEBUG}
+-  GDBCon,GDBInt,
++  {$ifdef GDBMI}
++    GDBMICon,GDBMIInt,
++  {$else GDBMI}
++    GDBCon,GDBInt,
++  {$endif GDBMI}
+ {$endif NODEBUG}
+   Menus,
+   WViews,WEditor,
+@@ -36,6 +40,9 @@ type
+ {$ifndef NODEBUG}
+   PDebugController=^TDebugController;
+   TDebugController=object(TGDBController)
++  private
++    function  GetFPCBreakErrorParameters(var ExitCode: LongInt; var ExitAddr, ExitFrame: CORE_ADDR): Boolean;
++  public
+      InvalidSourceLine : boolean;
+ 
+      { if true the current debugger raw will stay in middle of
+@@ -50,8 +57,6 @@ type
+      NoSwitch : boolean;
+      HasExe   : boolean;
+      RunCount : longint;
+-     WindowWidth : longint;
+-     TBreakNumber : longint;
+      FPCBreakErrorNumber : longint;
+ {$ifdef SUPPORT_REMOTE}
+      isRemoteDebugging,
+@@ -61,11 +66,9 @@ type
+ {$endif SUPPORT_REMOTE}
+     constructor Init;
+     procedure SetExe(const exefn:string);
+-    procedure SetTBreak(tbreakstring : string);
+-    procedure SetWidth(AWidth : longint);
+     procedure SetSourceDirs;
+     destructor  Done;
+-    procedure DoSelectSourceline(const fn:string;line:longint);virtual;
++    function DoSelectSourceline(const fn:string;line,BreakIndex:longint): Boolean;virtual;
+ {    procedure DoStartSession;virtual;
+     procedure DoBreakSession;virtual;}
+     procedure DoEndSession(code:longint);virtual;
+@@ -563,7 +566,11 @@ begin
+ {$ifdef Windows}
+   {$ifndef USE_MINGW_GDB} // see mantis 11968 because of mingw build. MvdV
+ { for Windows we should convert e:\ into //e/ PM }
+-  if (length(st)>2) and (st[2]=':') and (st[3]='/') then
++  if
++    {$ifdef GDBMI}
++     using_cygwin_gdb and
++    {$endif}
++     (length(st)>2) and (st[2]=':') and (st[3]='/') then
+     st:=CygDrivePrefix+'/'+st[1]+copy(st,3,length(st));
+   {$endif}
+ { support spaces in the name by escaping them but without changing '\ ' into '\\ ' }
+@@ -656,15 +663,14 @@ begin
+   NoSwitch:=False;
+   HasExe:=false;
+   Debugger:=@self;
+-  WindowWidth:=-1;
+   switch_to_user:=true;
+   GetDir(0,OrigPwd);
+-  Command('set print object off');
++  SetCommand('print object off');
+ {$ifdef SUPPORT_REMOTE}
+   isFirstRemote:=true;
+ {$ifdef FPC_ARMEL32}
+   { GDB needs advice on exact file type }
+-  Command('set gnutarget elf32-littlearm');
++  SetCommand('gnutarget elf32-littlearm');
+ {$endif FPC_ARMEL32}
+ {$endif SUPPORT_REMOTE}
+ end;
+@@ -675,14 +681,19 @@ begin
+   f := GDBFileName(GetShortName(exefn));
+   if (f<>'') and ExistsFile(exefn) then
+     begin
+-      LoadFile(f);
++      if not LoadFile(f) then
++        begin
++          HasExe:=false;
++          if GetError<>'' then
++            f:=GetError;
++          MessageBox(#3'Failed to load file '#13#3+f,nil,mfOKbutton);
++          exit;
++        end;
+       HasExe:=true;
+       { Procedure HandleErrorAddrFrame
+          (Errno : longint;addr,frame : longint);
+-         [public,alias:'FPC_BREAK_ERROR'];
+-      Command('b HANDLEERRORADDRFRAME'); }
+-      Command('b FPC_BREAK_ERROR');
+-      FPCBreakErrorNumber:=last_breakpoint_number;
++         [public,alias:'FPC_BREAK_ERROR'];}
++      FPCBreakErrorNumber:=BreakpointInsert('FPC_BREAK_ERROR', []);
+ {$ifdef FrameNameKnown}
+       { this fails in GDB 5.1 because
+         GDB replies that there is an attempt to dereference
+@@ -701,25 +712,23 @@ begin
+     begin
+       HasExe:=false;
+       reset_command:=true;
++{$ifdef GDBMI}
++      Command('-file-exec-and-symbols');
++{$else GDBMI}
+       Command('file');
++{$endif GDBMI}
+       reset_command:=false;
+     end;
+ end;
+ 
+ 
+-procedure TDebugController.SetTBreak(tbreakstring : string);
+-begin
+-  Command('tbreak '+tbreakstring);
+-  TBreakNumber:=Last_breakpoint_number;
+-end;
+-
+-procedure TDebugController.SetWidth(AWidth : longint);
+-begin
+-  WindowWidth:=AWidth;
+-  Command('set width '+inttostr(WindowWidth));
+-end;
+-
+ procedure TDebugController.SetSourceDirs;
++  const
++{$ifdef GDBMI}
++    AddSourceDirCommand = '-environment-directory';
++{$else GDBMI}
++    AddSourceDirCommand = 'dir';
++{$endif GDBMI}
+   var f,s: ansistring;
+       i : longint;
+       Dir : SearchRec;
+@@ -736,7 +745,7 @@ begin
+       end;
+     DefaultReplacements(s);
+     if (pos('*',s)=0) and ExistsDir(s) then
+-      Command('dir '+GDBFileName(GetShortName(s)))
++      Command(AddSourceDirCommand+' '+GDBFileName(GetShortName(s)))
+     { we should also handle the /* cases of -Fu option }
+     else if pos('*',s)>0 then
+       begin
+@@ -746,7 +755,7 @@ begin
+         while Dos.DosError=0 do
+           begin
+             if ((Dir.attr and Directory) <> 0) and ExistsDir(s+Dir.Name) then
+-              Command('dir '+GDBFileName(GetShortName(s+Dir.Name)));
++              Command(AddSourceDirCommand+' '+GDBFileName(GetShortName(s+Dir.Name)));
+             Dos.FindNext(Dir);
+           end;
+         Dos.FindClose(Dir);
+@@ -820,6 +829,12 @@ end;
+ 
+ 
+ procedure TDebugController.Run;
++const
++{$ifdef GDBMI}
++  SetTTYCommand = '-inferior-tty-set';
++{$else GDBMI}
++  SetTTYCommand = 'tty';
++{$endif GDBMI}
+ {$ifdef Unix}
+ var
+   Debuggeefile : text;
+@@ -916,9 +931,9 @@ begin
+ {$ifdef Windows}
+   { Run the debugge in another console }
+   if DebuggeeTTY<>'' then
+-    Command('set new-console on')
++    SetCommand('new-console on')
+   else
+-    Command('set new-console off');
++    SetCommand('new-console off');
+   NoSwitch:=DebuggeeTTY<>'';
+ {$endif Windows}
+ {$ifdef Unix}
+@@ -931,12 +946,12 @@ begin
+       ResetOK:=IOResult=0;
+       If ResetOK and (IsATTY(textrec(Debuggeefile).handle)<>-1) then
+         begin
+-          Command('tty '+DebuggeeTTY);
++          Command(SetTTYCommand+' '+DebuggeeTTY);
+           TTYUsed:=true;
+         end
+       else
+         begin
+-          Command('tty ');
++          Command(SetTTYCommand+' ');
+           TTYUsed:=false;
+         end;
+       if ResetOK then
+@@ -949,7 +964,7 @@ begin
+   else
+     begin
+       if TTYName(input)<>'' then
+-        Command('tty '+TTYName(input));
++        Command(SetTTYCommand+' '+TTYName(input));
+       NoSwitch := false;
+     end;
+ {$endif Unix}
+@@ -958,9 +973,6 @@ begin
+ {$endif SUPPORT_REMOTE}
+   { Switch to user screen to get correct handles }
+   UserScreen;
+-  { Don't try to print GDB messages while in User Screen mode }
+-  If assigned(GDBWindow) then
+-    GDBWindow^.Editor^.Lock;
+ {$ifdef SUPPORT_REMOTE}
+   if isRemoteDebugging then
+     begin
+@@ -982,8 +994,6 @@ begin
+       SetDir(StartupDir);
+     end;
+   DebuggerScreen;
+-  If assigned(GDBWindow) then
+-    GDBWindow^.Editor^.UnLock;
+   IDEApp.SetCmdState([cmResetDebugger,cmUntilReturn],true);
+   IDEApp.UpdateRunMenu(true);
+   UpdateDebugViews;
+@@ -1010,7 +1020,7 @@ end;
+ 
+ procedure TDebugController.UntilReturn;
+ begin
+-  Command('finish');
++  inherited UntilReturn;
+   UpdateDebugViews;
+   { We could try to get the return value !
+     Not done yet }
+@@ -1087,6 +1097,14 @@ begin
+             gdberrorbuf.reset;
+         end;
+ 
++{$ifdef GDB_RAW_OUTPUT}
++      If StrLen(GetRaw)>0 then
++        begin
++          GDBWindow^.WriteOutputText(GetRaw);
++          if in_command=0 then
++            gdbrawbuf.reset;
++        end;
++{$endif GDB_RAW_OUTPUT}
+       If StrLen(GetOutput)>0 then
+         begin
+           GDBWindow^.WriteOutputText(GetOutput);
+@@ -1107,6 +1125,10 @@ begin
+       { We should do something special for errors !! }
+       If StrLen(GetError)>0 then
+         GDBWindow^.WriteErrorText(GetError);
++{$ifdef GDB_RAW_OUTPUT}
++      If StrLen(GetRaw)>0 then
++        GDBWindow^.WriteOutputText(GetRaw);
++{$endif GDB_RAW_OUTPUT}
+       GDBWindow^.WriteOutputText(GetOutput);
+       GDBWindow^.Editor^.TextEnd;
+     end;
+@@ -1192,41 +1214,8 @@ begin
+ end;
+ 
+ function TDebugController.GetValue(Const expr : string) : pchar;
+-var
+-  p,p2,p3 : pchar;
+-begin
+-  if WindowWidth<>-1 then
+-    Command('set width 0xffffffff');
+-  Command('p '+expr);
+-  p:=GetOutput;
+-  p3:=nil;
+-  if assigned(p) and (p[strlen(p)-1]=#10) then
+-   begin
+-     p3:=p+strlen(p)-1;
+-     p3^:=#0;
+-   end;
+-  if assigned(p) then
+-    p2:=strpos(p,'=')
+-  else
+-    p2:=nil;
+-  if assigned(p2) then
+-    p:=p2+1;
+-  while p^ in [' ',TAB] do
+-    inc(p);
+-  { get rid of type }
+-  if p^ = '(' then
+-    p:=strpos(p,')')+1;
+-  while p^ in [' ',TAB] do
+-    inc(p);
+-  if assigned(p) then
+-    GetValue:=StrNew(p)
+-  else
+-    GetValue:=StrNew(GetError);
+-  if assigned(p3) then
+-    p3^:=#10;
+-  got_error:=false;
+-  if WindowWidth<>-1 then
+-    Command('set width '+IntToStr(WindowWidth));
++begin
++  GetValue:=StrNew(PChar(PrintCommand(expr)));
+ end;
+ 
+ function TDebugController.GetFramePointer : CORE_ADDR;
+@@ -1235,8 +1224,7 @@ var
+   p : longint;
+ begin
+ {$ifdef FrameNameKnown}
+-  Command('p /d '+FrameName);
+-  st:=strpas(GetOutput);
++  st:=PrintFormattedCommand(FrameName,pfdecimal);
+   p:=pos('=',st);
+   while (p<length(st)) and (st[p+1] in [' ',#9]) do
+     inc(p);
+@@ -1256,7 +1244,7 @@ var
+   st : string;
+   p : longint;
+ begin
+-  Command('x /wd 0x'+hexstr(longint(addr),8));
++  Command('x /wd 0x'+hexstr(longint(addr),sizeof(CORE_ADDR)*2));
+   st:=strpas(GetOutput);
+   p:=pos(':',st);
+   while (p<length(st)) and (st[p+1] in [' ',#9]) do
+@@ -1275,7 +1263,7 @@ var
+   p : longint;
+   code : integer;
+ begin
+-  Command('x /wx 0x'+hexstr(PtrInt(addr),sizeof(PtrInt)*2));
++  Command('x /wx 0x'+hexstr(PtrInt(addr),sizeof(CORE_ADDR)*2));
+   st:=strpas(GetOutput);
+   p:=pos(':',st);
+   while (p<length(st)) and (st[p+1] in [' ',#9]) do
+@@ -1290,24 +1278,55 @@ begin
+   Val('$'+st,GetPointerAt,code);
+ end;
+ 
+-procedure TDebugController.DoSelectSourceLine(const fn:string;line:longint);
++function TDebugController.GetFPCBreakErrorParameters(var ExitCode: LongInt; var ExitAddr, ExitFrame: CORE_ADDR): Boolean;
++const
++  { try to find the parameters }
++  FirstArgOffset = -sizeof(CORE_ADDR);
++  SecondArgOffset = 2*-sizeof(CORE_ADDR);
++  ThirdArgOffset = 3*-sizeof(CORE_ADDR);
++begin
++  // Procedure HandleErrorAddrFrame (Errno : longint;addr : CodePointer; frame : Pointer);
++  //  [public,alias:'FPC_BREAK_ERROR']; {$ifdef cpui386} register; {$endif}
++{$if defined(i386)}
++  GetFPCBreakErrorParameters :=
++    GetIntRegister('eax', ExitCode) and
++    GetIntRegister('edx', ExitAddr) and
++    GetIntRegister('ecx', ExitFrame);
++{$elseif defined(x86_64)}
++  {$ifdef Win64}
++    GetFPCBreakErrorParameters :=
++      GetIntRegister('rcx', ExitCode) and
++      GetIntRegister('rdx', ExitAddr) and
++      GetIntRegister('r8', ExitFrame);
++  {$else Win64}
++    GetFPCBreakErrorParameters :=
++      GetIntRegister('rdi', ExitCode) and
++      GetIntRegister('rsi', ExitAddr) and
++      GetIntRegister('rdx', ExitFrame);
++ {$endif Win64}
++{$elseif defined(FrameNameKnown)}
++  ExitCode:=GetLongintAt(GetFramePointer+FirstArgOffset);
++  ExitAddr:=GetPointerAt(GetFramePointer+SecondArgOffset);
++  ExitFrame:=GetPointerAt(GetFramePointer+ThirdArgOffset);
++  GetFPCBreakErrorParameters := True;
++{$else}
++  ExitCode := 0;
++  ExitAddr := 0;
++  ExitFrame := 0;
++  GetFPCBreakErrorParameters := False;
++{$endif}
++end;
++
++function TDebugController.DoSelectSourceLine(const fn:string;line,BreakIndex:longint): Boolean;
+ var
+   W: PSourceWindow;
+   Found : boolean;
+   PB : PBreakpoint;
+   S : String;
+-  BreakIndex : longint;
+   stop_addr : CORE_ADDR;
+   i,ExitCode : longint;
+   ExitAddr,ExitFrame : CORE_ADDR;
+-const
+-  { try to find the parameters }
+-  FirstArgOffset = -sizeof(pointer);
+-  SecondArgOffset = 2*-sizeof(pointer);
+-  ThirdArgOffset = 3*-sizeof(pointer);
+-
+ begin
+-  BreakIndex:=stop_breakpoint_number;
+   Desktop^.Lock;
+   { 0 based line count in Editor }
+   if Line>0 then
+@@ -1318,41 +1337,33 @@ begin
+ 
+   if (BreakIndex=FPCBreakErrorNumber) then
+     begin
+-      { Procedure HandleErrorAddrFrame
+-         (Errno : longint;addr,frame : longint);
+-         [public,alias:'FPC_BREAK_ERROR']; }
+-{$ifdef FrameNameKnown}
+-      ExitCode:=GetLongintAt(GetFramePointer+FirstArgOffset);
+-      ExitAddr:=GetPointerAt(GetFramePointer+SecondArgOffset);
+-      ExitFrame:=GetPointerAt(GetFramePointer+ThirdArgOffset);
+-      if (ExitCode=0) and (ExitAddr=0) then
+-        begin
+-          Desktop^.Unlock;
+-          Command('continue');
+-          exit;
+-        end;
+-      { forget all old frames }
+-      clear_frames;
+-      { record new frames }
+-      Command('backtrace');
+-      for i:=0 to frame_count-1 do
+-        begin
+-          with frames[i]^ do
+-            begin
+-              if ExitAddr=address then
+-                begin
+-                  Command('f '+IntToStr(i));
+-                  if assigned(file_name) then
+-                    begin
+-                      s:=strpas(file_name);
+-                      line:=line_number;
+-                      stop_addr:=address;
+-                    end;
+-                  break;
+-                end;
+-            end;
+-        end;
+-{$endif FrameNameKnown}
++      if GetFPCBreakErrorParameters(ExitCode, ExitAddr, ExitFrame) then
++      begin
++        Backtrace;
++        for i:=0 to frame_count-1 do
++          begin
++            with frames[i]^ do
++              begin
++                if ExitAddr=address then
++                  begin
++                    if SelectFrameCommand(i) and
++                       assigned(file_name) then
++                      begin
++                        s:=strpas(file_name);
++                        line:=line_number;
++                        stop_addr:=address;
++                      end;
++                    break;
++                  end;
++              end;
++          end;
++      end
++      else
++      begin
++        Desktop^.Unlock;
++        DoSelectSourceLine := False;
++        exit;
++      end;
+     end;
+   { Update Disassembly position }
+   if Assigned(DisassemblyWindow) then
+@@ -1455,13 +1466,8 @@ begin
+          (PB^.typ<>bt_file_line) and (PB^.typ<>bt_function) and
+          (PB^.typ<>bt_address) then
+         begin
+-           Command('p '+GetStr(PB^.Name));
+-           S:=GetPChar(GetOutput);
++           S:=PrintCommand(GetStr(PB^.Name));
+            got_error:=false;
+-           If Pos('=',S)>0 then
+-             S:=Copy(S,Pos('=',S)+1,255);
+-           If S[Length(S)]=#10 then
+-             Delete(S,Length(S),1);
+            if Assigned(PB^.OldValue) then
+              DisposeStr(PB^.OldValue);
+            PB^.OldValue:=PB^.CurrentValue;
+@@ -1480,6 +1486,7 @@ begin
+                #3+' value = '+GetStr(PB^.CurrentValue),nil);
+         end;
+     end;
++  DoSelectSourceLine := True;
+ end;
+ 
+ procedure TDebugController.DoUserSignal;
+@@ -1542,6 +1549,8 @@ begin
+      end;
+    ChangeDebuggeeWindowTitleTo(Stopped_State);
+ {$endif Windows}
++  If assigned(GDBWindow) then
++    GDBWindow^.Editor^.UnLock;
+ end;
+ 
+ 
+@@ -1581,6 +1590,9 @@ begin
+      end;
+    ChangeDebuggeeWindowTitleTo(Running_State);
+ {$endif Windows}
++  { Don't try to print GDB messages while in User Screen mode }
++  If assigned(GDBWindow) then
++    GDBWindow^.Editor^.Lock;
+ end;
+ 
+ {$endif NODEBUG}
+@@ -1756,32 +1768,32 @@ procedure TBreakpoint.Insert;
+   var
+     p,p2 : pchar;
+     st : string;
++    bkpt_no: LongInt = 0;
+ begin
+ {$ifndef NODEBUG}
+   If not assigned(Debugger) then Exit;
+   Remove;
+-  Debugger^.last_breakpoint_number:=0;
+   if (GDBState=bs_deleted) and (state=bs_enabled) then
+     begin
+       if (typ=bt_file_line) and assigned(FileName) then
+-        Debugger^.Command('break '+GDBFileName(NameAndExtOf(GetStr(FileName)))+':'+IntToStr(Line))
++        bkpt_no := Debugger^.BreakpointInsert(GDBFileName(NameAndExtOf(GetStr(FileName)))+':'+IntToStr(Line), [])
+       else if (typ=bt_function) and assigned(name) then
+-        Debugger^.Command('break '+name^)
++        bkpt_no := Debugger^.BreakpointInsert(name^, [])
+       else if (typ=bt_address) and assigned(name) then
+-        Debugger^.Command('break *0x'+name^)
++        bkpt_no := Debugger^.BreakpointInsert('*0x'+name^, [])
+       else if (typ=bt_watch) and assigned(name) then
+-        Debugger^.Command('watch '+name^)
++        bkpt_no := Debugger^.WatchpointInsert(name^, wtWrite)
+       else if (typ=bt_awatch) and assigned(name) then
+-        Debugger^.Command('awatch '+name^)
++        bkpt_no := Debugger^.WatchpointInsert(name^, wtReadWrite)
+       else if (typ=bt_rwatch) and assigned(name) then
+-        Debugger^.Command('rwatch '+name^);
+-      if Debugger^.last_breakpoint_number<>0 then
++        bkpt_no := Debugger^.WatchpointInsert(name^, wtRead);
++      if bkpt_no<>0 then
+         begin
+-          GDBIndex:=Debugger^.last_breakpoint_number;
++          GDBIndex:=bkpt_no;
+           GDBState:=bs_enabled;
+-          Debugger^.Command('cond '+IntToStr(GDBIndex)+' '+GetStr(Conditions));
++          Debugger^.BreakpointCondition(GDBIndex, GetStr(Conditions));
+           If IgnoreCount>0 then
+-            Debugger^.Command('ignore '+IntToStr(GDBIndex)+' '+IntToStr(IgnoreCount));
++            Debugger^.BreakpointSetIgnoreCount(GDBIndex, IgnoreCount);
+           If Assigned(Commands) then
+             begin
+               {Commands are not handled yet }
+@@ -1842,7 +1854,7 @@ begin
+ {$ifndef NODEBUG}
+   If not assigned(Debugger) then Exit;
+   if GDBIndex>0 then
+-    Debugger^.Command('delete '+IntToStr(GDBIndex));
++    Debugger^.BreakpointDelete(GDBIndex);
+   GDBIndex:=0;
+   GDBState:=bs_deleted;
+ {$endif NODEBUG}
+@@ -1853,7 +1865,7 @@ begin
+ {$ifndef NODEBUG}
+   If not assigned(Debugger) then Exit;
+   if GDBIndex>0 then
+-    Debugger^.Command('enable '+IntToStr(GDBIndex))
++    Debugger^.BreakpointEnable(GDBIndex)
+   else
+     Insert;
+   GDBState:=bs_disabled;
+@@ -1865,7 +1877,7 @@ begin
+ {$ifndef NODEBUG}
+   If not assigned(Debugger) then Exit;
+   if GDBIndex>0 then
+-    Debugger^.Command('disable '+IntToStr(GDBIndex));
++    Debugger^.BreakpointDisable(GDBIndex);
+   GDBState:=bs_disabled;
+ {$endif NODEBUG}
+ end;
+@@ -2844,27 +2856,16 @@ procedure TWatch.rename(s : string);
+ 
+ procedure TWatch.Get_new_value;
+ {$ifndef NODEBUG}
+-  var p, q : pchar;
+-      i, j, curframe, startframe : longint;
+-      s,s2 : string;
++  var i, curframe, startframe : longint;
++      s,s2,orig_s_result : AnsiString;
+       loop_higher, found : boolean;
+-      last_removed : char;
+ 
+-    function GetValue(var s : string) : boolean;
++    function GetValue(var s : AnsiString) : boolean;
+       begin
+-        Debugger^.command('p '+s);
+-        if not Debugger^.Error then
+-          begin
+-            s:=StrPas(Debugger^.GetOutput);
+-            GetValue:=true;
+-          end
+-        else
+-          begin
+-            s:=StrPas(Debugger^.GetError);
+-            GetValue:=false;
+-            { do not open a messagebox for such errors }
+-            Debugger^.got_error:=false;
+-          end;
++        s:=Debugger^.PrintCommand(s);
++        GetValue := not Debugger^.Error;
++        { do not open a messagebox for such errors }
++        Debugger^.got_error:=false;
+       end;
+ 
+   begin
+@@ -2892,6 +2893,7 @@ procedure TWatch.Get_new_value;
+           end;
+       end;
+     found:=GetValue(s);
++    orig_s_result:=s;
+     Debugger^.got_error:=false;
+     loop_higher:=not found;
+     if not found then
+@@ -2914,16 +2916,12 @@ procedure TWatch.Get_new_value;
+                if not Debugger^.set_current_frame(curframe) then
+                  loop_higher:=false;
+ {$ifdef FrameNameKnown}
+-               s2:='/x '+FrameName;
++               s2:=FrameName;
+ {$else not  FrameNameKnown}
+-               s2:='/x $ebp';
++               s2:='$ebp';
+ {$endif FrameNameKnown}
+-               getValue(s2);
+-               j:=pos('=',s2);
+-               if j>0 then
+-                 s2:=copy(s2,j+1,length(s2));
+-               while s2[1] in [' ',TAB] do
+-                 delete(s2,1,1);
++               if not getValue(s2) then
++                 loop_higher:=false;
+                if pos(s2,s)>0 then
+                  loop_higher :=false;
+              until not loop_higher;
+@@ -2936,14 +2934,9 @@ procedure TWatch.Get_new_value;
+            loop_higher:=false;
+       end;
+     if found then
+-      p:=StrNew(Debugger^.GetOutput)
++      current_value:=StrNew(PChar('= ' + s))
+     else
+-      begin
+-        { get a reasonable output at least }
+-        s:=GetStr(expr);
+-        GetValue(s);
+-        p:=StrNew(Debugger^.GetError);
+-      end;
++      current_value:=StrNew(PChar(orig_s_result));
+     Debugger^.got_error:=false;
+     { We should try here to find the expr in parent
+       procedure if there are
+@@ -2955,31 +2948,6 @@ procedure TWatch.Get_new_value;
+     if curframe<>startframe then
+       Debugger^.set_current_frame(startframe);
+ 
+-    q:=nil;
+-    if assigned(p) and (p[0]='$') then
+-      q:=StrPos(p,'=');
+-    if not assigned(q) then
+-      q:=p;
+-    if assigned(q) then
+-      i:=strlen(q)
+-    else
+-      i:=0;
+-    if (i>0) and (q[i-1]=#10) then
+-      begin
+-        while (i>1) and ((q[i-2]=' ') or (q[i-2]=#9)) do
+-          dec(i);
+-        last_removed:=q[i-1];
+-        q[i-1]:=#0;
+-      end
+-    else
+-      last_removed:=#0;
+-    if assigned(q) then
+-      current_value:=strnew(q)
+-    else
+-      current_value:=strnew('');
+-    if last_removed<>#0 then
+-      q[i-1]:=last_removed;
+-    strdispose(p);
+     GDBRunCount:=Debugger^.RunCount;
+   end;
+ {$else NODEBUG}
+@@ -3523,12 +3491,8 @@ end;
+         exit;
+       DeskTop^.Lock;
+       Clear;
+-      { forget all old frames }
+-      Debugger^.clear_frames;
+ 
+-      if Debugger^.WindowWidth<>-1 then
+-        Debugger^.Command('set width 0xffffffff');
+-      Debugger^.Command('backtrace');
++      Debugger^.Backtrace;
+       { generate list }
+       { all is in tframeentry }
+       for i:=0 to Debugger^.frame_count-1 do
+@@ -3539,7 +3503,7 @@ end;
+                 AddItem(new(PMessageItem,init(0,GetPChar(function_name)+GetPChar(args),
+                   AddModuleName(GetPChar(file_name)),line_number,1)))
+               else
+-                AddItem(new(PMessageItem,init(0,HexStr(address,8)+' '+GetPChar(function_name)+GetPChar(args),
++                AddItem(new(PMessageItem,init(0,HexStr(address,SizeOf(address)*2)+' '+GetPChar(function_name)+GetPChar(args),
+                   AddModuleName(''),line_number,1)));
+               W:=SearchOnDesktop(GetPChar(file_name),false);
+               { First reset all Debugger rows }
+@@ -3568,8 +3532,6 @@ end;
+         end;
+       if Assigned(list) and (List^.Count > 0) then
+         FocusItem(0);
+-      if Debugger^.WindowWidth<>-1 then
+-        Debugger^.Command('set width '+IntToStr(Debugger^.WindowWidth));
+       DeskTop^.Unlock;
+ {$endif NODEBUG}
+     end;
+@@ -3585,7 +3547,7 @@ end;
+       { select frame for watches }
+       If not assigned(Debugger) then
+         exit;
+-      Debugger^.Command('f '+IntToStr(Focused));
++      Debugger^.SelectFrameCommand(Focused);
+       { for local vars }
+       Debugger^.RereadWatches;
+ {$endif NODEBUG}
+@@ -3599,7 +3561,7 @@ end;
+       { select frame for watches }
+       If not assigned(Debugger) then
+         exit;
+-      Debugger^.Command('f '+IntToStr(Focused));
++      Debugger^.SelectFrameCommand(Focused);
+       { for local vars }
+       Debugger^.RereadWatches;
+ {$endif}
+diff --git a/fpcsrc/ide/fpdesk.pas b/fpcsrc/ide/fpdesk.pas
+index 0ff9f243..957187c5 100644
+--- a/fpcsrc/ide/fpdesk.pas
++++ b/fpcsrc/ide/fpdesk.pas
+@@ -356,7 +356,8 @@ end;
+ function DeskUseSyntaxHighlight(Editor: PFileEditor): boolean;
+ var b : boolean;
+ begin
+-  b:= (*(Editor^.IsFlagSet(efSyntaxHighlight)) and *) ((Editor^.FileName='') or MatchesFileList(NameAndExtOf(Editor^.FileName),HighlightExts));
++  b:= (*(Editor^.IsFlagSet(efSyntaxHighlight)) and *) ((Editor^.FileName='') or
++      MatchesMaskList(NameAndExtOf(Editor^.FileName),HighlightExts));
+   DeskUseSyntaxHighlight:=b;
+ end;
+ 
+@@ -368,10 +369,14 @@ var S: PMemoryStream;
+     Title: string;
+     XDataOfs: word;
+     XData: array[0..1024] of byte;
++
+ procedure GetData(var B; Size: word);
+ begin
+-  Move(XData[XDataOfs],B,Size);
+-  Inc(XDataOfs,Size);
++  if Size>0 Then
++    Begin
++      Move(XData[XDataOfs],B,Size);
++      Inc(XDataOfs,Size);
++    End;   
+ end;
+ procedure ProcessWindowInfo;
+ var W: PWindow;
+@@ -381,6 +386,9 @@ var W: PWindow;
+     TP,TP2: TPoint;
+     L: longint;
+     R: TRect;
++    ZZ: byte;
++    Z: TRect;
++    Len : Byte;
+ begin
+   XDataOfs:=0;
+   Desktop^.Lock;
+@@ -388,8 +396,9 @@ begin
+   case WI.HelpCtx of
+     hcSourceWindow :
+       begin
+-        GetData(St[0],1);
+-        GetData(St[1],ord(St[0]));
++        GetData(len,1);
++        SetLength(St,Len);
++        GetData(St[1],Len);
+         W:=ITryToOpenFile(@WI.Bounds,St,0,0,false,false,true);
+         if Assigned(W)=false then
+           begin
+@@ -531,6 +540,29 @@ begin
+       end
+     else
+       W^.Hide;
++  ZZ:=0;
++  Desktop^.GetExtent(Z);
++  if R.A.Y>Z.B.Y-7 then
++    begin
++      R.A.Y:=Z.B.Y-7;
++      ZZ:=1;
++    end;
++  if R.A.X>Z.B.X-4 then
++    begin
++      R.A.X:=Z.B.X-4;
++      ZZ:=1;
++    end;
++  if R.A.Y<0 then
++    begin
++      R.A.Y:=0;
++      ZZ:=1;
++    end;
++  if R.A.X<0 then
++    begin
++      R.A.X:=0;
++      ZZ:=1;
++    end;
++  if ZZ<>0 then W^.MoveTo(R.A.X,R.A.Y);
+   W^.Number:=WI.WinNb;
+   Desktop^.Unlock;
+ end;
+@@ -553,7 +585,7 @@ begin
+         S^.Read(WI,sizeof(WI));
+         if S^.Status=stOK then
+         begin
+-          Title[0]:=chr(WI.TitleLen);
++          SetLength(Title,WI.TitleLen);
+           S^.Read(Title[1],WI.TitleLen);
+           if WI.ExtraDataSize>0 then
+           S^.Read(XData,WI.ExtraDataSize);
+diff --git a/fpcsrc/ide/fpide.pas b/fpcsrc/ide/fpide.pas
+index 2d89e5ec..b95c2305 100644
+--- a/fpcsrc/ide/fpide.pas
++++ b/fpcsrc/ide/fpide.pas
+@@ -794,14 +794,14 @@ end;
+ 
+ function IDEUseSyntaxHighlight(Editor: PFileEditor): boolean;
+ begin
+-  IDEUseSyntaxHighlight:=(Editor^.IsFlagSet(efSyntaxHighlight)) and ((Editor^.FileName='') or MatchesFileList(NameAndExtOf(Editor^.FileName),HighlightExts));
++  IDEUseSyntaxHighlight:=(Editor^.IsFlagSet(efSyntaxHighlight)) and ((Editor^.FileName='') or MatchesMaskList(NameAndExtOf(Editor^.FileName),HighlightExts));
+ end;
+ 
+ function IDEUseTabsPattern(Editor: PFileEditor): boolean;
+ begin
+   { the commented code lead all new files
+     to become with TAB use enabled which is wrong in my opinion PM }
+-  IDEUseTabsPattern:={(Editor^.FileName='') or }MatchesFileList(NameAndExtOf(Editor^.FileName),TabsPattern);
++  IDEUseTabsPattern:={(Editor^.FileName='') or }MatchesMaskList(NameAndExtOf(Editor^.FileName),TabsPattern);
+ end;
+ 
+ constructor TIDEApp.Init;
+diff --git a/fpcsrc/ide/fpini.pas b/fpcsrc/ide/fpini.pas
+index f9116835..cb5d740f 100644
+--- a/fpcsrc/ide/fpini.pas
++++ b/fpcsrc/ide/fpini.pas
+@@ -431,7 +431,9 @@ begin
+   { First read the primary file, which can also set the parameters which can
+     be overruled with the parameter loading }
+   SetPrimaryFile(INIFile^.GetEntry(secCompile,iePrimaryFile,PrimaryFile));
++{$ifndef GDB_WINDOWS_ALWAYS_USE_ANOTHER_CONSOLE}
+   DebuggeeTTY := INIFile^.GetEntry(secRun,ieDebuggeeRedir,DebuggeeTTY);
++{$endif not GDB_WINDOWS_ALWAYS_USE_ANOTHER_CONSOLE}
+ {$ifdef SUPPORT_REMOTE}
+   RemoteMachine :=INIFile^.GetEntry(secRun,ieRemoteMachine,RemoteMachine);
+   RemotePort :=INIFile^.GetEntry(secRun,ieRemotePort,RemotePort);
+@@ -653,8 +655,10 @@ begin
+   INIFile^.SetEntry(secRun,ieRunDir,GetRunDir);
+   INIFile^.SetEntry(secRun,ieRunParameters,GetRunParameters);
+   INIFile^.SetEntry(secFiles,iePrinterDevice,GetPrinterDevice);
++{$ifndef GDB_WINDOWS_ALWAYS_USE_ANOTHER_CONSOLE}
+   { If DebuggeeTTY<>'' then }
+     INIFile^.SetEntry(secRun,ieDebuggeeRedir,DebuggeeTTY);
++{$endif not GDB_WINDOWS_ALWAYS_USE_ANOTHER_CONSOLE}
+ {$ifdef SUPPORT_REMOTE}
+     INIFile^.SetEntry(secRun,ieRemoteMachine,RemoteMachine);
+     INIFile^.SetEntry(secRun,ieRemotePort,RemotePort);
+diff --git a/fpcsrc/ide/fpmake.pp b/fpcsrc/ide/fpmake.pp
+index 60c437ea..63b31aa1 100644
+--- a/fpcsrc/ide/fpmake.pp
++++ b/fpcsrc/ide/fpmake.pp
+@@ -9,6 +9,7 @@ uses
+ 
+ const
+   NoGDBOption: boolean = false;
++  GDBMIOption: boolean = false;
+ 
+ procedure ide_check_gdb_availability(Sender: TObject);
+ 
+@@ -75,7 +76,15 @@ begin
+   P := sender as TPackage;
+   with installer do
+     begin
+-    if not (NoGDBOption) then
++    if GDBMIOption then
++      begin
++        BuildEngine.log(vlCommand, 'Compiling IDE with GDB/MI debugger support, LibGDB is not needed');
++        P.Options.Add('-dGDBMI');
++        { AIX also requires -CTsmalltoc for gdbmi }
++        if Defaults.OS=aix then
++          P.Options.Add('-CTsmalltoc');
++      end
++    else if not (NoGDBOption) then
+       begin
+         // Detection of GDB.
+         GDBLibDir := DetectLibGDBDir;
+@@ -141,11 +150,15 @@ Var
+ begin
+   AddCustomFpmakeCommandlineOption('CompilerTarget','Target CPU for the IDE''s compiler');
+   AddCustomFpmakeCommandlineOption('NoGDB','If value=1 or ''Y'', no GDB support');
++  AddCustomFpmakeCommandlineOption('GDBMI','If value=1 or ''Y'', builds IDE with GDB/MI support (no need for LibGDB)');
+   With Installer do
+     begin
+     s := GetCustomFpmakeCommandlineOptionValue('NoGDB');
+     if (s='1') or (s='Y') then
+      NoGDBOption := true;
++    s := GetCustomFpmakeCommandlineOptionValue('GDBMI');
++    if (s='1') or (s='Y') then
++     GDBMIOption := true;
+     s :=GetCustomFpmakeCommandlineOptionValue('CompilerTarget');
+     if s <> '' then
+       CompilerTarget:=StringToCPU(s)
+@@ -153,7 +166,7 @@ begin
+       CompilerTarget:=Defaults.CPU;
+ 
+     P:=AddPackage('ide');
+-    P.Version:='3.0.4';
++    P.Version:='3.1.1';
+ {$ifdef ALLPACKAGES}
+     P.Directory:=ADirectory;
+ {$endif ALLPACKAGES}
+@@ -163,9 +176,12 @@ begin
+     P.Dependencies.Add('chm');
+     { This one is only needed if DEBUG is set }
+     P.Dependencies.Add('regexpr');
+-    if not (NoGDBOption) then
++    if not (NoGDBOption) and not (GDBMIOption) then
+       P.Dependencies.Add('gdbint',AllOSes-AllAmigaLikeOSes);
++    if GDBMIOption then
++      P.Dependencies.Add('fcl-process');
+     P.Dependencies.Add('graph',[go32v2]);
++    P.Dependencies.Add('ami-extra',AllAmigaLikeOSes);
+ 
+     P.SupportBuildModes:=[bmOneByOne];
+ 
+@@ -182,15 +198,27 @@ begin
+     P.Options.Add('-Fi../compiler/'+CPUToString(CompilerTarget));
+     P.Options.Add('-Fi../compiler');
+ 
+-    if CompilerTarget in [x86_64, i386] then
++    if CompilerTarget in [x86_64, i386, i8086] then
+       P.Options.Add('-Fu../compiler/x86');
+     if CompilerTarget in [powerpc, powerpc64] then
+       P.Options.Add('-Fu../compiler/ppcgen');
++    if CompilerTarget in [sparc] then
++      begin
++        P.Options.Add('-Fu../compiler/sparcgen');
++        P.Options.add('-Fi../compiler/sparcgen');
++      end;
+     if CompilerTarget = x86_64 then
+       P.Options.Add('-dNOOPT');
+     if CompilerTarget = mipsel then
+       P.Options.Add('-Fu../compiler/mips');
+ 
++    { powerpc64-aix compiled IDE needs -CTsmalltoc option }
++    if (Defaults.OS=aix) and (Defaults.CPU=powerpc64) then
++     P.Options.Add('-CTsmalltoc');
++    { Handle SPECIALLINK environment variable if available }
++    s:=GetEnvironmentVariable('SPECIALLINK');
++    if s<>'' then
++      P.Options.Add(s);
+     P.Options.Add('-Sg');
+     P.IncludePath.Add('compiler');
+ 
+diff --git a/fpcsrc/ide/fpmopts.inc b/fpcsrc/ide/fpmopts.inc
+index 0f7edefd..bf90ae9f 100644
+--- a/fpcsrc/ide/fpmopts.inc
++++ b/fpcsrc/ide/fpmopts.inc
+@@ -547,6 +547,10 @@ begin
+     else
+       L:=0;
+     CB2^.SetData(L);
++{$ifdef GDB_WINDOWS_ALWAYS_USE_ANOTHER_CONSOLE}
++    { EnableMask type is longint, avoid range check error here }
++    CB2^.EnableMask := CB2^.EnableMask and longint($7ffffffe);
++{$endif GDB_WINDOWS_ALWAYS_USE_ANOTHER_CONSOLE}
+     R2.Move(0,-1);
+     Insert(New(PLabel, Init(R2,label_debugger_redirection, CB2)));
+ {$endif Windows}
+diff --git a/fpcsrc/ide/fpregs.pas b/fpcsrc/ide/fpregs.pas
+index b4fff2c4..b218eff3 100644
+--- a/fpcsrc/ide/fpregs.pas
++++ b/fpcsrc/ide/fpregs.pas
+@@ -42,7 +42,15 @@ uses
+        cs,ds,es,ss,fs,gs : word;
+        eflags : dword;
+ {$endif cpui386}
+-{$ifdef cpum68k}
++{$ifdef x86_64}
++{$define cpu_known}
++       rax,rbx,rcx,rdx,rsi,rdi,rbp,rsp,
++       r8,r9,r10,r11,r12,r13,r14,r15,
++       rip : qword;
++       cs,ds,es,ss,fs,gs : word;
++       eflags : dword;
++{$endif x86_64}
++{$ifdef cpuim68k}
+ {$define cpu_known}
+        d0,d1,d2,d3,d4,d5,d6,d7 : dword;
+        a0,a1,a2,a3,a4,a5,fp,sp : dword;
+@@ -73,6 +81,7 @@ uses
+       InDraw : boolean;
+       GDBCount : longint;
+       first : boolean;
++      LastOK : boolean;
+       constructor Init(var Bounds: TRect);
+       procedure   Draw;virtual;
+       destructor  Done; virtual;
+@@ -90,12 +99,12 @@ uses
+ 
+     TFPURegs = record
+ {$ifndef test_generic_cpu}
+-{$ifdef cpui386}
++{$if defined(i386) or defined(x86_64)}
+       st0,st1,st2,st3,st4,st5,st6,st7 :string;
+       ftag,fop,fctrl,fstat,fiseg,foseg : word;
+       fioff,fooff : cardinal;
+-{$endif cpui386}
+-{$ifdef cpum68k}
++{$endif cpui386 or x86_64}
++{$ifdef cpuim68k}
+       fp0,fp1,fp2,fp3,fp4,fp5,fp6,fp7 : string;
+       fpcontrol,fpstatus,fpiaddr : dword;
+ {$endif cpum68k}
+@@ -120,6 +129,7 @@ uses
+       UseInfoFloat : boolean;
+ {$endif not cpu_known}
+       first : boolean;
++      LastOK : boolean;
+       constructor Init(var Bounds: TRect);
+       procedure   Draw;virtual;
+       destructor  Done; virtual;
+@@ -157,11 +167,11 @@ uses
+ 
+     TVectorRegs = record
+ {$ifndef test_generic_cpu}
+-{$ifdef cpui386}
++{$if defined(i386) or defined(x86_64)}
+       xmm : array[0..7] of string;
+       mmx : array[0..7] of string;
+       mxcsr : string;
+-{$endif cpui386}
++{$endif cpui386 or x86_64}
+ {$ifdef cpupowerpc}
+       m : array[0..31] of string;
+ {$endif cpupowerpc}
+@@ -181,6 +191,7 @@ uses
+       UseInfoVector : boolean;
+ {$endif not cpu_known}
+       first : boolean;
++      LastOK : boolean;
+       constructor Init(var Bounds: TRect);
+       procedure   Draw;virtual;
+       destructor  Done; virtual;
+@@ -212,7 +223,11 @@ implementation
+ uses
+   Strings,
+ {$ifndef NODEBUG}
+-  GDBCon,GDBInt,
++  {$ifdef GDBMI}
++    GDBMICon, GDBMIInt,
++  {$else GDBMI}
++    GDBCon,GDBInt,
++  {$endif GDBMI}
+ {$endif NODEBUG}
+   App,Menus,
+   WViews,WEditor,
+@@ -265,6 +280,8 @@ const
+       dialog_registers = 'Register View';
+       dialog_fpu = 'FPU View';
+       dialog_vector = 'Vector Unit View';
++      msg_registervaluesnotavailable = '<no values available>';
++      msg_registerwindowerror = '<debugger error>';
+ 
+ {****************************************************************************
+                          TRegistersView
+@@ -275,23 +292,126 @@ const
+     var
+        p,po : pchar;
+        p1 : pchar;
+-       reg,value : string;
+        buffer : array[0..255] of char;
+-       v : dword;
+-       code : word;
+        i : byte;
+ 
+     begin
+        GetIntRegs:=false;
+ {$ifndef NODEBUG}
++{$ifdef cpu_known}
++{$ifdef cpui386}
++       GetIntRegs :=
++         Debugger^.GetIntRegister('eax', rs.eax) and
++         Debugger^.GetIntRegister('ebx', rs.ebx) and
++         Debugger^.GetIntRegister('ecx', rs.ecx) and
++         Debugger^.GetIntRegister('edx', rs.edx) and
++         Debugger^.GetIntRegister('esi', rs.esi) and
++         Debugger^.GetIntRegister('edi', rs.edi) and
++         Debugger^.GetIntRegister('ebp', rs.ebp) and
++         Debugger^.GetIntRegister('esp', rs.esp) and
++         Debugger^.GetIntRegister('eip', rs.eip) and
++       { under Windows flags are on a register named ps !! PM }
++         (Debugger^.GetIntRegister('eflags', rs.eflags) or Debugger^.GetIntRegister('ps', rs.eflags)) and
++         Debugger^.GetIntRegister('cs', rs.cs) and
++         Debugger^.GetIntRegister('ds', rs.ds) and
++         Debugger^.GetIntRegister('es', rs.es) and
++         Debugger^.GetIntRegister('fs', rs.fs) and
++         Debugger^.GetIntRegister('gs', rs.gs) and
++         Debugger^.GetIntRegister('ss', rs.ss);
++{$endif cpui386}
++{$ifdef x86_64}
++       GetIntRegs :=
++         Debugger^.GetIntRegister('rax', rs.rax) and
++         Debugger^.GetIntRegister('rbx', rs.rbx) and
++         Debugger^.GetIntRegister('rcx', rs.rcx) and
++         Debugger^.GetIntRegister('rdx', rs.rdx) and
++         Debugger^.GetIntRegister('rsi', rs.rsi) and
++         Debugger^.GetIntRegister('rdi', rs.rdi) and
++         Debugger^.GetIntRegister('rbp', rs.rbp) and
++         Debugger^.GetIntRegister('rsp', rs.rsp) and
++         Debugger^.GetIntRegister('r8', rs.r8) and
++         Debugger^.GetIntRegister('r9', rs.r9) and
++         Debugger^.GetIntRegister('r10', rs.r10) and
++         Debugger^.GetIntRegister('r11', rs.r11) and
++         Debugger^.GetIntRegister('r12', rs.r12) and
++         Debugger^.GetIntRegister('r13', rs.r13) and
++         Debugger^.GetIntRegister('r14', rs.r14) and
++         Debugger^.GetIntRegister('r15', rs.r15) and
++         Debugger^.GetIntRegister('rip', rs.rip) and
++       { under Windows flags are on a register named ps !! PM }
++         (Debugger^.GetIntRegister('eflags', rs.eflags) or Debugger^.GetIntRegister('ps', rs.eflags)) and
++         Debugger^.GetIntRegister('cs', rs.cs) and
++         Debugger^.GetIntRegister('ds', rs.ds) and
++         Debugger^.GetIntRegister('es', rs.es) and
++         Debugger^.GetIntRegister('fs', rs.fs) and
++         Debugger^.GetIntRegister('gs', rs.gs) and
++         Debugger^.GetIntRegister('ss', rs.ss);
++{$endif x86_64}
++{$ifdef cpuim68k}
++       GetIntRegs :=
++         Debugger^.GetIntRegister('d0', rs.d0) and
++         Debugger^.GetIntRegister('d1', rs.d1) and
++         Debugger^.GetIntRegister('d2', rs.d2) and
++         Debugger^.GetIntRegister('d3', rs.d3) and
++         Debugger^.GetIntRegister('d4', rs.d4) and
++         Debugger^.GetIntRegister('d5', rs.d5) and
++         Debugger^.GetIntRegister('d6', rs.d6) and
++         Debugger^.GetIntRegister('d7', rs.d7) and
++         Debugger^.GetIntRegister('a0', rs.a0) and
++         Debugger^.GetIntRegister('a1', rs.a1) and
++         Debugger^.GetIntRegister('a2', rs.a2) and
++         Debugger^.GetIntRegister('a3', rs.a3) and
++         Debugger^.GetIntRegister('a4', rs.a4) and
++         Debugger^.GetIntRegister('a5', rs.a5) and
++         Debugger^.GetIntRegister('fp', rs.fp) and
++         Debugger^.GetIntRegister('sp', rs.sp) and
++         Debugger^.GetIntRegister('ps', rs.ps) and
++         Debugger^.GetIntRegister('pc', rs.pc);
++{$endif cpum68k}
++{$ifdef cpupowerpc}
++       GetIntRegs := true;
++       for i:=0 to 31 do
++         GetIntRegs := GetIntRegs and Debugger^.GetIntRegister('r'+inttostr(i), rs.r[i]);
++       { other regs
++         pc,ps,cr,lr,ctr,xer : dword; }
++       GetIntRegs := GetIntRegs and
++         Debugger^.GetIntRegister('pc', rs.pc) and
++         Debugger^.GetIntRegister('ps', rs.ps) and
++         Debugger^.GetIntRegister('lr', rs.lr) and
++         Debugger^.GetIntRegister('ctr', rs.ctr) and
++         Debugger^.GetIntRegister('xer', rs.xer);
++{$endif cpupowerpc}
++{$ifdef cpusparc}
++       GetIntRegs := true;
++       for i:=0 to 7 do
++         GetIntRegs := GetIntRegs and Debugger^.GetIntRegister('o'+inttostr(i), rs.o[i]);
++       for i:=0 to 7 do
++         if i = 6 then
++           GetIntRegs := GetIntRegs and (Debugger^.GetIntRegister('i6', rs.i[6]) or Debugger^.GetIntRegister('fp', rs.i[6]))
++         else
++           GetIntRegs := GetIntRegs and Debugger^.GetIntRegister('i'+inttostr(i), rs.i[i]);
++       for i:=0 to 7 do
++         GetIntRegs := GetIntRegs and Debugger^.GetIntRegister('l'+inttostr(i), rs.l[i]);
++       for i:=0 to 7 do
++         GetIntRegs := GetIntRegs and Debugger^.GetIntRegister('g'+inttostr(i), rs.g[i]);
++
++       GetIntRegs := GetIntRegs and
++         Debugger^.GetIntRegister('y', rs.y) and
++         Debugger^.GetIntRegister('psr', rs.psr) and
++         Debugger^.GetIntRegister('wim', rs.wim) and
++         Debugger^.GetIntRegister('tbs', rs.tbr) and
++         Debugger^.GetIntRegister('pc', rs.pc) and
++         Debugger^.GetIntRegister('npc', rs.npc) and
++         Debugger^.GetIntRegister('fsr', rs.fsr) and
++         Debugger^.GetIntRegister('csr', rs.csr);
++{$endif cpusparc}
++{$else cpu_known}
+        Debugger^.Command('info registers');
+        if Debugger^.Error then
+          exit
+        else
+          begin
+-{$ifndef cpu_known}
+             i:=0;
+-{$endif not cpu_known}
+             po:=StrNew(Debugger^.GetOutput);
+             p:=po;
+             if assigned(p) then
+@@ -300,7 +420,6 @@ const
+                  p1:=strscan(p,' ');
+                  while assigned(p1) do
+                    begin
+-{$ifndef cpu_known}
+                       p1:=strscan(p,#10);
+                       if assigned(p1) then
+                         begin
+@@ -309,162 +428,6 @@ const
+                           if i<MaxRegs-1 then
+                             inc(i);
+                         end;
+-{$else cpu_known}
+-                      strlcopy(buffer,p,p1-p);
+-                      reg:=strpas(buffer);
+-                      p1:=strscan(p,'$');
+-                      { some targets use 0x instead of $ }
+-                      if p1=nil then
+-                        p:=strpos(p,'0x')
+-                      else
+-                        p:=p1;
+-                      p1:=strscan(p,#9);
+-                      strlcopy(buffer,p,p1-p);
+-                      value:=strpas(buffer);
+-
+-                      { replace the $? }
+-                      if copy(value,1,2)='0x' then
+-                        value:='$'+copy(value,3,length(value)-2);
+-                      val(value,v,code);
+-{$ifdef cpui386}
+-                      if reg='eax' then
+-                        rs.eax:=v
+-                      else if reg='ebx' then
+-                        rs.ebx:=v
+-                      else if reg='ecx' then
+-                        rs.ecx:=v
+-                      else if reg='edx' then
+-                        rs.edx:=v
+-                      else if reg='eip' then
+-                        rs.eip:=v
+-                      else if reg='esi' then
+-                        rs.esi:=v
+-                      else if reg='edi' then
+-                        rs.edi:=v
+-                      else if reg='esp' then
+-                        rs.esp:=v
+-                      else if reg='ebp' then
+-                        rs.ebp:=v
+-                      { under Windows flags are on a register named ps !! PM }
+-                      else if (reg='eflags') or (reg='ps') then
+-                        rs.eflags:=v
+-                      else if reg='cs' then
+-                        rs.cs:=v
+-                      else if reg='ds' then
+-                        rs.ds:=v
+-                      else if reg='es' then
+-                        rs.es:=v
+-                      else if reg='fs' then
+-                        rs.fs:=v
+-                      else if reg='gs' then
+-                        rs.gs:=v
+-                      else if reg='ss' then
+-                        rs.ss:=v;
+-{$endif cpui386}
+-{$ifdef cpum68k}
+-                      if reg='d0' then
+-                        rs.d0:=v
+-                      else if reg='d1' then
+-                        rs.d1:=v
+-                      else if reg='d2' then
+-                        rs.d2:=v
+-                      else if reg='d3' then
+-                        rs.d3:=v
+-                      else if reg='d4' then
+-                        rs.d4:=v
+-                      else if reg='d5' then
+-                        rs.d5:=v
+-                      else if reg='d6' then
+-                        rs.d6:=v
+-                      else if reg='d7' then
+-                        rs.d7:=v
+-                      else if reg='a0' then
+-                        rs.a0:=v
+-                      else if reg='a1' then
+-                        rs.a1:=v
+-                      else if reg='a2' then
+-                        rs.a2:=v
+-                      else if reg='a3' then
+-                        rs.a3:=v
+-                      else if reg='a4' then
+-                        rs.a4:=v
+-                      else if reg='a5' then
+-                        rs.a5:=v
+-                      else if reg='fp' then
+-                        rs.fp:=v
+-                      else if reg='sp' then
+-                        rs.sp:=v
+-                      else if (reg='ps') then
+-                        rs.ps:=v
+-                      else if reg='pc' then
+-                        rs.pc:=v;
+-{$endif cpum68k}
+-{$ifdef cpupowerpc}
+-                      if (reg[1]='r') then
+-                        begin
+-                          for i:=0 to 31 do
+-                            if reg='r'+inttostr(i) then
+-                              rs.r[i]:=v;
+-                        end
+-                      { other regs
+-                        pc,ps,cr,lr,ctr,xer : dword; }
+-                      else if (reg='pc') then
+-                        rs.pc:=v
+-                      else if (reg='ps') then
+-                        rs.ps:=v
+-                      else if (reg='lr') then
+-                        rs.lr:=v
+-                      else if (reg='ctr') then
+-                        rs.ctr:=v
+-                      else if (reg='xer') then
+-                        rs.xer:=v;
+-{$endif cpupowerpc}
+-{$ifdef cpusparc}
+-                      if (reg[1]='o') then
+-                        begin
+-                          for i:=0 to 7 do
+-                            if reg='o'+inttostr(i) then
+-                              rs.o[i]:=v;
+-                        end
+-                      else if (reg[1]='i') then
+-                        begin
+-                          for i:=0 to 7 do
+-                            if reg='i'+inttostr(i) then
+-                              rs.i[i]:=v;
+-                        end
+-                      else if (reg[1]='l') then
+-                        begin
+-                          for i:=0 to 7 do
+-                            if reg='l'+inttostr(i) then
+-                              rs.l[i]:=v;
+-                        end
+-                      else if (reg[1]='g') then
+-                        begin
+-                          for i:=0 to 7 do
+-                            if reg='g'+inttostr(i) then
+-                              rs.g[i]:=v;
+-                        end
+-
+-                      else if reg='fp' then
+-                        rs.i[6]:=v
+-                      else if reg='y' then
+-                        rs.y:=v
+-                      else if reg='psr' then
+-                        rs.psr:=v
+-                      else if reg='wim' then
+-                        rs.wim:=v
+-                      else if reg='tbs' then
+-                        rs.tbr:=v
+-                      else if reg='pc' then
+-                        rs.pc:=v
+-                      else if reg='npc' then
+-                        rs.npc:=v
+-                      else if reg='fsr' then
+-                        rs.fsr:=v
+-                      else if reg='csr' then
+-                        rs.csr:=v;
+-{$endif cpusparc}
+-{$endif not cpu_known}
+                       p:=strscan(p1,#10);
+                       if assigned(p) then
+                         begin
+@@ -483,7 +446,8 @@ const
+        { do not open a messagebox for such errors }
+        Debugger^.got_error:=false;
+        GetIntRegs:=true;
+-{$endif}
++{$endif cpu_known}
++{$endif not NODEBUG}
+     end;
+ 
+   constructor TRegistersView.Init(var Bounds: TRect);
+@@ -514,6 +478,14 @@ const
+         color:=8;
+     end;
+ 
++    procedure SetColor(x,y : qword);
++    begin
++      if x=y then
++        color:=7
++      else
++        color:=8;
++    end;
++
+     procedure SetStrColor(const x,y : string);
+     begin
+       if x=y then
+@@ -525,11 +497,11 @@ const
+     begin
+        inherited draw;
+ {$ifdef NODEBUG}
+-       WriteStr(1,0,'<no values available>',7);
++       WriteStr(1,0,msg_registervaluesnotavailable,7);
+ {$else NODEBUG}
+-       If not assigned(Debugger) then
++       If (not assigned(Debugger)) or (not Debugger^.IsRunning) then
+          begin
+-            WriteStr(1,0,'<no values available>',7);
++            WriteStr(1,0,msg_registervaluesnotavailable,7);
+             exit;
+          end;
+        if InDraw then exit;
+@@ -538,6 +510,7 @@ const
+          begin
+            OldReg:=NewReg;
+            OK:=GetIntRegs(rs);
++           LastOK:=OK;
+            NewReg:=rs;
+            { get inital values }
+            if first then
+@@ -550,7 +523,7 @@ const
+        else
+          begin
+            rs:=NewReg;
+-           OK:=true;
++           OK:=LastOK;
+          end;
+        if  OK then
+          begin
+@@ -603,7 +576,71 @@ const
+             SetColor(rs.eflags and $400,OldReg.eflags and $400);
+             WriteStr(22,7,'d='+chr(byte((rs.eflags and $400)<>0)+48),color);
+ {$endif cpui386}
+-{$ifdef cpum68k}
++{$ifdef x86_64}
++            SetColor(rs.rax,OldReg.rax);
++            WriteStr(1,0,'RAX '+HexStr(rs.rax,16),color);
++            SetColor(rs.rbx,OldReg.rbx);
++            WriteStr(1,1,'RBX '+HexStr(rs.rbx,16),color);
++            SetColor(rs.rcx,OldReg.rcx);
++            WriteStr(1,2,'RCX '+HexStr(rs.rcx,16),color);
++            SetColor(rs.rdx,OldReg.rdx);
++            WriteStr(1,3,'RDX '+HexStr(rs.rdx,16),color);
++            SetColor(rs.rsi,OldReg.rsi);
++            WriteStr(1,4,'RSI '+HexStr(rs.rsi,16),color);
++            SetColor(rs.rdi,OldReg.rdi);
++            WriteStr(1,5,'RDI '+HexStr(rs.rdi,16),color);
++            SetColor(rs.rbp,OldReg.rbp);
++            WriteStr(1,6,'RBP '+HexStr(rs.rbp,16),color);
++            SetColor(rs.rsp,OldReg.rsp);
++            WriteStr(1,7,'RSP '+HexStr(rs.rsp,16),color);
++            SetColor(rs.r8,OldReg.r8);
++            WriteStr(1,8,'R8  '+HexStr(rs.r8,16),color);
++            SetColor(rs.r9,OldReg.r9);
++            WriteStr(1,9,'R9  '+HexStr(rs.r9,16),color);
++            SetColor(rs.r10,OldReg.r10);
++            WriteStr(1,10,'R10 '+HexStr(rs.r10,16),color);
++            SetColor(rs.r11,OldReg.r11);
++            WriteStr(1,11,'R11 '+HexStr(rs.r11,16),color);
++            SetColor(rs.r12,OldReg.r12);
++            WriteStr(1,12,'R12 '+HexStr(rs.r12,16),color);
++            SetColor(rs.r13,OldReg.r13);
++            WriteStr(1,13,'R13 '+HexStr(rs.r13,16),color);
++            SetColor(rs.r14,OldReg.r14);
++            WriteStr(1,14,'R14 '+HexStr(rs.r14,16),color);
++            SetColor(rs.r15,OldReg.r15);
++            WriteStr(1,15,'R15 '+HexStr(rs.r15,16),color);
++            SetColor(rs.rip,OldReg.rip);
++            WriteStr(1,16,'RIP '+HexStr(rs.rip,16),color);
++            SetColor(rs.cs,OldReg.cs);
++            WriteStr(22,11,'CS '+HexStr(rs.cs,4),color);
++            SetColor(rs.ds,OldReg.ds);
++            WriteStr(22,12,'DS '+HexStr(rs.ds,4),color);
++            SetColor(rs.es,OldReg.es);
++            WriteStr(22,13,'ES '+HexStr(rs.es,4),color);
++            SetColor(rs.fs,OldReg.fs);
++            WriteStr(22,14,'FS '+HexStr(rs.fs,4),color);
++            SetColor(rs.gs,OldReg.gs);
++            WriteStr(22,15,'GS '+HexStr(rs.gs,4),color);
++            SetColor(rs.ss,OldReg.ss);
++            WriteStr(22,16,'SS '+HexStr(rs.ss,4),color);
++            SetColor(rs.eflags and $1,OldReg.eflags and $1);
++            WriteStr(24,0,'c='+chr(byte((rs.eflags and $1)<>0)+48),color);
++            SetColor(rs.eflags and $20,OldReg.eflags and $20);
++            WriteStr(24,1,'z='+chr(byte((rs.eflags and $20)<>0)+48),color);
++            SetColor(rs.eflags and $80,OldReg.eflags and $80);
++            WriteStr(24,2,'s='+chr(byte((rs.eflags and $80)<>0)+48),color);
++            SetColor(rs.eflags and $800,OldReg.eflags and $800);
++            WriteStr(24,3,'o='+chr(byte((rs.eflags and $800)<>0)+48),color);
++            SetColor(rs.eflags and $4,OldReg.eflags and $4);
++            WriteStr(24,4,'p='+chr(byte((rs.eflags and $4)<>0)+48),color);
++            SetColor(rs.eflags and $200,OldReg.eflags and $200);
++            WriteStr(24,5,'i='+chr(byte((rs.eflags and $200)<>0)+48),color);
++            SetColor(rs.eflags and $10,OldReg.eflags and $10);
++            WriteStr(24,6,'a='+chr(byte((rs.eflags and $10)<>0)+48),color);
++            SetColor(rs.eflags and $400,OldReg.eflags and $400);
++            WriteStr(24,7,'d='+chr(byte((rs.eflags and $400)<>0)+48),color);
++{$endif x86_64}
++{$ifdef cpuim68k}
+             SetColor(rs.d0,OldReg.d0);
+             WriteStr(1,0,'d0 '+HexStr(longint(rs.d0),8),color);
+             SetColor(rs.d1,OldReg.d1);
+@@ -717,7 +754,7 @@ const
+ {$endif cpu_known}
+          end
+        else
+-         WriteStr(0,0,'<debugger error>',7);
++         WriteStr(0,0,msg_registerwindowerror,7);
+        InDraw:=false;
+ {$endif NODEBUG}
+     end;
+@@ -743,13 +780,17 @@ const
+        R.A.X:=R.B.X-28;
+        R.B.Y:=R.A.Y+11;
+ {$endif cpui386}
+-{$ifdef cpum68k}
++{$ifdef x86_64}
++       R.A.X:=R.B.X-32;
++       R.B.Y:=R.A.Y+19;
++{$endif x86_64}
++{$ifdef cpuim68k}
+        R.A.X:=R.B.X-28;
+        R.B.Y:=R.A.Y+11;
+ {$endif cpum68k}
+ {$ifdef cpupowerpc}
+-       R.A.X:=R.B.X-28;
+-       R.B.Y:=R.A.Y+22;
++       R.A.X:=R.B.X-30;
++       R.B.Y:=R.A.Y+21;
+ {$endif cpupowerpc}
+ {$ifdef cpusparc}
+        R.A.X:=R.B.X-30;
+@@ -883,7 +924,7 @@ const
+                         if v[i]=#9 then
+                           v[i]:=' ';
+                       val(v,res,err);
+-{$ifdef cpui386}
++{$if defined(i386) or defined(x86_64)}
+                       if reg='st0' then
+                         rs.st0:=v
+                       else if reg='st1' then
+@@ -916,8 +957,8 @@ const
+                         rs.fooff:=res
+                       else if reg='fop' then
+                         rs.fop:=res;
+-{$endif cpui386}
+-{$ifdef cpum68k}
++{$endif cpui386 or x86_64}
++{$ifdef cpuim68k}
+                       if reg='fp0' then
+                         rs.fp0:=v
+                       else if reg='fp1' then
+@@ -1021,11 +1062,11 @@ const
+     begin
+        inherited draw;
+ {$ifdef NODEBUG}
+-       WriteStr(1,0,'<no values available>',7);
++       WriteStr(1,0,msg_registervaluesnotavailable,7);
+ {$else NODEBUG}
+-       If not assigned(Debugger) then
++       If (not assigned(Debugger)) or (not Debugger^.IsRunning) then
+          begin
+-            WriteStr(1,0,'<no values available>',7);
++            WriteStr(1,0,msg_registervaluesnotavailable,7);
+             exit;
+          end;
+        if InDraw then
+@@ -1039,6 +1080,7 @@ const
+              ,UseInfoFloat
+ {$endif not cpu_known}
+              );
++           LastOK:=OK;
+            NewReg:=rs;
+            { get inital values }
+            if first then
+@@ -1051,12 +1093,12 @@ const
+        else
+          begin
+            rs:=newreg;
+-           OK:=true;
++           OK:=LastOK;
+          end;
+        if OK then
+          begin
+ {$ifdef cpu_known}
+-{$ifdef cpui386}
++{$if defined(i386) or defined(x86_64)}
+             top:=(rs.fstat shr 11) and 7;
+             SetColor(rs.st0,OldReg.st0);
+             WriteStr(1,0,'ST0 '+TypeStr[(rs.ftag shr (2*((0+top) and 7))) and 3]+rs.st0,color);
+@@ -1094,8 +1136,8 @@ const
+             else
+               color:=7;
+             WriteStr(1,11,'FO    '+hexstr(rs.foseg,4)+':'+hexstr(rs.fooff,8),color);
+-{$endif cpui386}
+-{$ifdef cpum68k}
++{$endif cpui386 or x86_64}
++{$ifdef cpuim68k}
+             SetColor(rs.fp0,OldReg.fp0);
+             WriteStr(1,0,'fp0 '+rs.fp0,color);
+             SetColor(rs.fp1,OldReg.fp1);
+@@ -1148,7 +1190,7 @@ const
+ {$endif cpu_known}
+          end
+        else
+-         WriteStr(0,0,'<debugger error>',7);
++         WriteStr(0,0,msg_registerwindowerror,7);
+        InDraw:=false;
+ {$endif NODEBUG}
+     end;
+@@ -1170,11 +1212,11 @@ const
+ 
+     begin
+        Desktop^.GetExtent(R);
+-{$ifdef cpui386}
++{$if defined(i386) or defined(x86_64)}
+        R.A.X:=R.B.X-44;
+        R.B.Y:=R.A.Y+14;
+-{$endif cpui386}
+-{$ifdef cpum68k}
++{$endif cpui386 or x86_64}
++{$ifdef cpuim68k}
+        R.A.X:=R.B.X-44;
+        R.B.Y:=R.A.Y+14;
+ {$endif cpum68k}
+@@ -1194,7 +1236,7 @@ const
+        Flags:=wfClose or wfMove or wfgrow;
+        Palette:=wpCyanWindow;
+        HelpCtx:=hcFPURegisters;
+-       R.Assign(1,1,Size.X-2,Size.Y-2);
++       R.Assign(1,1,Size.X-2,Size.Y-1);
+        RV:=new(PFPUView,init(R));
+        Insert(RV);
+        If assigned(FPUWindow) then
+@@ -1312,7 +1354,7 @@ const
+                         if v[i]=#9 then
+                           v[i]:=' ';
+                       val(v,res,err);
+-{$ifdef cpui386}
++{$if defined(i386) or defined(x86_64)}
+                       if reg[1]='x' then
+                         for i:=0 to 7 do
+                           begin
+@@ -1327,7 +1369,7 @@ const
+                             if reg='mm'+inttostr(i) then
+                               rs.mmx[i]:=v;
+                           end;
+-{$endif cpui386}
++{$endif cpui386 or x86_64}
+ {$ifdef cpupowerpc}
+                       { !!!! fixme }
+                       if reg[1]='v' then
+@@ -1405,11 +1447,11 @@ const
+     begin
+        inherited draw;
+ {$ifdef NODEBUG}
+-       WriteStr(1,0,'<no values available>',7);
++       WriteStr(1,0,msg_registervaluesnotavailable,7);
+ {$else NODEBUG}
+-       If not assigned(Debugger) then
++       If (not assigned(Debugger)) or (not Debugger^.IsRunning) then
+          begin
+-            WriteStr(1,0,'<no values available>',7);
++            WriteStr(1,0,msg_registervaluesnotavailable,7);
+             exit;
+          end;
+        if InDraw then
+@@ -1423,6 +1465,7 @@ const
+              ,UseInfoVector
+ {$endif not cpu_known}
+              );
++           LastOK:=OK;
+            NewReg:=rs;
+            { get inital values }
+            if first then
+@@ -1435,12 +1478,12 @@ const
+        else
+          begin
+            rs:=newreg;
+-           OK:=true;
++           OK:=LastOK;
+          end;
+        if OK then
+          begin
+ {$ifdef cpu_known}
+-{$ifdef cpui386}
++{$if defined(i386) or defined(x86_64)}
+             for i:=0 to 7 do
+               begin
+                 SetColor(rs.xmm[i],OldReg.xmm[i]);
+@@ -1455,7 +1498,7 @@ const
+                 SetColor(rs.mmx[i],OldReg.mmx[i]);
+                 WriteStr(1,i+9,'mmx'+IntToStr(i)+'  '+rs.mmx[i],color);
+               end;
+-{$endif cpui386}
++{$endif cpui386 or x86_64}
+ {$ifdef cpupowerpc}
+             for i:=0 to 31 do
+               begin
+@@ -1478,7 +1521,7 @@ const
+ {$endif cpu_known}
+          end
+        else
+-         WriteStr(0,0,'<debugger error>',7);
++         WriteStr(0,0,msg_registerwindowerror,7);
+        InDraw:=false;
+ {$endif NODEBUG}
+     end;
+@@ -1500,11 +1543,11 @@ const
+ 
+     begin
+        Desktop^.GetExtent(R);
+-{$ifdef cpui386}
++{$if defined(i386) or defined(x86_64)}
+        R.A.X:=R.B.X-60;
+        R.B.Y:=R.A.Y+20;
+-{$endif cpui386}
+-{$ifdef cpum68k}
++{$endif cpui386 or x86_64}
++{$ifdef cpuim68k}
+        R.A.X:=R.B.X-60;
+        R.B.Y:=R.A.Y+14;
+ {$endif cpum68k}
+@@ -1524,7 +1567,7 @@ const
+        Flags:=wfClose or wfMove or wfgrow;
+        Palette:=wpCyanWindow;
+        HelpCtx:=hcVectorRegisters;
+-       R.Assign(1,1,Size.X-2,Size.Y-2);
++       R.Assign(1,1,Size.X-2,Size.Y-1);
+        RV:=new(PVectorView,init(R));
+        Insert(RV);
+        If assigned(VectorWindow) then
+diff --git a/fpcsrc/ide/fpusrscr.pas b/fpcsrc/ide/fpusrscr.pas
+index 1dd6c1aa..03550950 100644
+--- a/fpcsrc/ide/fpusrscr.pas
++++ b/fpcsrc/ide/fpusrscr.pas
+@@ -955,9 +955,10 @@ const
+ procedure UpdateFileHandles;
+ begin
+   {StdInputHandle:=longint(GetStdHandle(STD_INPUT_HANDLE));}
+-  StdOutputHandle:=longint(GetStdHandle(cardinal(STD_OUTPUT_HANDLE)));
++  StdOutputHandle:=THandle(GetStdHandle(cardinal(STD_OUTPUT_HANDLE)));
+   {StdErrorHandle:=longint(GetStdHandle(STD_ERROR_HANDLE));}
+   TextRec(Output).Handle:=StdOutputHandle;
++  VideoSetConsoleOutHandle(StdOutputHandle);
+   TextRec(StdOut).Handle:=StdOutputHandle;
+   {TextRec(StdErr).Handle:=StdErrorHandle;}
+ end;
+diff --git a/fpcsrc/ide/fpvars.pas b/fpcsrc/ide/fpvars.pas
+index 02ec192b..32a609aa 100644
+--- a/fpcsrc/ide/fpvars.pas
++++ b/fpcsrc/ide/fpvars.pas
+@@ -145,7 +145,11 @@ const ClipboardWindow  : PClipboardWindow = nil;
+        '"$REMOTEEXECCOMMAND" $DOITINBACKGROUND';
+ {$endif SUPPORT_REMOTE}
+ 
++{$ifdef GDB_WINDOWS_ALWAYS_USE_ANOTHER_CONSOLE}
++     DebuggeeTTY : string = 'on';
++{$else GDB_WINDOWS_ALWAYS_USE_ANOTHER_CONSOLE}
+      DebuggeeTTY : string = '';
++{$endif GDB_WINDOWS_ALWAYS_USE_ANOTHER_CONSOLE}
+ 
+       ActionCommands   : array[acFirstAction..acLastAction] of word =
+         (cmHelpTopicSearch,cmGotoCursor,cmToggleBreakpoint,
+diff --git a/fpcsrc/ide/fpviews.pas b/fpcsrc/ide/fpviews.pas
+index 903f5bb3..4de85159 100644
+--- a/fpcsrc/ide/fpviews.pas
++++ b/fpcsrc/ide/fpviews.pas
+@@ -26,6 +26,14 @@ uses
+   WEditor,WCEdit,
+   WUtils,WHelp,WHlpView,WViews,WANSI,
+   Comphook,
++{$ifndef NODEBUG}
++  { Needed here for CORE_ADDR definition }
++  {$ifdef GDBMI}
++    gdbmiint,
++  {$else GDBMI}
++    gdbint,
++  {$endif GDBMI}
++{$endif NODEBUG}
+   FPConst,FPUsrScr;
+ 
+ type
+@@ -224,7 +232,7 @@ type
+ 
+     PDisasLine = ^TDisasLine;
+     TDisasLine = object(TLine)
+-      address : cardinal;{ should be target size of address for cross debuggers }
++      address : CORE_ADDR;{ should be target size of address for cross debuggers }
+     end;
+ 
+     PDisasLineCollection = ^TDisasLineCollection;
+@@ -241,13 +249,13 @@ type
+       procedure  ReleaseSource;
+       destructor Done;virtual;
+       procedure  AddSourceLine(const AFileName: string;line : longint); virtual;
+-      procedure  AddAssemblyLine(const S: string;AAddress : cardinal); virtual;
+-      function   GetCurrentLine(address : cardinal) : PDisasLine;
++      procedure  AddAssemblyLine(const S: string;AAddress : CORE_ADDR); virtual;
++      function   GetCurrentLine(address : CORE_ADDR) : PDisasLine;
+       private
+         Source : PSourceWindow;
+         OwnsSource : Boolean;
+         DisasLines : PDisasLineCollection;
+-        MinAddress,MaxAddress : cardinal;
++        MinAddress,MaxAddress : CORE_ADDR;
+         CurL : PDisasLine;
+       end;
+ 
+@@ -257,12 +265,12 @@ type
+       Indicator : PIndicator;
+       constructor Init(var Bounds: TRect);
+       procedure   LoadFunction(Const FuncName : string);
+-      procedure   LoadAddress(Addr : cardinal);
++      procedure   LoadAddress(Addr : CORE_ADDR);
+       function    ProcessPChar(p : pchar) : boolean;
+       procedure   HandleEvent(var Event: TEvent); virtual;
+       procedure   WriteSourceString(Const S : string;line : longint);
+-      procedure   WriteDisassemblyString(Const S : string;address : cardinal);
+-      procedure   SetCurAddress(address : cardinal);
++      procedure   WriteDisassemblyString(Const S : string;address : CORE_ADDR);
++      procedure   SetCurAddress(address : CORE_ADDR);
+       procedure   UpdateCommands; virtual;
+       function    GetPalette: PPalette;virtual;
+       destructor  Done; virtual;
+@@ -556,9 +564,6 @@ uses
+ {$ifdef USE_EXTERNAL_COMPILER}
+    fpintf, { superseeds version_string of version unit }
+ {$endif USE_EXTERNAL_COMPILER}
+-{$ifndef NODEBUG}
+-  gdbint,
+-{$endif NODEBUG}
+   {$ifdef VESA}Vesa,{$endif}
+   FPSwitch,FPSymbol,FPDebug,FPVars,FPUtils,FPCompil,FPHelp,
+   FPTools,FPIDE,FPCodTmp,FPCodCmp;
+@@ -2490,8 +2495,10 @@ begin
+     Editor^.AddLine('');
+   Insert(Editor);
+ {$ifndef NODEBUG}
++ {$ifndef GDBMI}
+   if assigned(Debugger) then
+-    Debugger^.SetWidth(Size.X-1);
++    Debugger^.SetCommand('width ' + IntToStr(Size.X-1));
++ {$endif GDBMI}
+ {$endif NODEBUG}
+   Editor^.silent:=false;
+   Editor^.AutoRepeat:=true;
+@@ -2575,7 +2582,10 @@ begin
+   While assigned(p) and (p^<>#0) do
+     begin
+        pe:=strscan(p,#10);
+-       if pe<>nil then
++       { if pe-p is more than High(s), discard for this round }
++       if (pe<>nil) and (pe-p > high(s)) then
++         pe:=nil;
++       if (pe<>nil)  then
+          pe^:=#0;
+        s:=strpas(p);
+        If IsError then
+@@ -2586,16 +2596,16 @@ begin
+        if pe<>nil then
+          pe^:=#10;
+        if pe=nil then
+-         p:=nil
+-       else
+          begin
+-           if pe-p > High(s) then
+-             p:=p+High(s)-1
++           if strlen(p)<High(s) then
++             p:=nil
+            else
+-             begin
+-               p:=pe;
+-               inc(p);
+-             end;
++             p:=p+High(s);
++         end
++       else
++         begin
++           p:=pe;
++           inc(p);
+          end;
+     end;
+   DeskTop^.Unlock;
+@@ -2682,13 +2692,13 @@ begin
+    LimitsChanged;
+ end;
+ 
+-procedure  TDisassemblyEditor.AddAssemblyLine(const S: string;AAddress : cardinal);
++procedure  TDisassemblyEditor.AddAssemblyLine(const S: string;AAddress : CORE_ADDR);
+ var
+   PL : PDisasLine;
+   LI : PEditorLineInfo;
+ begin
+    if AAddress<>0 then
+-     inherited AddLine('$'+hexstr(AAddress,sizeof(PtrUInt)*2)+S)
++     inherited AddLine('$'+hexstr(AAddress,sizeof(CORE_ADDR)*2)+S)
+    else
+      inherited AddLine(S);
+    PL:=DisasLines^.At(DisasLines^.count-1);
+@@ -2703,7 +2713,7 @@ begin
+      MaxAddress:=AAddress;
+ end;
+ 
+-function   TDisassemblyEditor.GetCurrentLine(address : cardinal) : PDisasLine;
++function   TDisassemblyEditor.GetCurrentLine(address : CORE_ADDR) : PDisasLine;
+ 
+   function IsCorrectLine(PL : PDisasLine) : boolean;
+     begin
+@@ -2757,9 +2767,9 @@ var
+ begin
+ {$ifndef NODEBUG}
+   If not assigned(Debugger) then Exit;
+-  Debugger^.Command('set print sym on');
+-  Debugger^.Command('set width 0xffffffff');
+-  Debugger^.Command('disas '+FuncName);
++  Debugger^.SetCommand('print symbol on');
++  Debugger^.SetCommand('width 0xffffffff');
++  Debugger^.Command('disas /m '+FuncName);
+   p:=StrNew(Debugger^.GetOutput);
+   ProcessPChar(p);
+   if (Debugger^.IsRunning) and (FuncName='') then
+@@ -2767,15 +2777,15 @@ begin
+ {$endif NODEBUG}
+ end;
+ 
+-procedure   TDisassemblyWindow.LoadAddress(Addr : cardinal);
++procedure   TDisassemblyWindow.LoadAddress(Addr : CORE_ADDR);
+ var
+    p : pchar;
+ begin
+ {$ifndef NODEBUG}
+   If not assigned(Debugger) then Exit;
+-  Debugger^.Command('set print sym on');
+-  Debugger^.Command('set width 0xffffffff');
+-  Debugger^.Command('disas 0x'+HexStr(Addr,8));
++  Debugger^.SetCommand('print symbol on');
++  Debugger^.SetCommand('width 0xffffffff');
++  Debugger^.Command('disas /m 0x'+HexStr(Addr,sizeof(Addr)*2));
+   p:=StrNew(Debugger^.GetOutput);
+   ProcessPChar(p);
+   if Debugger^.IsRunning and
+@@ -2791,7 +2801,7 @@ var
+   p1: pchar;
+   pline : pchar;
+   pos1, pos2, CurLine, PrevLine : longint;
+-  CurAddr : cardinal;
++  CurAddr : CORE_ADDR;
+   err : word;
+   curaddress, cursymofs, CurFile,
+   PrevFile, line : string;
+@@ -2812,7 +2822,7 @@ begin
+       pline:=strscan(p,#10);
+       if assigned(pline) then
+         pline^:=#0;
+-      line:=strpas(p);
++      line:=trim(strpas(p));
+       CurAddr:=0;
+       if assigned(pline) then
+         begin
+@@ -2822,11 +2832,17 @@ begin
+       else
+         p:=nil;
+       { now process the line }
++      { Remove current position marker }
++      if copy(line,1,3)='=> ' then
++        begin
++          system.delete(line,1,3);
++        end;
++
+       { line is hexaddr <symbol+sym_offset at filename:line> assembly }
+       pos1:=pos('<',line);
+       if pos1>0 then
+         begin
+-          curaddress:=copy(line,1,pos1-1);
++          curaddress:=trim(copy(line,1,pos1-1));
+           if copy(curaddress,1,2)='0x' then
+             curaddress:='$'+copy(curaddress,3,length(curaddress)-2);
+           val(curaddress,CurAddr,err);
+@@ -2883,12 +2899,12 @@ begin
+   Editor^.AddSourceLine(S,line);
+ end;
+ 
+-procedure   TDisassemblyWindow.WriteDisassemblyString(Const S : string;address : cardinal);
++procedure   TDisassemblyWindow.WriteDisassemblyString(Const S : string;address : CORE_ADDR);
+ begin
+   Editor^.AddAssemblyLine(S,address);
+ end;
+ 
+-procedure   TDisassemblyWindow.SetCurAddress(address : cardinal);
++procedure   TDisassemblyWindow.SetCurAddress(address : CORE_ADDR);
+ begin
+   if (address<Editor^.MinAddress) or (address>Editor^.MaxAddress) then
+     LoadAddress(address);
+@@ -4229,7 +4245,7 @@ end;
+ constructor TFPAboutDialog.Init;
+ var R,R2: TRect;
+     C: PUnsortedStringCollection;
+-    I: integer;
++    I,nblines: integer;
+     OSStr: string;
+ procedure AddLine(S: string);
+ begin
+@@ -4256,13 +4272,28 @@ begin
+   if pos('Fake',GDBVersion)=0 then
+     begin
+       R2.Move(0,1);
++      nblines:=1;
++      for i:=1 to length(GDBVersion) do
++        if GDBVersion[i]=#13 then
++          inc(nblines);
++      R2.B.Y:=R2.A.Y+nblines;
++      if nblines>1 then
++        GrowTo(Size.X,Size.Y+nblines-1);
++      {$ifdef GDBMI}
++      if GDBVersionOK then
++        Insert(New(PStaticText, Init(R2, FormatStrStr2(^C'(%s %s, using MI interface)',label_about_debugger,GDBVersion))))
++      else
++        Insert(New(PStaticText, Init(R2, FormatStrStr(^C'%s',GDBVersion))));
++      {$else}
+       Insert(New(PStaticText, Init(R2, FormatStrStr2(^C'(%s %s)',label_about_debugger,GDBVersion))));
+-      R2.Move(0,1);
++      {$endif}
++      R2.Move(0,nblines);
++      R2.B.Y:=R2.A.Y+1;
+     end
+   else
+ {$endif NODEBUG}
+     R2.Move(0,2);
+-  Insert(New(PStaticText, Init(R2, ^C'Copyright (C) 1998-2016 by')));
++  Insert(New(PStaticText, Init(R2, ^C'Copyright (C) 1998-2017 by')));
+   R2.Move(0,2);
+   Insert(New(PStaticText, Init(R2, ^C'B‚rczi G bor')));
+   R2.Move(0,1);
+@@ -4291,6 +4322,9 @@ begin
+   AddLine(^C'Peter Vreman');
+   AddLine(^C'Pierre Muller');
+   AddLine('');
++  AddLine(^C'< GDBMI development >');
++  AddLine(^C'Nikolay Nikolov');
++  AddLine('');
+ 
+   GetExtent(R);
+   R.Grow(-1,-1); Inc(R.A.Y,3);
+@@ -4386,7 +4420,7 @@ begin
+               Message(W,evCommand,cmAddChar,pointer(ptrint(ord(Report^.AsciiChar))));
+             ClearEvent(Event);
+           end;
+-        
++
+         cmSearchWindow+1..cmSearchWindow+99 :
+           if (Event.Command-cmSearchWindow=Number) then
+               ClearEvent(Event);
+diff --git a/fpcsrc/ide/gdbmicon.pas b/fpcsrc/ide/gdbmicon.pas
+new file mode 100644
+index 00000000..c190894f
+--- /dev/null
++++ b/fpcsrc/ide/gdbmicon.pas
+@@ -0,0 +1,545 @@
++{
++    Copyright (c) 2015 by Nikolay Nikolov
++    Copyright (c) 1998 by Peter Vreman
++
++    This is a replacement for GDBCon, implemented on top of GDB/MI,
++    instead of LibGDB. This allows integration of GDB/MI support in the
++    text mode IDE.
++
++    See the file COPYING.FPC, included in this distribution,
++    for details about the copyright.
++
++    This program is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
++
++ **********************************************************************}
++
++unit gdbmicon;
++
++{$MODE fpc}{$H-}
++
++{$I globdir.inc}
++
++interface
++
++uses
++  gdbmiint, gdbmiwrap;
++
++type
++  TBreakpointFlags = set of (bfTemporary, bfHardware);
++  TWatchpointType = (wtWrite, wtReadWrite, wtRead);
++  TPrintFormatType = (pfbinary, pfdecimal, pfhexadecimal, pfoctal, pfnatural);
++
++  TGDBController = object(TGDBInterface)
++  private
++    FRegisterNames: array of AnsiString;
++    procedure UpdateRegisterNames;
++    function GetGdbRegisterNo(const RegName: string): LongInt;
++    function GetRegisterAsString(const RegName, Format: string; var Value: string): Boolean;
++    procedure RunExecCommand(const Cmd: string);
++  protected
++    TBreakNumber,
++    start_break_number: LongInt;
++    in_command: LongInt;
++
++    procedure CommandBegin(const s: string); virtual;
++    procedure CommandEnd(const s: string); virtual;
++
++  public
++    constructor Init;
++    destructor Done;
++
++    procedure Command(const s: string);
++    procedure Reset; virtual;
++    { tracing }
++    procedure StartTrace;
++    procedure Run; virtual;
++    procedure TraceStep;
++    procedure TraceNext;
++    procedure TraceStepI;
++    procedure TraceNextI;
++    procedure Continue; virtual;
++    procedure UntilReturn; virtual;
++    { registers }
++    function GetIntRegister(const RegName: string; var Value: UInt64): Boolean;
++    function GetIntRegister(const RegName: string; var Value: Int64): Boolean;
++    function GetIntRegister(const RegName: string; var Value: UInt32): Boolean;
++    function GetIntRegister(const RegName: string; var Value: Int32): Boolean;
++    function GetIntRegister(const RegName: string; var Value: UInt16): Boolean;
++    function GetIntRegister(const RegName: string; var Value: Int16): Boolean;
++    { set command }
++    function SetCommand(Const SetExpr : string) : boolean;
++    { print }
++    function PrintCommand(const expr : string): AnsiString;
++    function PrintFormattedCommand(const expr : string; Format : TPrintFormatType): AnsiString;
++    { breakpoints }
++    function BreakpointInsert(const location: string; BreakpointFlags: TBreakpointFlags): LongInt;
++    function WatchpointInsert(const location: string; WatchpointType: TWatchpointType): LongInt;
++    function BreakpointDelete(BkptNo: LongInt): Boolean;
++    function BreakpointEnable(BkptNo: LongInt): Boolean;
++    function BreakpointDisable(BkptNo: LongInt): Boolean;
++    function BreakpointCondition(BkptNo: LongInt; const ConditionExpr: string): Boolean;
++    function BreakpointSetIgnoreCount(BkptNo: LongInt; const IgnoreCount: LongInt): Boolean;
++    procedure SetTBreak(tbreakstring : string);
++    { frame commands }
++    procedure Backtrace;
++    function SelectFrameCommand(level :longint) : boolean;
++    function LoadFile(var fn: string): Boolean;
++    procedure SetDir(const s: string);
++    procedure SetArgs(const s: string);
++  end;
++
++implementation
++
++uses
++{$ifdef Windows}
++  Windebug,
++{$endif Windows}
++  strings;
++
++procedure UnixDir(var s : string);
++var i : longint;
++begin
++  for i:=1 to length(s) do
++    if s[i]='\' then
++{$ifdef windows}
++  { Don't touch at '\ ' used to escapes spaces in windows file names PM }
++     if (i=length(s)) or (s[i+1]<>' ') then
++{$endif windows}
++      s[i]:='/';
++{$ifdef windows}
++  { if we are using cygwin, we need to convert e:\ into /cygdriveprefix/e/ PM }
++  if using_cygwin_gdb and (length(s)>2) and (s[2]=':') and (s[3]='/') then
++    s:=CygDrivePrefix+'/'+s[1]+copy(s,3,length(s));
++{$endif windows}
++end;
++
++constructor TGDBController.Init;
++begin
++  inherited Init;
++end;
++
++destructor TGDBController.Done;
++begin
++  inherited Done;
++end;
++
++procedure TGDBController.CommandBegin(const s: string);
++begin
++end;
++
++procedure TGDBController.Command(const s: string);
++begin
++  Inc(in_command);
++  CommandBegin(s);
++  GDBOutputBuf.Reset;
++  GDBErrorBuf.Reset;
++{$ifdef GDB_RAW_OUTPUT}
++  GDBRawBuf.reset;
++{$endif GDB_RAW_OUTPUT}
++  i_gdb_command(s);
++  CommandEnd(s);
++  Dec(in_command);
++end;
++
++procedure TGDBController.CommandEnd(const s: string);
++begin
++end;
++
++procedure TGDBController.UpdateRegisterNames;
++var
++  I: LongInt;
++  ResultList: TGDBMI_ListValue;
++begin
++  SetLength(FRegisterNames, 0);
++  Command('-data-list-register-names');
++  if not GDB.ResultRecord.Success then
++    exit;
++  ResultList := GDB.ResultRecord.Parameters['register-names'].AsList;
++  SetLength(FRegisterNames, ResultList.Count);
++  for I := 0 to ResultList.Count - 1 do
++    FRegisterNames[I] := ResultList.ValueAt[I].AsString;
++end;
++
++function TGDBController.GetGdbRegisterNo(const RegName: string): LongInt;
++var
++  I: LongInt;
++begin
++  for I := Low(FRegisterNames) to High(FRegisterNames) do
++    if FRegisterNames[I] = RegName then
++    begin
++      GetGdbRegisterNo := I;
++      exit;
++    end;
++  GetGdbRegisterNo := -1;
++end;
++
++procedure TGDBController.Reset;
++begin
++end;
++
++procedure TGDBController.StartTrace;
++begin
++  Command('-break-insert -t PASCALMAIN');
++  if not GDB.ResultRecord.Success then
++    exit;
++  start_break_number := GDB.ResultRecord.Parameters['bkpt'].AsTuple['number'].AsLongInt;
++  Run;
++end;
++
++procedure TGDBController.RunExecCommand(const Cmd: string);
++begin
++  UserScreen;
++  Command(Cmd);
++  if not GDB.ResultRecord.Success then
++  begin
++    DebuggerScreen;
++    got_error := True;
++    exit;
++  end;
++  WaitForProgramStop;
++end;
++
++procedure TGDBController.Run;
++begin
++  RunExecCommand('-exec-run');
++end;
++
++procedure TGDBController.TraceStep;
++begin
++  RunExecCommand('-exec-step');
++end;
++
++procedure TGDBController.TraceNext;
++begin
++  RunExecCommand('-exec-next');
++end;
++
++procedure TGDBController.TraceStepI;
++begin
++  RunExecCommand('-exec-step-instruction');
++end;
++
++procedure TGDBController.TraceNextI;
++begin
++  RunExecCommand('-exec-next-instruction');
++end;
++
++procedure TGDBController.Continue;
++begin
++  RunExecCommand('-exec-continue');
++end;
++
++procedure TGDBController.UntilReturn;
++begin
++  RunExecCommand('-exec-finish');
++end;
++
++function TGDBController.GetRegisterAsString(const RegName, Format: string; var Value: string): Boolean;
++var
++  RegNo: LongInt;
++  RegNoStr: string;
++begin
++  GetRegisterAsString := False;
++  Value := '';
++
++  RegNo := GetGdbRegisterNo(RegName);
++  if RegNo = -1 then
++    exit;
++  Str(RegNo, RegNoStr);
++  Command('-data-list-register-values ' + Format + ' ' + RegNoStr);
++  if not GDB.ResultRecord.Success then
++    exit;
++  Value := GDB.ResultRecord.Parameters['register-values'].AsList.ValueAt[0].AsTuple['value'].AsString;
++  GetRegisterAsString := True;
++end;
++
++function TGDBController.GetIntRegister(const RegName: string; var Value: UInt64): Boolean;
++var
++  RegValueStr: string;
++  Code: LongInt;
++begin
++  GetIntRegister := False;
++  Value := 0;
++  if not GetRegisterAsString(RegName, 'x', RegValueStr) then
++    exit;
++  Val(RegValueStr, Value, Code);
++  if Code <> 0 then
++    exit;
++  GetIntRegister := True;
++end;
++
++function TGDBController.GetIntRegister(const RegName: string; var Value: Int64): Boolean;
++var
++  U64Value: UInt64;
++begin
++  GetIntRegister := GetIntRegister(RegName, U64Value);
++  Value := Int64(U64Value);
++end;
++
++function TGDBController.GetIntRegister(const RegName: string; var Value: UInt32): Boolean;
++var
++  U64Value: UInt64;
++begin
++  GetIntRegister := GetIntRegister(RegName, U64Value);
++  Value := UInt32(U64Value);
++  if (U64Value shr 32) <> 0 then
++    GetIntRegister := False;
++end;
++
++function TGDBController.GetIntRegister(const RegName: string; var Value: Int32): Boolean;
++var
++  U32Value: UInt32;
++begin
++  GetIntRegister := GetIntRegister(RegName, U32Value);
++  Value := Int32(U32Value);
++end;
++
++function TGDBController.GetIntRegister(const RegName: string; var Value: UInt16): Boolean;
++var
++  U64Value: UInt64;
++begin
++  GetIntRegister := GetIntRegister(RegName, U64Value);
++  Value := UInt16(U64Value);
++  if (U64Value shr 16) <> 0 then
++    GetIntRegister := False;
++end;
++
++function TGDBController.GetIntRegister(const RegName: string; var Value: Int16): Boolean;
++var
++  U16Value: UInt16;
++begin
++  GetIntRegister := GetIntRegister(RegName, U16Value);
++  Value := Int16(U16Value);
++end;
++
++
++{ set command }
++function TGDBController.SetCommand(Const SetExpr : string) : boolean;
++begin
++  SetCommand:=false;
++  Command('-gdb-set '+SetExpr);
++  if error then
++    exit;
++  SetCommand:=true;
++end;
++
++
++{ print }
++function TGDBController.PrintCommand(const expr : string): AnsiString;
++begin
++  Command('-data-evaluate-expression '+QuoteString(expr));
++  if GDB.ResultRecord.Success then
++    PrintCommand:=GDB.ResultRecord.Parameters['value'].AsString
++  else
++    PrintCommand:=AnsiString(GetError);
++end;
++
++const
++  PrintFormatName : Array[TPrintFormatType] of string[11] =
++  ('binary', 'decimal', 'hexadecimal', 'octal', 'natural');
++
++function TGDBController.PrintFormattedCommand(const expr : string; Format : TPrintFormatType): ansistring;
++begin
++  Command('-var-evaluate-expression -f '+PrintFormatName[Format]+' '+QuoteString(expr));
++  if GDB.ResultRecord.Success then
++    PrintFormattedCommand:=GDB.ResultRecord.Parameters['value'].AsString
++  else
++    PrintFormattedCommand:=AnsiString(GetError);
++end;
++
++function TGDBController.BreakpointInsert(const location: string; BreakpointFlags: TBreakpointFlags): LongInt;
++var
++  Options: string = '';
++begin
++  if bfTemporary in BreakpointFlags then
++    Options := Options + '-t ';
++  if bfHardware in BreakpointFlags then
++    Options := Options + '-h ';
++  Command('-break-insert ' + Options + location);
++  if GDB.ResultRecord.Success then
++    BreakpointInsert := GDB.ResultRecord.Parameters['bkpt'].AsTuple['number'].AsLongInt
++  else
++    BreakpointInsert := 0;
++end;
++
++function TGDBController.WatchpointInsert(const location: string; WatchpointType: TWatchpointType): LongInt;
++begin
++  case WatchpointType of
++    wtWrite:
++      Command('-break-watch ' + location);
++    wtReadWrite:
++      Command('-break-watch -a ' + location);
++    wtRead:
++      Command('-break-watch -r ' + location);
++  end;
++  if GDB.ResultRecord.Success then
++    case WatchpointType of
++      wtWrite:
++        WatchpointInsert := GDB.ResultRecord.Parameters['wpt'].AsTuple['number'].AsLongInt;
++      wtReadWrite:
++        WatchpointInsert := GDB.ResultRecord.Parameters['hw-awpt'].AsTuple['number'].AsLongInt;
++      wtRead:
++        WatchpointInsert := GDB.ResultRecord.Parameters['hw-rwpt'].AsTuple['number'].AsLongInt;
++    end
++  else
++    WatchpointInsert := 0;
++end;
++
++function TGDBController.BreakpointDelete(BkptNo: LongInt): Boolean;
++var
++  BkptNoStr: string;
++begin
++  Str(BkptNo, BkptNoStr);
++  Command('-break-delete ' + BkptNoStr);
++  BreakpointDelete := GDB.ResultRecord.Success;
++end;
++
++function TGDBController.BreakpointEnable(BkptNo: LongInt): Boolean;
++var
++  BkptNoStr: string;
++begin
++  Str(BkptNo, BkptNoStr);
++  Command('-break-enable ' + BkptNoStr);
++  BreakpointEnable := GDB.ResultRecord.Success;
++end;
++
++function TGDBController.BreakpointDisable(BkptNo: LongInt): Boolean;
++var
++  BkptNoStr: string;
++begin
++  Str(BkptNo, BkptNoStr);
++  Command('-break-disable ' + BkptNoStr);
++  BreakpointDisable := GDB.ResultRecord.Success;
++end;
++
++function TGDBController.BreakpointCondition(BkptNo: LongInt; const ConditionExpr: string): Boolean;
++var
++  BkptNoStr: string;
++begin
++  Str(BkptNo, BkptNoStr);
++  Command('-break-condition ' + BkptNoStr + ' ' + ConditionExpr);
++  BreakpointCondition := GDB.ResultRecord.Success;
++end;
++
++function TGDBController.BreakpointSetIgnoreCount(BkptNo: LongInt; const IgnoreCount: LongInt): Boolean;
++var
++  BkptNoStr, IgnoreCountStr: string;
++begin
++  Str(BkptNo, BkptNoStr);
++  Str(IgnoreCount, IgnoreCountStr);
++  Command('-break-after ' + BkptNoStr + ' ' + IgnoreCountStr);
++  BreakpointSetIgnoreCount := GDB.ResultRecord.Success;
++end;
++
++procedure TGDBController.SetTBreak(tbreakstring : string);
++begin
++  Command('-break-insert -t ' + tbreakstring);
++  TBreakNumber := GDB.ResultRecord.Parameters['bkpt'].AsTuple['number'].AsLongInt;
++end;
++
++procedure TGDBController.Backtrace;
++var
++  FrameList,FrameArgList,ArgList: TGDBMI_ListValue;
++  I,J,arg_count: LongInt;
++  s : ansistring;
++begin
++  { forget all old frames }
++  clear_frames;
++
++  Command('-stack-list-frames');
++  if not GDB.ResultRecord.Success then
++    exit;
++
++  FrameList := GDB.ResultRecord.Parameters['stack'].AsList;
++  frame_count := FrameList.Count;
++  frames := AllocMem(SizeOf(PFrameEntry) * frame_count);
++  for I := 0 to frame_count - 1 do
++    frames[I] := New(PFrameEntry, Init);
++  for I := 0 to FrameList.Count - 1 do
++  begin
++    frames[I]^.address := FrameList.ValueAt[I].AsTuple['addr'].AsCoreAddr;
++    frames[I]^.level := FrameList.ValueAt[I].AsTuple['level'].AsLongInt;
++    if Assigned(FrameList.ValueAt[I].AsTuple['line']) then
++      frames[I]^.line_number := FrameList.ValueAt[I].AsTuple['line'].AsLongInt;
++    if Assigned(FrameList.ValueAt[I].AsTuple['func']) then
++      frames[I]^.function_name := StrNew(PChar(FrameList.ValueAt[I].AsTuple['func'].AsString));
++    if Assigned(FrameList.ValueAt[I].AsTuple['fullname']) then
++      frames[I]^.file_name := StrNew(PChar(FrameList.ValueAt[I].AsTuple['fullname'].AsString));
++  end;
++  Command('-stack-list-arguments 1');
++  if not GDB.ResultRecord.Success then
++    exit;
++
++  FrameArgList := GDB.ResultRecord.Parameters['stack-args'].AsList;
++  arg_count:=FrameArgList.Count;
++  if arg_count>frame_count then
++    arg_count:=frame_count;
++  for I := 0 to arg_count - 1 do
++  begin
++    ArgList:=FrameArgList.ValueAt[I].AsTuple['args'].AsList;
++    s:='(';
++    for J:=0 to ArgList.Count-1 do
++      begin
++        if J>0 then s:=s+', ';
++        s:=s+ArgList.ValueAt[J].AsTuple['name'].AsString;
++        if Assigned(ArgList.ValueAt[J].AsTuple['value']) then
++          s:=s+':='+ArgList.ValueAt[J].AsTuple['value'].ASString;
++      end;
++    s:=s+')';
++    frames[I]^.args:=StrNew(pchar(s));
++  end;
++end;
++
++function TGDBController.SelectFrameCommand(level :longint) : boolean;
++var
++  LevelStr : String;
++begin
++  Str(Level, LevelStr);
++  Command('-stack-select-frame '+LevelStr);
++  SelectFrameCommand:=not error;
++end;
++
++function TGDBController.LoadFile(var fn: string): Boolean;
++var
++  cmd: string;
++begin
++  getdir(0,cmd);
++  UnixDir(cmd);
++  Command('-environment-cd ' + cmd);
++  GDBOutputBuf.Reset;
++  GDBErrorBuf.Reset;
++{$ifdef GDB_RAW_OUTPUT}
++  GDBRawBuf.reset;
++{$endif GDB_RAW_OUTPUT}
++  UnixDir(fn);
++  Command('-file-exec-and-symbols ' + fn);
++  if not GDB.ResultRecord.Success then
++    begin
++      LoadFile:=false;
++      exit;
++    end;
++  { the register list may change *after* loading a file, because there }
++  { are gdb versions that support multiple archs, e.g. i386 and x86_64 }
++  UpdateRegisterNames;               { so that's why we update it here }
++  LoadFile := True;
++end;
++
++procedure TGDBController.SetDir(const s: string);
++var
++  hs: string;
++begin
++  hs:=s;
++  UnixDir(hs);
++  { Avoid error message if s is empty }
++  if hs<>'' then
++    Command('-environment-cd ' + hs);
++end;
++
++procedure TGDBController.SetArgs(const s: string);
++begin
++  Command('-exec-arguments ' + s);
++end;
++
++end.
+diff --git a/fpcsrc/ide/gdbmiint.pas b/fpcsrc/ide/gdbmiint.pas
+new file mode 100644
+index 00000000..874d6be8
+--- /dev/null
++++ b/fpcsrc/ide/gdbmiint.pas
+@@ -0,0 +1,650 @@
++{
++    Copyright (c) 2015 by Nikolay Nikolov
++    Copyright (c) 1998 by Peter Vreman
++
++    This is a replacement for GDBInt, implemented on top of GDB/MI,
++    instead of LibGDB. This allows integration of GDB/MI support in the
++    text mode IDE.
++
++    See the file COPYING.FPC, included in this distribution,
++    for details about the copyright.
++
++    This program is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
++
++ **********************************************************************}
++
++unit gdbmiint;
++
++{$MODE fpc}{$H-}
++
++{$I globdir.inc}
++
++interface
++
++uses
++  gdbmiwrap;
++
++type
++  CORE_ADDR = gdbmiwrap.CORE_ADDR;
++
++  PPFrameEntry = ^PFrameEntry;
++  PFrameEntry = ^TFrameEntry;
++  TFrameEntry = object
++  private
++    procedure Reset;
++    procedure Clear;
++  public
++    file_name: PChar;
++    function_name: PChar;
++    args: PChar;
++    line_number: LongInt;
++    address: CORE_ADDR;
++    level : longint;
++    constructor Init;
++    destructor Done;
++  end;
++
++  TGDBBuffer = object
++  private
++    buf: PChar;
++    size, idx: LongInt;
++    procedure Resize(nsize: LongInt);
++    procedure Append(p: PChar);
++    procedure LAppend(p: PChar; len: LongInt);
++  public
++    constructor Init;
++    destructor Done;
++    procedure Reset;
++  end;
++
++  TGDBInterface = object
++  private
++    user_screen_shown: Boolean;
++{$ifdef GDB_RAW_OUTPUT}
++    output_raw : boolean;
++{$endif GDB_RAW_OUTPUT}
++  protected
++    GDB: TGDBWrapper;
++
++    procedure i_gdb_command(const S: string);
++    procedure WaitForProgramStop;
++    procedure ProcessResponse;
++  public
++    GDBErrorBuf: TGDBBuffer;
++    GDBOutputBuf: TGDBBuffer;
++{$ifdef GDB_RAW_OUTPUT}
++    { Separate Raw buffer to display everything inside GDB Window
++      but without parsing it twice }
++    GDBRawBuf: TGDBBuffer;
++{$endif GDB_RAW_OUTPUT}
++    got_error: Boolean;
++    reset_command: Boolean;
++    Debuggee_started: Boolean;
++    init_count : longint;
++    { frames and frame info while recording a frame }
++    frames: PPFrameEntry;
++    frame_count: LongInt;
++    command_level: LongInt;
++    signal_name: PChar;
++    signal_string: PChar;
++    current_pc: CORE_ADDR;
++    switch_to_user: Boolean;
++
++    { init }
++    constructor Init;
++    destructor Done;
++    { from gdbcon }
++    function GetOutput: PChar;
++    function GetError: PChar;
++{$ifdef DEBUG}
++    function GetRaw: PChar;
++{$endif DEBUG}
++    { Lowlevel }
++    procedure Set_debuggee_started;
++    function error: Boolean;
++    function error_num: LongInt;
++    function get_current_frame: PtrInt;
++    function set_current_frame(level: LongInt): Boolean;
++    procedure clear_frames;
++    { Highlevel }
++    procedure DebuggerScreen;
++    procedure UserScreen;
++    procedure FlushAll; virtual;
++    function Query(question: PChar; args: PChar): LongInt; virtual;
++    { Hooks }
++    function DoSelectSourceline(const fn: string; line, BreakIndex: longint): Boolean;virtual;
++    procedure DoStartSession; virtual;
++    procedure DoBreakSession; virtual;
++    procedure DoEndSession(code: LongInt); virtual;
++    procedure DoUserSignal; virtual;
++    procedure DoDebuggerScreen; virtual;
++    procedure DoUserScreen; virtual;
++    function AllowQuit: Boolean; virtual;
++  end;
++
++const
++  use_gdb_file: Boolean = False;
++
++var
++  gdb_file: Text;
++
++function GDBVersion: string;
++function GDBVersionOK: boolean;
++function inferior_pid : longint;
++
++{$ifdef windows}
++{ We need to do some path conversions if we are using Cygwin GDB }
++var
++  using_cygwin_gdb : boolean;
++{$endif windows}
++implementation
++
++uses
++  strings;
++
++constructor TFrameEntry.Init;
++begin
++  Reset;
++end;
++
++destructor TFrameEntry.Done;
++begin
++  Clear;
++end;
++
++procedure TFrameEntry.Reset;
++begin
++  file_name := nil;
++  function_name := nil;
++  args := nil;
++  line_number := 0;
++  address := 0;
++  level := 0;
++end;
++
++procedure TFrameEntry.Clear;
++begin
++  if Assigned(file_name) then
++    StrDispose(file_name);
++  if Assigned(function_name) then
++    StrDispose(function_name);
++  if Assigned(args) then
++    StrDispose(args);
++  Reset;
++end;
++
++const
++  BlockSize = 2048;
++
++constructor TGDBBuffer.Init;
++begin
++  buf := nil;
++  size := 0;
++  Resize(BlockSize);
++  Reset;
++end;
++
++destructor TGDBBuffer.Done;
++begin
++  if Assigned(buf) then
++    FreeMem(buf, size);
++end;
++
++procedure TGDBBuffer.Reset;
++begin
++  idx := 0;
++  buf[0] := #0;
++end;
++
++procedure TGDBBuffer.Resize(nsize: LongInt);
++var
++  np: PChar;
++begin
++  nsize := ((nsize + BlockSize - 1) div BlockSize) * BlockSize;
++  GetMem(np, nsize);
++  if Assigned(buf) then
++  begin
++    Move(buf^, np^, size);
++    FreeMem(buf, size);
++  end;
++  buf := np;
++  size := nsize;
++end;
++
++procedure TGDBBuffer.Append(p: PChar);
++var
++  len: LongInt;
++begin
++  if not Assigned(p) then
++    exit;
++  len := StrLen(p);
++  LAppend(p, len);
++end;
++
++procedure TGDBBuffer.LAppend(p: PChar; len: LongInt);
++begin
++  if not Assigned(p) then
++    exit;
++  if (len + idx + 1) > size then
++    Resize(len + idx + 1);
++  Move(p^, buf[idx], len);
++  Inc(idx, len);
++  buf[idx] := #0;
++end;
++
++constructor TGDBInterface.Init;
++begin
++  GDBErrorBuf.Init;
++  GDBOutputBuf.Init;
++  GDB := TGDBWrapper.Create;
++  command_level := 0;
++  Debuggee_started:=false;
++  init_count:=0;
++{$ifdef GDB_RAW_OUTPUT}
++  output_raw:=true;
++  GDBRawBuf.Init;
++{$endif GDB_RAW_OUTPUT}
++{ other standard commands used for fpc debugging }
++  i_gdb_command('-gdb-set print demangle off');
++  i_gdb_command('-gdb-set gnutarget auto');
++  i_gdb_command('-gdb-set language auto');
++  i_gdb_command('-gdb-set print vtbl on');
++  i_gdb_command('-gdb-set print object on');
++  i_gdb_command('-gdb-set print null-stop');
++end;
++
++destructor TGDBInterface.Done;
++begin
++  clear_frames;
++  GDB.Free;
++  GDBErrorBuf.Done;
++  GDBOutputBuf.Done;
++{$ifdef GDB_RAW_OUTPUT}
++  GDBRawBuf.Done;
++{$endif GDB_RAW_OUTPUT}
++end;
++
++function TGDBInterface.GetOutput: PChar;
++begin
++  GetOutput := GDBOutputBuf.buf;
++end;
++
++{$ifdef GDB_RAW_OUTPUT}
++function TGDBInterface.GetRaw: PChar;
++begin
++  GetRaw := GDBRawBuf.buf;
++end;
++{$endif GDB_RAW_OUTPUT}
++
++function TGDBInterface.GetError: PChar;
++var
++  p: PChar;
++begin
++  p := GDBErrorBuf.buf;
++  if (p^=#0) and got_error then
++    GetError := PChar(PtrInt(GDBOutputBuf.buf) + GDBOutputBuf.idx)
++  else
++    GetError := p;
++end;
++
++procedure TGDBInterface.Set_debuggee_started;
++begin
++  if not Debuggee_started then
++    begin
++      inc(init_count);
++      Debuggee_started:=true;
++    end;
++end;
++
++procedure TGDBInterface.i_gdb_command(const S: string);
++var
++  I: LongInt;
++begin
++  Inc(command_level);
++  got_error := False;
++  GDB.Command(S);
++{$ifdef GDB_RAW_OUTPUT}
++  if output_raw then
++    for I := 0 to GDB.RawResponse.Count - 1 do
++      GDBRawBuf.Append(PChar(GDB.RawResponse[I]));
++{$endif GDB_RAW_OUTPUT}
++
++  for I := 0 to GDB.ConsoleStream.Count - 1 do
++    GDBOutputBuf.Append(PChar(GDB.ConsoleStream[I]));
++  if GDB.ResultRecord.AsyncClass='error' then
++  begin
++    got_error := True;
++    if Assigned(GDB.ResultRecord.Parameters['msg']) then
++      GDBErrorBuf.Append(PChar(GDB.ResultRecord.Parameters['msg'].AsString));
++  end;
++  ProcessResponse;
++  Dec(command_level);
++end;
++
++procedure TGDBInterface.WaitForProgramStop;
++label
++  Ignore;
++var
++  StopReason: string;
++  LocalSignalString,LocalSignalName: String;
++  FileName: string = '';
++  LineNumber: LongInt = 0;
++  Addr: CORE_ADDR;
++  BreakpointNo: LongInt;
++  ExitCode: LongInt;
++begin
++Ignore:
++  GDB.WaitForProgramStop;
++  if not GDB.Alive then
++  begin
++    DebuggerScreen;
++    current_pc := 0;
++    Debuggee_started := False;
++    exit;
++  end;
++  ProcessResponse;
++  StopReason := GDB.ExecAsyncOutput.Parameters['reason'].AsString;
++  case StopReason of
++    'watchpoint-scope':
++      begin
++        { A watchpoint has gone out of scope (e.g. if it was a local variable). TODO: should we stop
++          the program and notify the user or maybe silently disable it in the breakpoint list and
++          continue execution? The libgdb.a version of the debugger just silently ignores this case.
++
++          We have: GDB.ExecAsyncOutput.Parameters['wpnum'].AsLongInt }
++        i_gdb_command('-exec-continue');
++        if not GDB.ResultRecord.Success then
++        begin
++          DebuggerScreen;
++          got_error := True;
++          exit;
++        end;
++        goto Ignore;
++      end;
++    'signal-received':
++      begin
++        {    TODO: maybe show information to the user about the signal
++          we have:
++               GDB.ExecAsyncOutput.Parameters['signal-name'].AsString (e.g. 'SIGTERM')
++               GDB.ExecAsyncOutput.PArameters['signal-meaning'].AsString (e.g. 'Terminated')
++          }
++        LocalSignalName:=GDB.ExecAsyncOutput.Parameters['signal-name'].AsString;
++        LocalSignalString:=GDB.ExecAsyncOutput.PArameters['signal-meaning'].AsString;
++        signal_name:=@LocalSignalName;
++        signal_string:=@LocalSignalString;
++        if (user_screen_shown) then
++          begin
++            DebuggerScreen;
++            DoUserSignal;
++            UserScreen;
++          end
++        else
++          DoUserSignal;
++        i_gdb_command('-exec-continue');
++        if not GDB.ResultRecord.Success then
++        begin
++          DebuggerScreen;
++          got_error := True;
++          exit;
++        end;
++        goto Ignore;
++      end;
++    'breakpoint-hit',
++    'watchpoint-trigger',
++    'access-watchpoint-trigger',
++    'read-watchpoint-trigger',
++    'end-stepping-range',
++    'function-finished':
++      begin
++        if StopReason = 'breakpoint-hit' then
++          BreakpointNo := GDB.ExecAsyncOutput.Parameters['bkptno'].AsLongInt
++        else if StopReason = 'watchpoint-trigger' then
++          BreakpointNo := GDB.ExecAsyncOutput.Parameters['wpt'].AsTuple['number'].AsLongInt
++        else if StopReason = 'access-watchpoint-trigger' then
++          BreakpointNo := GDB.ExecAsyncOutput.Parameters['hw-awpt'].AsTuple['number'].AsLongInt
++        else if StopReason = 'read-watchpoint-trigger' then
++          BreakpointNo := GDB.ExecAsyncOutput.Parameters['hw-rwpt'].AsTuple['number'].AsLongInt
++        else
++          BreakpointNo := 0;
++
++        Addr := GDB.ExecAsyncOutput.Parameters['frame'].AsTuple['addr'].AsCoreAddr;
++        if Assigned(GDB.ExecAsyncOutput.Parameters['frame'].AsTuple['fullname']) then
++          FileName := GDB.ExecAsyncOutput.Parameters['frame'].AsTuple['fullname'].AsString;
++        if Assigned(GDB.ExecAsyncOutput.Parameters['frame'].AsTuple['line']) then
++          LineNumber := GDB.ExecAsyncOutput.Parameters['frame'].AsTuple['line'].AsLongInt;
++
++        { this kills GDB.ExecAsyncOutput, because it may execute other gdb commands, so
++          make sure we have read all parameters that we need to local variables before that }
++        DebuggerScreen;
++
++        set_debuggee_started;
++        current_pc := Addr;
++        if not DoSelectSourceLine(FileName, LineNumber, BreakpointNo) then
++        begin
++          UserScreen;
++          i_gdb_command('-exec-continue');
++          if not GDB.ResultRecord.Success then
++          begin
++            DebuggerScreen;
++            got_error := True;
++            exit;
++          end;
++          goto Ignore;
++        end;
++      end;
++    'exited-signalled':
++      begin
++        DebuggerScreen;
++        current_pc := 0;
++        Debuggee_started := False;
++        {    TODO: maybe show information to the user about the signal
++          we have:
++               GDB.ExecAsyncOutput.Parameters['signal-name'].AsString (e.g. 'SIGTERM')
++               GDB.ExecAsyncOutput.PArameters['signal-meaning'].AsString (e.g. 'Terminated')
++          }
++        DoEndSession(1);
++      end;
++    'exited':
++      begin
++        ExitCode := LongInt(GDB.ExecAsyncOutput.Parameters['exit-code'].AsLongWord);
++        DebuggerScreen;
++        current_pc := 0;
++        Debuggee_started := False;
++        DoEndSession(ExitCode);
++      end;
++    'exited-normally':
++      begin
++        DebuggerScreen;
++        current_pc := 0;
++        Debuggee_started := False;
++        DoEndSession(0);
++      end;
++  end;
++end;
++
++procedure TGDBInterface.ProcessResponse;
++//var
++//  NAO: TGDBMI_AsyncOutput;
++//  Code: LongInt;
++begin
++//  for NAO in GDB.NotifyAsyncOutput do
++//  begin
++//    if NAO.AsyncClass = 'breakpoint-created' then
++//    begin
++//      Writeln('BREAKPOINT created!');
++//      Val(NAO.Parameters['bkpt'].AsTuple['number'].AsString, last_breakpoint_number, Code);
++//      Writeln('last_breakpoint_number=', last_breakpoint_number);
++//    end;
++//  end;
++end;
++
++function TGDBInterface.error: Boolean;
++begin
++  error := got_error or not GDB.Alive;
++end;
++
++function TGDBInterface.error_num: LongInt;
++begin
++  error_num := 0;  { TODO }
++end;
++
++function TGDBInterface.get_current_frame: PtrInt;
++begin
++  i_gdb_command('-stack-info-frame');
++  if GDB.ResultRecord.Success then
++    get_current_frame := GDB.ResultRecord.Parameters['frame'].AsTuple['level'].AsLongInt
++  else
++    get_current_frame := 0;
++end;
++
++function TGDBInterface.set_current_frame(level: LongInt): Boolean;
++var
++  s: string;
++begin
++  str(level,s);
++  { Note: according to the gdb docs, '-stack-select-frame' is deprecated in favor of passing the '--frame' option to every command }
++  i_gdb_command('-stack-select-frame '+s);
++  set_current_frame := GDB.ResultRecord.Success;
++end;
++
++procedure TGDBInterface.clear_frames;
++var
++  I: LongInt;
++begin
++  for I := 0 to frame_count - 1 do
++    Dispose(frames[I], Done);
++  if Assigned(frames) then
++  begin
++    FreeMem(frames, SizeOf(Pointer) * frame_count);
++    frames := nil;
++  end;
++  frame_count := 0;
++end;
++
++procedure TGDBInterface.DebuggerScreen;
++begin
++  if user_screen_shown then
++    DoDebuggerScreen;
++  user_screen_shown := False;
++end;
++
++procedure TGDBInterface.UserScreen;
++begin
++  if switch_to_user then
++  begin
++    if not user_screen_shown then
++      DoUserScreen;
++    user_screen_shown := True;
++  end;
++end;
++
++procedure TGDBInterface.FlushAll;
++begin
++end;
++
++function TGDBInterface.Query(question: PChar; args: PChar): LongInt;
++begin
++  Query := 0;
++end;
++
++function TGDBInterface.DoSelectSourceline(const fn: string; line, BreakIndex: LongInt): Boolean;
++begin
++end;
++
++procedure TGDBInterface.DoStartSession;
++begin
++end;
++
++procedure TGDBInterface.DoBreakSession;
++begin
++end;
++
++procedure TGDBInterface.DoEndSession(code: LongInt);
++begin
++end;
++
++procedure TGDBInterface.DoUserSignal;
++begin
++end;
++
++procedure TGDBInterface.DoDebuggerScreen;
++begin
++end;
++
++procedure TGDBInterface.DoUserScreen;
++begin
++end;
++
++function TGDBInterface.AllowQuit: Boolean;
++begin
++  AllowQuit := True;
++end;
++
++function inferior_pid : longint;
++begin
++  inferior_pid:=0; {inferior_ptid.pid; }
++end;
++
++
++var
++  CachedGDBVersion: string;
++  CachedGDBVersionOK : boolean;
++
++function GDBVersion: string;
++var
++  GDB: TGDBWrapper;
++{$ifdef windows}
++  i : longint;
++  line :string;
++{$endif windows}
++begin
++  if CachedGDBVersion <> '' then
++  begin
++    GDBVersion := CachedGDBVersion;
++    exit;
++  end;
++  GDBVersion := '';
++  GDB := TGDBWrapper.Create;
++  GDB.Command('-gdb-version');
++  if GDB.ConsoleStream.Count > 0 then
++    GDBVersion := GDB.ConsoleStream[0];
++  if (GDBVersion <> '') and (GDBVersion[Length(GDBVersion)]=#10) then
++    Delete(GDBVersion, Length(GDBVersion), 1);
++{$ifdef windows}
++  i:=0;
++  using_cygwin_gdb:=false;
++  while i < GDB.ConsoleStream.Count do
++    begin
++      line:=GDB.ConsoleStream[i];
++      if pos('This GDB was configured',line) > 0 then
++        using_cygwin_gdb:=pos('cygwin',line) > 0;
++      inc(i);
++    end;
++{$endif windows}
++  GDB.Free;
++  CachedGDBVersion := GDBVersion;
++  if GDBVersion = '' then
++    begin
++      GDBVersion := 'GDB missing or does not work'#13
++                   +#3'Consider using -G command line option'#13
++                   +#3'or set FPIDE_GDBPROC environment variable'#13
++                   +#3'to specify full path to GDB';
++      CachedGDBVersionOK := false;
++    end;
++end;
++
++function GDBVersionOK: boolean;
++var
++  S : string;
++begin
++  { Be sure GDBVersion is called }
++  S:=GDBVersion;
++  GDBVersionOK := CachedGDBVersionOK;
++end;
++
++begin
++  CachedGDBVersion := '';
++  CachedGDBVersionOK := true;
++end.
+diff --git a/fpcsrc/ide/gdbmiproc.pas b/fpcsrc/ide/gdbmiproc.pas
+new file mode 100644
+index 00000000..4b2b0970
+--- /dev/null
++++ b/fpcsrc/ide/gdbmiproc.pas
+@@ -0,0 +1,156 @@
++{
++    Copyright (c) 2015 by Nikolay Nikolov
++
++    This unit implements a class, which launches gdb in GDB/MI mode
++    and allows sending textual commands to it and receiving the response
++
++    See the file COPYING.FPC, included in this distribution,
++    for details about the copyright.
++
++    This program is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
++
++ **********************************************************************}
++
++unit GDBMIProc;
++
++{$MODE objfpc}{$H+}
++
++{$I globdir.inc}
++
++interface
++
++uses
++  SysUtils, Classes, Process;
++
++type
++  TGDBProcess = class
++  private
++    FProcess: TProcess;
++    FDebugLog: TextFile;
++
++    function IsAlive: Boolean;
++    procedure GDBWrite(const S: string);
++    procedure DebugLn(const S: string);
++    procedure DebugErrorLn(const S: string);
++  public
++    constructor Create;
++    destructor Destroy; override;
++    function GDBReadLn: string;
++    procedure GDBWriteLn(const S: string);
++    property Alive: Boolean read IsAlive;
++  end;
++
++var
++  GdbProgramName: string = 'gdb';
++
++implementation
++
++uses
++  fputils;
++
++var
++  DebugLogEnabled: Boolean = False;
++
++function TGDBProcess.IsAlive: Boolean;
++begin
++  Result := Assigned(FProcess) and FProcess.Running;
++end;
++
++function TGDBProcess.GDBReadLn: string;
++var
++  C: Char;
++begin
++  Result := '';
++  while FProcess.Running do
++  begin
++    FProcess.Output.Read(C, 1);
++{$ifdef windows}
++    { On windows we expect both #13#10 and #10 }
++    if C = #13 then
++    begin
++      FProcess.Output.Read(C, 1);
++      if C <> #10 then
++        { #13 not followed by #10, what should we do? }
++        Result := Result + #13;
++    end;
++{$endif windows}
++    if C = #10 then
++    begin
++      DebugLn(Result);
++      exit;
++    end;
++    Result := Result + C;
++  end;
++end;
++
++constructor TGDBProcess.Create;
++begin
++  if DebugLogEnabled then
++  begin
++    AssignFile(FDebugLog, 'gdblog.txt');
++    Rewrite(FDebugLog);
++    CloseFile(FDebugLog);
++  end;
++  FProcess := TProcess.Create(nil);
++  FProcess.Options := [poUsePipes, poStdErrToOutput];
++  if (ExeExt<>'') and (pos(ExeExt,LowerCaseStr(GdbProgramName))=0) then
++    FProcess.Executable := GdbProgramName+ExeExt
++  else
++    FProcess.Executable := GdbProgramName;
++  FProcess.Parameters.Add('--interpreter=mi');
++  try
++    FProcess.Execute;
++  except
++    on e: Exception do
++    begin
++      DebugErrorLn('Could not start GDB: ' + e.Message);
++      FreeAndNil(FProcess);
++    end;
++  end;
++end;
++
++destructor TGDBProcess.Destroy;
++begin
++  FProcess.Free;
++  inherited Destroy;
++end;
++
++procedure TGDBProcess.DebugLn(const S: string);
++begin
++  if DebugLogEnabled then
++  begin
++    Append(FDebugLog);
++    Writeln(FDebugLog, S);
++    CloseFile(FDebugLog);
++  end;
++end;
++
++procedure TGDBProcess.DebugErrorLn(const S: string);
++begin
++  DebugLn('ERROR: ' + S);
++end;
++
++procedure TGDBProcess.GDBWrite(const S: string);
++begin
++  FProcess.Input.Write(S[1], Length(S));
++end;
++
++procedure TGDBProcess.GDBWriteln(const S: string);
++begin
++  if not IsAlive then
++  begin
++    DebugErrorLn('Trying to send command to a dead GDB: ' + S);
++    exit;
++  end;
++  DebugLn(S);
++  GDBWrite(S + #10);
++end;
++
++begin
++  if GetEnvironmentVariable('FPIDE_GDBLOG') = '1' then
++    DebugLogEnabled := True;
++  if GetEnvironmentVariable('FPIDE_GDBPROG') <> '' then
++    GdbProgramName := GetEnvironmentVariable('FPIDE_GDBPROG');
++end.
+diff --git a/fpcsrc/ide/gdbmiwrap.pas b/fpcsrc/ide/gdbmiwrap.pas
+new file mode 100644
+index 00000000..2198aef4
+--- /dev/null
++++ b/fpcsrc/ide/gdbmiwrap.pas
+@@ -0,0 +1,559 @@
++{
++    Copyright (c) 2015 by Nikolay Nikolov
++
++    This unit provides a wrapper around GDB and implements parsing of
++    the GDB/MI command result records.
++
++    See the file COPYING.FPC, included in this distribution,
++    for details about the copyright.
++
++    This program is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
++
++ **********************************************************************}
++
++unit gdbmiwrap;
++
++{$MODE objfpc}{$H+}
++{$ASSERTIONS on}
++
++{$I globdir.inc}
++
++interface
++
++uses
++  SysUtils, Classes, GDBMIProc;
++
++type
++{$ifdef TARGET_IS_64BIT}
++  { force 64bit if target compilation CPU is 64-bit address CPU }
++  CORE_ADDR = Qword;
++{$else}
++  CORE_ADDR = PtrUInt;
++{$endif}
++
++  TGDBMI_TupleValue = class;
++  TGDBMI_ListValue = class;
++  TGDBMI_Value = class
++    function AsString: string;
++    function AsInt64: Int64;
++    function AsQWord: QWord;
++    function AsLongInt: LongInt;
++    function AsLongWord: LongWord;
++    function AsCoreAddr: CORE_ADDR;
++    function AsTuple: TGDBMI_TupleValue;
++    function AsList: TGDBMI_ListValue;
++  end;
++
++  { "C string\n" }
++  TGDBMI_StringValue = class(TGDBMI_Value)
++    FStringValue: string;
++  public
++    constructor Create(const S: string);
++    property StringValue: string read FStringValue;
++  end;
++
++  (* {...} or [...] *)
++  TGDBMI_TupleOrListValue = class(TGDBMI_Value)
++  private
++    FNames: array of string;
++    FValues: array of TGDBMI_Value;
++    function GetValue(const AName: string): TGDBMI_Value;
++  public
++    destructor Destroy; override;
++    procedure Clear;
++    procedure Add(AName: string; AValue: TGDBMI_Value);
++    function HasNames: Boolean;
++    function IsEmpty: Boolean;
++    property Values [const AName: string]: TGDBMI_Value read GetValue; default;
++  end;
++
++  (* {} or {variable=value,variable=value,variable=value} *)
++  TGDBMI_TupleValue = class(TGDBMI_TupleOrListValue)
++  end;
++
++  { [] or [value,value,value] or [variable=value,variable=value,variable=value] }
++  TGDBMI_ListValue = class(TGDBMI_TupleOrListValue)
++  private
++    function GetCount: LongInt;
++    function GetValueAt(AIndex: LongInt): TGDBMI_Value;
++  public
++    property Count: LongInt read GetCount;
++    property ValueAt [AIndex: LongInt]: TGDBMI_Value read GetValueAt;
++  end;
++
++  TGDBMI_AsyncOutput = class
++    FAsyncClass: string;
++    FParameters: TGDBMI_TupleValue;
++  public
++    constructor Create;
++    destructor Destroy; override;
++    procedure Clear;
++    property AsyncClass: string read FAsyncClass write FAsyncClass;
++    property Parameters: TGDBMI_TupleValue read FParameters;
++  end;
++
++  TGDBMI_ResultRecord = class(TGDBMI_AsyncOutput)
++  public
++    function Success: Boolean;
++  end;
++
++  TGDBMI_AsyncOutput_List = array of TGDBMI_AsyncOutput;
++
++  TGDBWrapper = class
++  private
++    FProcess: TGDBProcess;
++    FRawResponse: TStringList;
++    FConsoleStream: TStringList;
++    FExecAsyncOutput: TGDBMI_AsyncOutput;
++    FResultRecord: TGDBMI_ResultRecord;
++
++    function IsAlive: Boolean;
++    procedure ReadResponse;
++  public
++    NotifyAsyncOutput: TGDBMI_AsyncOutput_List;
++
++    constructor Create;
++    destructor Destroy; override;
++    procedure Command(S: string);
++    procedure WaitForProgramStop;
++    property RawResponse: TStringList read FRawResponse;
++    property ConsoleStream: TStringList read FConsoleStream;
++    property ExecAsyncOutput: TGDBMI_AsyncOutput read FExecAsyncOutput;
++    property ResultRecord: TGDBMI_ResultRecord read FResultRecord write FResultRecord;
++    property Alive: Boolean read IsAlive;
++  end;
++
++function QuoteString(S: string): string;
++function C2PascalNumberPrefix(const S: string): string;
++
++implementation
++
++function QuoteString(S: string): string;
++var
++  I: LongInt;
++begin
++  I := 1;
++  Result := '';
++  while I <= Length(S) do
++  begin
++    case S[I] of
++      '''': Result := Result + '\''';
++      '"':  Result := Result + '\"';
++      #10:  Result := Result + '\n';
++      #13:  Result := Result + '\r';
++      #9:   Result := Result + '\t';
++      #11:  Result := Result + '\v';
++      #8:   Result := Result + '\b';
++      #12:  Result := Result + '\f';
++      #7:   Result := Result + '\a';
++      '\':  Result := Result + '\\';
++      '?':  Result := Result + '\?';
++      else
++        Result := Result + S[I];
++    end;
++    Inc(I);
++  end;
++  Result := '"' + Result + '"';
++end;
++
++function C2PascalNumberPrefix(const S: string): string;
++begin
++  { hex: 0x -> $ }
++  if (Length(S) >= 3) and (s[1] = '0') and ((s[2] = 'x') or (s[2] = 'X')) then
++    exit('$' + Copy(S, 3, Length(S) - 2));
++
++  { oct: 0 -> & }
++  if (Length(S) >= 2) and (s[1] = '0') and ((s[2] >= '0') and (s[2] <= '7')) then
++    exit('&' + Copy(S, 2, Length(S) - 1));
++
++  Result := S;
++end;
++
++function TGDBMI_Value.AsString: string;
++begin
++  Result := (self as TGDBMI_StringValue).StringValue;
++end;
++
++function TGDBMI_Value.AsInt64: Int64;
++begin
++  Result := StrToInt64(C2PascalNumberPrefix(AsString));
++end;
++
++function TGDBMI_Value.AsQWord: QWord;
++begin
++  Result := StrToQWord(C2PascalNumberPrefix(AsString));
++end;
++
++function TGDBMI_Value.AsLongInt: LongInt;
++begin
++  Result := StrToInt(C2PascalNumberPrefix(AsString));
++end;
++
++function TGDBMI_Value.AsLongWord: LongWord;
++const
++  SInvalidInteger = '"%s" is an invalid integer';
++var
++  S: string;
++  Error: LongInt;
++begin
++  S := C2PascalNumberPrefix(AsString);
++  Val(S, Result, Error);
++  if Error <> 0 then
++    raise EConvertError.CreateFmt(SInvalidInteger,[S]);
++end;
++
++function TGDBMI_Value.AsCoreAddr: CORE_ADDR;
++begin
++{$if defined(TARGET_IS_64BIT)}
++  Result := AsQWord;
++{$elseif defined(CPU64)}
++  Result := AsQWord;
++{$else}
++  Result := AsLongWord;
++{$endif}
++end;
++
++function TGDBMI_Value.AsTuple: TGDBMI_TupleValue;
++begin
++  Result := self as TGDBMI_TupleValue;
++end;
++
++function TGDBMI_Value.AsList: TGDBMI_ListValue;
++begin
++  Result := self as TGDBMI_ListValue;
++end;
++
++constructor TGDBMI_StringValue.Create(const S: string);
++begin
++  FStringValue := S;
++end;
++
++destructor TGDBMI_TupleOrListValue.Destroy;
++begin
++  Clear;
++  inherited Destroy;
++end;
++
++procedure TGDBMI_TupleOrListValue.Clear;
++var
++  I: LongInt;
++begin
++  SetLength(FNames, 0);
++  for I := Low(FValues) to High(FValues) do
++    FreeAndNil(FValues[I]);
++  SetLength(FValues, 0);
++end;
++
++procedure TGDBMI_TupleOrListValue.Add(AName: string; AValue: TGDBMI_Value);
++begin
++  Assert(AValue <> nil);
++  Assert(IsEmpty or (HasNames = (AName <> '')));
++  if AName <> '' then
++  begin
++    SetLength(FNames, Length(FNames) + 1);
++    FNames[Length(FNames) - 1] := AName;
++  end;
++  SetLength(FValues, Length(FValues) + 1);
++  FValues[Length(FValues) - 1] := AValue;
++end;
++
++function TGDBMI_TupleOrListValue.HasNames: Boolean;
++begin
++  Result := Length(FNames) > 0;
++end;
++
++function TGDBMI_TupleOrListValue.IsEmpty: Boolean;
++begin
++  Result := Length(FValues) = 0;
++end;
++
++function TGDBMI_TupleOrListValue.GetValue(const AName: string): TGDBMI_Value;
++var
++  I: LongInt;
++begin
++  for I := Low(FNames) to High(FNames) do
++    if FNames[I] = AName then
++    begin
++      Result := FValues[I];
++      exit;
++    end;
++  Result := nil;
++end;
++
++function TGDBMI_ListValue.GetCount: LongInt;
++begin
++  Result := Length(FValues);
++end;
++
++function TGDBMI_ListValue.GetValueAt(AIndex: LongInt): TGDBMI_Value;
++begin
++  Assert((AIndex >= Low(FValues)) and (AIndex <= High(FValues)));
++  Result := FValues[AIndex];
++end;
++
++constructor TGDBMI_AsyncOutput.Create;
++begin
++  FParameters := TGDBMI_TupleValue.Create;
++end;
++
++destructor TGDBMI_AsyncOutput.Destroy;
++begin
++  FParameters.Free;
++  inherited Destroy;
++end;
++
++procedure TGDBMI_AsyncOutput.Clear;
++begin
++  AsyncClass := '';
++  Parameters.Clear;
++end;
++
++function TGDBMI_ResultRecord.Success: Boolean;
++begin
++  { according to the GDB docs, 'done' and 'running' should be treated identically by clients }
++  Result := (AsyncClass='done') or (AsyncClass='running');
++end;
++
++function ParseCString(const CStr: string; var NextCharPos: LongInt): string;
++begin
++  if (NextCharPos <= Length(CStr)) and (CStr[NextCharPos] = '"') then
++    Inc(NextCharPos);
++  Result := '';
++  while NextCharPos <= Length(CStr) do
++  begin
++    if CStr[NextCharPos] = '"' then
++    begin
++      Inc(NextCharPos);
++      exit;
++    end
++    else if CStr[NextCharPos] = '\' then
++    begin
++      Inc(NextCharPos);
++      if NextCharPos <= Length(CStr) then
++        case CStr[NextCharPos] of
++          '''': Result := Result + '''';
++          '"': Result := Result + '"';
++          'n': Result := Result + #10;
++          'r': Result := Result + #13;
++          't': Result := Result + #9;
++          'v': Result := Result + #11;
++          'b': Result := Result + #8;
++          'f': Result := Result + #12;
++          'a': Result := Result + #7;
++          '\': Result := Result + '\';
++          '?': Result := Result + '?';
++          {\0, \000, \xhhh}
++        end;
++    end
++    else
++      Result := Result + CStr[NextCharPos];
++    Inc(NextCharPos);
++  end;
++end;
++
++function ParseIdentifier(const S: string; var NextCharPos: LongInt): string;
++begin
++  Result := '';
++  while (NextCharPos <= Length(S)) and (S[NextCharPos] in ['A'..'Z', 'a'..'z', '0'..'9', '-']) do
++  begin
++    Result := Result + S[NextCharPos];
++    Inc(NextCharPos);
++  end;
++end;
++
++function ParseValue(const S: string; var NextCharPos: LongInt): TGDBMI_Value;
++var
++  CStr: string;
++  Tuple: TGDBMI_TupleValue;
++  List: TGDBMI_ListValue;
++
++  Name: string;
++  Value: TGDBMI_Value;
++begin
++  Assert(NextCharPos <= Length(S));
++  case S[NextCharPos] of
++    '"':
++      begin
++        CStr := ParseCString(S, NextCharPos);
++        Result := TGDBMI_StringValue.Create(CStr);
++      end;
++    '{':
++      begin
++        Inc(NextCharPos);
++        Assert(NextCharPos <= Length(S));
++        Tuple := TGDBMI_TupleValue.Create;
++        Result := Tuple;
++        while (NextCharPos <= Length(S)) and (S[NextCharPos] <> '}') do
++        begin
++          Name := ParseIdentifier(S, NextCharPos);
++          Assert(NextCharPos <= Length(S));
++          Assert(S[NextCharPos] = '=');
++          Inc(NextCharPos);
++          Value := ParseValue(S, NextCharPos);
++          Tuple.Add(Name, Value);
++          Assert(NextCharPos <= Length(S));
++          Assert(S[NextCharPos] in [',', '}']);
++          if S[NextCharPos] = ',' then
++            Inc(NextCharPos);
++        end;
++        if (NextCharPos <= Length(S)) and (S[NextCharPos] = '}') then
++          Inc(NextCharPos);
++      end;
++    '[':
++      begin
++        Inc(NextCharPos);
++        Assert(NextCharPos <= Length(S));
++        List := TGDBMI_ListValue.Create;
++        Result := List;
++        if S[NextCharPos] in ['"', '{', '['] then
++        begin
++          { list of values, no names }
++          while (NextCharPos <= Length(S)) and (S[NextCharPos] <> ']') do
++          begin
++            Value := ParseValue(S, NextCharPos);
++            List.Add('', Value);
++            Assert(NextCharPos <= Length(S));
++            Assert(S[NextCharPos] in [',', ']']);
++            if S[NextCharPos] = ',' then
++              Inc(NextCharPos);
++          end;
++        end
++        else
++        begin
++          { list of name=value pairs (like a tuple) }
++          while (NextCharPos <= Length(S)) and (S[NextCharPos] <> ']') do
++          begin
++            Name := ParseIdentifier(S, NextCharPos);
++            Assert(NextCharPos <= Length(S));
++            Assert(S[NextCharPos] = '=');
++            Inc(NextCharPos);
++            Value := ParseValue(S, NextCharPos);
++            List.Add(Name, Value);
++            Assert(NextCharPos <= Length(S));
++            Assert(S[NextCharPos] in [',', ']']);
++            if S[NextCharPos] = ',' then
++              Inc(NextCharPos);
++          end;
++        end;
++        if (NextCharPos <= Length(S)) and (S[NextCharPos] = ']') then
++          Inc(NextCharPos);
++      end;
++    else
++      Assert(False);
++  end;
++end;
++
++procedure ParseAsyncOutput(const S: string; AsyncOutput: TGDBMI_AsyncOutput; var NextCharPos: LongInt);
++var
++  Name: string;
++  Value: TGDBMI_Value;
++begin
++  AsyncOutput.Clear;
++  AsyncOutput.AsyncClass := ParseIdentifier(S, NextCharPos);
++  while NextCharPos <= Length(S) do
++  begin
++    Assert(S[NextCharPos] = ',');
++    Inc(NextCharPos);
++    Name := ParseIdentifier(S, NextCharPos);
++    Assert(NextCharPos <= Length(S));
++    Assert(S[NextCharPos] = '=');
++    Inc(NextCharPos);
++    Value := ParseValue(S, NextCharPos);
++    AsyncOutput.Parameters.Add(Name, Value);
++  end;
++end;
++
++function TGDBWrapper.IsAlive: Boolean;
++begin
++  Result := Assigned(FProcess) and FProcess.Alive;
++end;
++
++procedure TGDBWrapper.ReadResponse;
++var
++  S: string;
++  I: LongInt;
++  NextCharPos: LongInt;
++  NAO: TGDBMI_AsyncOutput;
++begin
++  FRawResponse.Clear;
++  FConsoleStream.Clear;
++  ExecAsyncOutput.Clear;
++  for I := Low(NotifyAsyncOutput) to High(NotifyAsyncOutput) do
++    FreeAndNil(NotifyAsyncOutput[I]);
++  SetLength(NotifyAsyncOutput, 0);
++  if not FProcess.Alive then
++    exit;
++  repeat
++    S := FProcess.GDBReadLn;
++    FRawResponse.Add(S);
++    if Length(S) >= 1 then
++      case S[1] of
++        '~':
++          begin
++            NextCharPos := 2;
++            FConsoleStream.Add(ParseCString(S, NextCharPos));
++          end;
++        '*':
++          begin
++            NextCharPos := 2;
++            ParseAsyncOutput(S, ExecAsyncOutput, NextCharPos);
++          end;
++        '^':
++          begin
++            NextCharPos := 2;
++            ParseAsyncOutput(S, ResultRecord, NextCharPos);
++          end;
++        '=':
++          begin
++            NextCharPos := 2;
++            NAO := TGDBMI_AsyncOutput.Create;
++            try
++              ParseAsyncOutput(S, NAO, NextCharPos);
++              SetLength(NotifyAsyncOutput, Length(NotifyAsyncOutput) + 1);
++              NotifyAsyncOutput[Length(NotifyAsyncOutput) - 1] := NAO;
++              NAO := nil;
++            finally
++              NAO.Free;
++            end;
++          end;
++      end;
++  until (S = '(gdb) ') or (S = '(gdb)') or not FProcess.Alive;
++end;
++
++constructor TGDBWrapper.Create;
++begin
++  FRawResponse := TStringList.Create;
++  FConsoleStream := TStringList.Create;
++  FProcess := TGDBProcess.Create;
++  FExecAsyncOutput := TGDBMI_AsyncOutput.Create;
++  FResultRecord := TGDBMI_ResultRecord.Create;
++  ReadResponse;
++end;
++
++destructor TGDBWrapper.Destroy;
++begin
++  if Alive then
++    Command('-gdb-exit');
++  FProcess.Free;
++  FResultRecord.Free;
++  FExecAsyncOutput.Free;
++  FConsoleStream.Free;
++  FRawResponse.Free;
++end;
++
++procedure TGDBWrapper.Command(S: string);
++begin
++  FProcess.GDBWriteLn(S);
++  ReadResponse;
++end;
++
++procedure TGDBWrapper.WaitForProgramStop;
++begin
++  repeat
++    ReadResponse;
++  until (ExecAsyncOutput.AsyncClass = 'stopped') or not FProcess.Alive;
++end;
++
++end.
+diff --git a/fpcsrc/ide/globdir.inc b/fpcsrc/ide/globdir.inc
+index 520779f3..b8370a77 100644
+--- a/fpcsrc/ide/globdir.inc
++++ b/fpcsrc/ide/globdir.inc
+@@ -195,3 +195,29 @@
+ {$ifdef FPC_ARMHF}
+   {$define FPC_ARMEL32}
+ {$endif FPC_ARMHF}
++
++{ Set TARGET_IS_64BIT for corresponding compilation targets }
++{$ifdef X86_64}
++  {$define TARGET_IS_64BIT}
++{$endif}
++{$ifdef IA64}
++  {$define TARGET_IS_64BIT}
++{$endif}
++{$ifdef ALPHA}
++  {$define TARGET_IS_64BIT}
++{$endif}
++{$ifdef POWERPC64}
++  {$define TARGET_IS_64BIT}
++{$endif}
++{$ifdef AARCH64}
++  {$define TARGET_IS_64BIT}
++{$endif}
++
++{$ifdef GDBMI}
++  {$ifdef DEBUG}
++    {$define GDB_RAW_OUTPUT}
++  {$endif DEBUG}
++  {$ifdef Windows}
++    {$define GDB_WINDOWS_ALWAYS_USE_ANOTHER_CONSOLE}
++  {$endif Windows}
++{$endif GDBMI}
+diff --git a/fpcsrc/ide/weditor.pas b/fpcsrc/ide/weditor.pas
+index a777ee23..4b967438 100644
+--- a/fpcsrc/ide/weditor.pas
++++ b/fpcsrc/ide/weditor.pas
+@@ -1076,7 +1076,7 @@ begin
+      BMFScan := NotFoundValue;
+      exit;
+    end;
+-  s2[0]:=chr(len);       { sets the length to that of the search String }
++  SetLength(s2,len);     { sets the length to that of the search String }
+   found:=False;
+   numb:=pred(len);
+   While (not found) and (numb<size) do
+@@ -1185,7 +1185,7 @@ begin
+      BMBScan := NotFoundValue;
+      exit;
+    end;
+-  s2[0]:=chr(len);       { sets the length to that of the search String }
++  SetLength(S2,len);      { sets the length to that of the search String }
+   found:=False;
+   numb:=size-len;
+   While (not found) and (numb>=0) do
+@@ -4802,8 +4802,13 @@ begin
+ end;
+ 
+ procedure TCustomCodeEditor.BreakLine;
++var
++  SCP: TPoint;
+ begin
+-  NotImplemented; Exit;
++  { Like insert new line, but leave current pos unchanged }
++  SCP:=CurPos;
++  InsertNewLine;
++  SetCurPtr(SCP.X,SCP.Y);
+ end;
+ 
+ procedure TCustomCodeEditor.BackSpace;
+@@ -6800,8 +6805,7 @@ begin
+     S:=GetLineText(Line);
+     { Remove all traling spaces PM }
+     if not Editor^.IsFlagSet(efKeepTrailingSpaces) then
+-      While (Length(S)>0) and (S[Length(S)]=' ') do
+-       Dec(S[0]);
++      s:=RTrim(S,False); // removes trailing #0 too
+     { if FlagSet(efUseTabCharacters) then
+       S:=CompressUsingTabs(S,TabSize);
+       }
+diff --git a/fpcsrc/ide/windebug.pas b/fpcsrc/ide/windebug.pas
+index 1e06f126..8a067a7d 100644
+--- a/fpcsrc/ide/windebug.pas
++++ b/fpcsrc/ide/windebug.pas
+@@ -36,7 +36,11 @@ implementation
+ {$ifndef NODEBUG}
+ 
+ uses
+-  gdbint,
++  {$ifdef GDBMI}
++    gdbmiint,
++  {$else GDBMI}
++    gdbint,
++  {$endif GDBMI}
+   strings,
+   windows;
+ 
+diff --git a/fpcsrc/ide/wresourc.pas b/fpcsrc/ide/wresourc.pas
+index 7005666a..b31bb34a 100644
+--- a/fpcsrc/ide/wresourc.pas
++++ b/fpcsrc/ide/wresourc.pas
+@@ -780,6 +780,9 @@ begin
+       Fail;
+     End;
+   MyStream:=true;
++  {$ifdef HASAMIGA}
++  Flush;
++  {$endif}
+ end;
+ 
+ constructor TResourceFile.LoadFile(AFileName: string);
