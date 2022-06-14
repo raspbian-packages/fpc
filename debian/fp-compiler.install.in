@@ -1,7 +1,6 @@
 #! /usr/bin/dh-exec
 usr/bin/fpc-depends-${VERSION}
 usr/bin/${DEB_HOST_MULTIARCH}-fpc-${VERSION}
-usr/bin/${DEB_HOST_MULTIARCH}-fpcmkcfg-${VERSION}
 usr/bin/${DEB_HOST_MULTIARCH}-fpcres-${VERSION}
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/${PPCBIN}
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/samplecfg

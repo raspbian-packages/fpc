@@ -1,4 +1,4 @@
-fpc (3.2.2+dfsg-9+rpi1) bookworm-staging; urgency=medium
+fpc (3.2.2+dfsg-11+rpi1) bookworm-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
@@ -7,13 +7,42 @@ fpc (3.2.2+dfsg-9+rpi1) bookworm-staging; urgency=medium
   * Apply hack to work around binutils bug https://sourceware.org/bugzilla/show_bug.cgi?id=28848
   * Fix clean target.
 
- -- Raspbian forward porter <root@raspbian.org>  Fri, 25 Feb 2022 04:48:27 +0000
+ -- Peter Micheal Green <plugwash@raspbian.org>  Tue, 14 Jun 2022 19:31:36 +0000
+
+fpc (3.2.2+dfsg-11) unstable; urgency=medium
+
+  * Moved fpcmkcfg tool from fp-compiler to fp-units-rtl package.
+    This is required in order to generate fp IDE configuration files when
+    the fp-ide is installed without fp-compiler package.
+  * Generate fp IDE configuration file in /etc by post install script.
+  * Fixed IDE configuration files path list. (Closes: Bug#1011318)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Thu, 26 May 2022 18:47:05 +0200
+
+fpc (3.2.2+dfsg-10) unstable; urgency=medium
+
+  * Added a trigger to detect GCC version change and updated configuration.
+    (Closes: Bug#978040)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sun, 22 May 2022 13:57:24 +0200
+
+fpc (3.2.2+dfsg-9~bpo11+1) bullseye-backports; urgency=medium
+
+  * Rebuild for bullseye-backports.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Mon, 21 Feb 2022 08:44:15 +0100
 
 fpc (3.2.2+dfsg-9) unstable; urgency=medium
 
   * Upstream patch to fix FPU related internal compiler error on ppc64el.
 
  -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 19 Feb 2022 10:42:00 +0100
+
+fpc (3.2.2+dfsg-8~bpo11+1) bullseye-backports; urgency=medium
+
+  * Rebuild for bullseye-backports.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 22 Jan 2022 19:00:56 +0100
 
 fpc (3.2.2+dfsg-8) unstable; urgency=medium
 

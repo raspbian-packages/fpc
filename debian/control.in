@@ -233,8 +233,10 @@ Provides:
  fpc-abi${PACKAGESUFFIX}
 Breaks:
  fpc (<= ${UPSTREAM_VERSION}-0),
+ fp-compiler${PACKAGESUFFIX} (<= 3.2.2+dfsg-10)
 Replaces:
  fpc (<= ${UPSTREAM_VERSION}-0),
+ fp-compiler${PACKAGESUFFIX} (<= 3.2.2+dfsg-10)
 Description: Free Pascal - runtime libraries
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
  and Turbo Pascal 7.0 dialects, as well as Mac Pascal dialects. It provides a

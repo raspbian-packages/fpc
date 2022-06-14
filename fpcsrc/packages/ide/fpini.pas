@@ -154,6 +154,17 @@ const
   ieShowReadme       = 'ShowReadme';
   ieEditKeys         = 'EditKeys';
 
+const
+{$ifdef CPUARMHF}
+  gnu = 'gnueabihf';
+{$endif CPUARMHF}
+{$ifdef CPUARMEL}
+  gnu = 'gnueabi';
+{$endif CPUARMEL}
+{$ifndef CPUARM}
+  gnu = 'gnu';
+{$endif CPUARM}
+  FullTarget = {$I %FPCTARGETCPU%} + '-' + {$I %FPCTARGETOS%} + '-' + gnu;
 
 Procedure InitDirs;
 begin
@@ -179,12 +190,12 @@ begin
    end;
 {$endif WINDOWS}
 {$else}
-  SystemIDEDir:=FExpand(DirOf(system.paramstr(0))+'../lib/fpc/'+version_string+'/ide');
+  SystemIDEDir:=FExpand(DirOf(system.paramstr(0))+'../lib/fpc/'+version_string+'/ide/text');
   If Not ExistsDir(SystemIDEdir) Then
     begin
-    SystemIDEDir:=FExpand(DirOf(system.paramstr(0))+'../lib64/fpc/'+version_string+'/ide');
+    SystemIDEDir:=FExpand(DirOf(system.paramstr(0))+'../lib/'+LowerCase(FullTarget)+'/fpc/'+version_string+'/ide');
     If Not ExistsDir(SystemIDEdir) Then
-      SystemIDEDir:='/usr/lib/fpc/'+version_string+'/ide';
+      SystemIDEDir:='/usr/lib/fpc/'+version_string+'/ide/text';
     end;
   IDEdir:=CompleteDir(FExpand('~/.fp'));
   If Not ExistsDir(IDEdir) Then

@@ -148,7 +148,7 @@ export GDBLIBDIR=/usr/lib
 
 ifeq ($(CPU_TARGET),m68k)
   # Disable optimization for the first runs as there may be bugs associated
-  # with that, preventing proper building new versions 
+  # with that, preventing proper building new versions
   CYCLEOPTS:=OPT='@${CURDIR}/${DEB_HOST_FPC_OPT}' OPTLEVEL1=-O-
 else
   CYCLEOPTS:=OPT='@${CURDIR}/${DEB_HOST_FPC_OPT}'

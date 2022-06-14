@@ -38,6 +38,26 @@ cat >> ${PKG_CFG_PATH} <<EOF
 #CFGDIR /etc/fpc-\$fpcversion.cfg.d/\$fpctarget
 EOF
 
+case "$1" in
+	configure)
+		# Nothing to do
+	;;
+
+	triggered)
+		# We were called after trigger was fired. Stop here then!
+		exit 0
+	;;
+
+	abort-upgrade | abort-remove | abort-deconfigure)
+		# Nothing to do
+	;;
+
+	*)
+		echo "Post installation script called with unknown argument '$1'!" >&2
+		exit 1
+	;;
+esac
+
 if test -n ${WINDRES_BIN}
 then
 	db_get fp-compiler/windres

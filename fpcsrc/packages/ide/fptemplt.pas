@@ -280,7 +280,6 @@ begin
   New(Templates, Init(10,10));
   ScanDir('.');
   ScanDir(IDEDir);
-  ScanDir(SystemIDEDir);
 end;
 
 
