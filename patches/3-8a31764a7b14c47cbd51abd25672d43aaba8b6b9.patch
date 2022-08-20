@@ -1,0 +1,195 @@
+From 8a31764a7b14c47cbd51abd25672d43aaba8b6b9 Mon Sep 17 00:00:00 2001
+From: Jonas Maebe <jonas@freepascal.org>
+Date: Fri, 1 May 2020 13:02:48 +0000
+Subject: [PATCH]   * support floating point parameters split over multiple
+ locations, including     integer registers, for homogeneous records/arrays on
+ ppc64le (related to     mantis #36934)
+
+git-svn-id: trunk@45205 -
+(cherry picked from commit 722ad1ff7b1f0ba015494a40ed282c606cbc1148)
+---
+ compiler/cgobj.pas       | 93 +++++++++++++++++++++-------------------
+ tests/webtbs/tw36934b.pp | 59 +++++++++++++++++++++++++
+ 2 files changed, 109 insertions(+), 43 deletions(-)
+ create mode 100644 tests/webtbs/tw36934b.pp
+
+diff --git a/fpcsrc/compiler/cgobj.pas b/fpcsrc/compiler/cgobj.pas
+index 859e524295..ecbd68f5b1 100644
+--- a/fpcsrc/compiler/cgobj.pas
++++ b/fpcsrc/compiler/cgobj.pas
+@@ -1158,7 +1158,7 @@ implementation
+                 end;
+               LOC_FPUREGISTER,LOC_CFPUREGISTER:
+                 begin
+-                  a_loadfpu_ref_reg(list,size,location^.size,tmpref,location^.register);
++                  a_loadfpu_ref_reg(list,location^.size,location^.size,tmpref,location^.register);
+                 end
+               else
+                 internalerror(2010053111);
+@@ -1880,49 +1880,56 @@ implementation
+ 
+     procedure tcg.a_loadfpu_ref_cgpara(list : TAsmList;size : tcgsize;const ref : treference;const cgpara : TCGPara);
+       var
+-         href : treference;
+-         hsize: tcgsize;
+-         paraloc: PCGParaLocation;
++        srcref,
++        href : treference;
++        hsize: tcgsize;
++        paraloc: PCGParaLocation;
++        sizeleft: tcgint;
+       begin
+-         case cgpara.location^.loc of
+-          LOC_FPUREGISTER,LOC_CFPUREGISTER:
+-            begin
+-              paramanager.alloccgpara(list,cgpara);
+-              paraloc:=cgpara.location;
+-              href:=ref;
+-              while assigned(paraloc) do
+-                begin
+-                  if not(paraloc^.loc in [LOC_FPUREGISTER,LOC_CFPUREGISTER]) then
+-                    internalerror(2015031501);
+-                  a_loadfpu_ref_reg(list,paraloc^.size,paraloc^.size,href,paraloc^.register);
+-                  inc(href.offset,tcgsize2size[paraloc^.size]);
+-                  paraloc:=paraloc^.next;
+-                end;
+-            end;
+-          LOC_REFERENCE,LOC_CREFERENCE:
+-            begin
+-              cgpara.check_simple_location;
+-              reference_reset_base(href,cgpara.location^.reference.index,cgpara.location^.reference.offset,ctempposinvalid,cgpara.alignment,[]);
+-              { concatcopy should choose the best way to copy the data }
+-              g_concatcopy(list,ref,href,tcgsize2size[size]);
+-            end;
+-          LOC_REGISTER,LOC_CREGISTER:
+-            begin
+-              { force integer size }
+-              hsize:=int_cgsize(tcgsize2size[size]);
+-{$ifndef cpu64bitalu}
+-              if (hsize in [OS_S64,OS_64]) then
+-                cg64.a_load64_ref_cgpara(list,ref,cgpara)
+-              else
+-{$endif not cpu64bitalu}
+-                begin
+-                  cgpara.check_simple_location;
+-                  a_load_ref_cgpara(list,hsize,ref,cgpara)
+-                end;
+-            end
+-          else
+-            internalerror(200402201);
+-        end;
++        sizeleft:=cgpara.intsize;
++        paraloc:=cgpara.location;
++        paramanager.alloccgpara(list,cgpara);
++        srcref:=ref;
++        repeat
++          case paraloc^.loc of
++            LOC_FPUREGISTER,LOC_CFPUREGISTER:
++              begin
++                { force fpu size }
++                hsize:=int_float_cgsize(tcgsize2size[paraloc^.size]);
++                a_loadfpu_ref_reg(list,hsize,hsize,srcref,paraloc^.register);
++              end;
++            LOC_REFERENCE,LOC_CREFERENCE:
++              begin
++                if assigned(paraloc^.next) then
++                  internalerror(2020050101);
++                reference_reset_base(href,paraloc^.reference.index,paraloc^.reference.offset,ctempposinvalid,newalignment(cgpara.alignment,cgpara.intsize-sizeleft),[]);
++                { concatcopy should choose the best way to copy the data }
++                g_concatcopy(list,srcref,href,sizeleft);
++              end;
++            LOC_REGISTER,LOC_CREGISTER:
++              begin
++                { force integer size }
++                hsize:=int_cgsize(tcgsize2size[paraloc^.size]);
++  {$ifndef cpu64bitalu}
++                if (hsize in [OS_S64,OS_64]) then
++                  begin
++                    { if this is not a simple location, we'll have to add support to cg64 to load parts of a cgpara }
++                    cgpara.check_simple_location;
++                    cg64.a_load64_ref_cgpara(list,srcref,cgpara)
++                  end
++                else
++  {$endif not cpu64bitalu}
++                  begin
++                    a_load_ref_reg(list,hsize,hsize,srcref,paraloc^.register)
++                  end;
++              end
++            else
++              internalerror(200402201);
++          end;
++          inc(srcref.offset,tcgsize2size[paraloc^.size]);
++          dec(sizeleft,tcgsize2size[paraloc^.size]);
++          paraloc:=paraloc^.next;
++        until not assigned(paraloc);
+       end;
+ 
+ 
+diff --git a/fpcsrc/tests/webtbs/tw36934b.pp b/fpcsrc/tests/webtbs/tw36934b.pp
+new file mode 100644
+index 0000000000..4787ee083f
+--- /dev/null
++++ b/fpcsrc/tests/webtbs/tw36934b.pp
+@@ -0,0 +1,59 @@
++type
++  TPointF = record
++    x,y,z,v,u: single;
++  end;
++
++procedure test(pt1, pt2, pt3: TPointF);
++begin
++  if pt1.x<>1.0 then
++    halt(1);
++  if pt1.y<>2.0 then
++    halt(2);
++  if pt1.z<>3.0 then
++    halt(3);
++  if pt1.u<>4.0 then
++    halt(4);
++  if pt1.v<>5.0 then
++    halt(5);
++  if pt2.x<>6.0 then
++    halt(6);
++  if pt2.y<>7.0 then
++    halt(7);
++  if pt2.z<>8.0 then
++    halt(8);
++  if pt2.u<>9.0 then
++    halt(9);
++  if pt2.v<>10.0 then
++    halt(10);
++  if pt3.x<>11.0 then
++    halt(11);
++  if pt3.y<>12.0 then
++    halt(12);
++  if pt3.z<>13.0 then
++    halt(13);
++  if pt3.u<>14.0 then
++    halt(14);
++  if pt3.v<>15.0 then
++    halt(15);
++end;
++
++var
++  p1,p2,p3,p4,t1,t2,t3,t4: tpointf;
++begin
++  p1.x:=1.0;
++  p1.y:=2.0;
++  p1.z:=3.0;
++  p1.u:=4.0;
++  p1.v:=5.0;
++  p2.x:=6.0;
++  p2.y:=7.0;
++  p2.z:=8.0;
++  p2.u:=9.0;
++  p2.v:=10.0;
++  p3.x:=11.0;
++  p3.y:=12.0;
++  p3.z:=13.0;
++  p3.u:=14.0;
++  p3.v:=15.0;
++  test(p1,p2,p3);
++end.
+-- 
+GitLab
+
