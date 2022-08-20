@@ -1,0 +1,108 @@
+From 28b2b299da00443c49e92d7f5fe4d4a2d0c1a557 Mon Sep 17 00:00:00 2001
+From: Jonas Maebe <jonas@freepascal.org>
+Date: Fri, 1 May 2020 13:02:45 +0000
+Subject: [PATCH]   * ppc64le: fix storing homogeneous 64 bit float parameters
+ in case they are     split over just FPU registers and memory (related to
+ mantis #36934)
+
+git-svn-id: trunk@45204 -
+(cherry picked from commit 05923af386db5572a68ab13f0b908c8c96e7831a)
+---
+ compiler/powerpc64/cpupara.pas |  7 ++--
+ tests/webtbs/tw36934a.pp       | 65 ++++++++++++++++++++++++++++++++++
+ 3 files changed, 69 insertions(+), 6 deletions(-)
+ create mode 100644 tests/webtbs/tw36934a.pp
+
+diff --git a/fpcsrc/compiler/powerpc64/cpupara.pas b/fpcsrc/compiler/powerpc64/cpupara.pas
+index 5da3edf3fd..ed1f666ada 100644
+--- a/fpcsrc/compiler/powerpc64/cpupara.pas
++++ b/fpcsrc/compiler/powerpc64/cpupara.pas
+@@ -636,10 +636,11 @@     if (paradef.typ = recorddef) then begin
+       if possible (only possible in case of single precision floats, because
+       there are more fprs than gprs for parameter passing) }
+     if assigned(alllocdef) and
+-       (tcgsize2size[paracgsize]=4) and
+        (loc=LOC_FPUREGISTER) and
+-       (nextfloatreg=RS_F13) and
+-       (paralen>4) then
++       (((nextfloatreg=RS_F13) and
++         (tcgsize2size[paracgsize]=4) and
++         (paralen>4)) or
++        (nextfloatreg>RS_F13)) then
+       begin
+         loc:=LOC_REGISTER;
+         paracgsize:=OS_64;
+diff --git a/fpcsrc/tests/webtbs/tw36934a.pp b/fpcsrc/tests/webtbs/tw36934a.pp
+new file mode 100644
+index 0000000000..90ffc7bbc3
+--- /dev/null
++++ b/fpcsrc/tests/webtbs/tw36934a.pp
+@@ -0,0 +1,65 @@
++type
++  TPointF = record
++    x,y: double;
++  end;
++
++procedure test(pt1, pt2, pt3,
++  pt4: TPointF; texture: tobject; tex1, tex2, tex3, tex4: TPointF);
++begin
++  if pt1.x<>1.0 then
++    halt(1);
++  if pt1.y<>2.0 then
++    halt(2);
++  if pt2.x<>3.0 then
++    halt(3);
++  if pt2.y<>4.0 then
++    halt(4);
++  if pt3.x<>5.0 then
++    halt(5);
++  if pt3.y<>6.0 then
++    halt(6);
++  if pt4.x<>7.0 then
++    halt(7);
++  if pt4.y<>8.0 then
++    halt(8);
++  if texture<>nil then
++    halt(9);
++  if tex1.x<>9.0 then
++    halt(9);
++  if tex1.y<>10.0 then
++    halt(10);
++  if tex2.x<>11.0 then
++    halt(11);
++  if tex2.y<>12.0 then
++    halt(12);
++  if tex3.x<>13.0 then
++    halt(13);
++  if tex3.y<>14.0 then
++    halt(14);
++  if tex4.x<>15.0 then
++    halt(15);
++  if tex4.y<>16.0 then
++    halt(16);
++end;
++
++var
++  p1,p2,p3,p4,t1,t2,t3,t4: tpointf;
++begin
++  p1.x:=1.0;
++  p1.y:=2.0;
++  p2.x:=3.0;
++  p2.y:=4.0;
++  p3.x:=5.0;
++  p3.y:=6.0;
++  p4.x:=7.0;
++  p4.y:=8.0;
++  t1.x:=9.0;
++  t1.y:=10.0;
++  t2.x:=11.0;
++  t2.y:=12.0;
++  t3.x:=13.0;
++  t3.y:=14.0;
++  t4.x:=15.0;
++  t4.y:=16.0;
++  test(p1,p2,p3,p4,nil,t1,t2,t3,t4);
++end.
+-- 
+GitLab
+
