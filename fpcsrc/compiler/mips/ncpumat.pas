@@ -245,6 +245,7 @@ begin
   begin
     secondpass(left);
     case left.location.loc of
+      LOC_FLAGS,
       LOC_REGISTER, LOC_CREGISTER, LOC_REFERENCE, LOC_CREFERENCE,
       LOC_SUBSETREG,LOC_CSUBSETREG,LOC_SUBSETREF,LOC_CSUBSETREF:
       begin
