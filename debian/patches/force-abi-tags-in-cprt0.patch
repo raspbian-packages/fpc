@@ -1,0 +1,14 @@
+Set ABI tags in cprt0.as to work around binutils fussiness
+
+This should not be pushed upstream or to Debian as it will almost certainly
+break things on soft float targets.
+
+--- fpc-3.2.2+dfsg/fpcsrc/rtl/linux/arm/cprt0.as	2013-06-27 14:01:18.000000000 +0000
++++ fpc-3.2.2+dfsg/fpcsrc/rtl/linux/arm/cprt0.as	2022-02-20 19:18:21.442456415 +0000
+@@ -146,3 +146,6 @@
+ 3:      .align 4
+ 
+ .section .note.GNU-stack,"",%progbits
++
++.eabi_attribute 28, 1 @Tag_ABI_VFP_args
++.eabi_attribute 10, 2 @Tag_FP_arch
