@@ -351,8 +351,8 @@ _restvr_31: addi r12,r0,-16
 start_addresses:
     .quad   0 /* was _SDA_BASE_  but not in 64-bit ABI*/
     .quad   main_stub
-    .quad   __libc_csu_init
-    .quad   __libc_csu_fini
+    .quad   0
+    .quad   0
     .size   start_adresses, .-start_addresses
 
 /*
