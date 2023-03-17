@@ -61,9 +61,8 @@ _start:
 	   which grow downwards).  */
 	pushq %rsp
 
-	/* Pass address of our own entry points to .fini and .init.  */
-	movq __libc_csu_init@GOTPCREL(%rip), %rcx
-	movq __libc_csu_fini@GOTPCREL(%rip), %r8
+	xorl %r8d, %r8d
+	xorl %ecx, %ecx
 
 	movq main_stub@GOTPCREL(%rip), %rdi
 
