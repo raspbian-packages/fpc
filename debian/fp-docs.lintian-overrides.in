@@ -1,0 +1,4 @@
+# Spelling error in upstream license text
+spelling-error-in-copyright orignal original
+# Many files are in national encoding.
+fp-docs${PACKAGESUFFIX}: national-encoding *.ans
