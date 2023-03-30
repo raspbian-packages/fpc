@@ -113,10 +113,9 @@ _start:
  and $29, -2 * 4
  subu $29, 32
 
- lw $7,%got(__libc_csu_init)($gp) /* init */
- lw $8,%got(__libc_csu_fini)($gp) /* fini */
+ move $7, $0
 
- sw $8, 16($29)				/* fini */
+ sw $0, 16($29)
  sw $2, 20($29)				/* rtld_fini */
  sw $29, 24($29)			/* stack_end */
 
