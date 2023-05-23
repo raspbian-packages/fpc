@@ -556,6 +556,30 @@ Description: Free Pascal - Kylix compatibility units
  This package contains the deprecated Free Pascal libc unit for the i386
  architecture (used for compatibility with Borland's Kylix).
 
+Package: fp-units-wasm${PACKAGESUFFIX}
+Architecture: any
+Multi-Arch: same
+Depends:
+ fp-units-rtl${PACKAGESUFFIX} (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends}
+Provides:
+ fp-units-wasm
+Breaks:
+ fpc (<= ${UPSTREAM_VERSION}-0),
+Replaces:
+ fpc (<= ${UPSTREAM_VERSION}-0),
+Description: Free Pascal - Web assmebly support units
+ The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
+ and Turbo Pascal 7.0 dialects, as well as Mac Pascal dialects. It provides a
+ completely portable RunTime Library (RTL) available on many platforms and
+ compatible with Turbo Pascal, along with a platform-independent class-based
+ Free Component Library (FCL) adding many Delphi extensions and interfacing
+ with many popular open source libraries.
+ .
+ This package contains Free Pascal web assembly support units: pas2js,
+ utils-pas2js, webidl ...
+
 Package: fpc
 Architecture: all
 Depends:
@@ -907,3 +931,21 @@ Description: Free Pascal - Kylix compatibility units dependency package
  This dependency package always depends on the latest available version of
  the package containing the deprecated Free Pascal libc unit for the i386
  architecture (used for compatibility with Borland's Kylix).
+
+Package: fp-units-wasm
+Architecture: any
+Multi-Arch: same
+Depends:
+ fp-units-wasm${PACKAGESUFFIX} (= ${binary:Version}),
+ ${misc:Depends}
+Description: Free Pascal - Web assmebly support units dependency package
+ The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
+ and Turbo Pascal 7.0 dialects, as well as Mac Pascal dialects. It provides a
+ completely portable RunTime Library (RTL) available on many platforms and
+ compatible with Turbo Pascal, along with a platform-independent class-based
+ Free Component Library (FCL) adding many Delphi extensions and interfacing
+ with many popular open source libraries.
+ .
+ This dependency package always depends on the latest available version of
+ the package containing the Free Pascal web assembly support units: pas2js,
+ utils-pas2js, webidl ...

@@ -32,5 +32,8 @@ fix-samplecfg-tool.patch
 glibc2.34.patch
 ppc64el-toc-fixes.patch
 pas2jni-cthreads.patch
+change_fpmake_to_install_missing_package_examples.patch
+Fix-missing-crtbeginS.o-on-mipsel.patch
+5-85c7368759f5fb53aa23e03c8cc27c2deb424b62.patch
 raspbian.diff
 force-abi-tags-in-cprt0.patch

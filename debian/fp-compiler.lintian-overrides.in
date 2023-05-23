@@ -4,3 +4,5 @@
 statically-linked-binary
 # Spelling error in upstream license text
 spelling-error-in-copyright orignal original
+# Many source files are in national encoding.
+fp-compiler${PACKAGESUFFIX}: national-encoding *.msg

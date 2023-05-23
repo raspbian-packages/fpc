@@ -1,4 +1,4 @@
-fpc (3.2.2+dfsg-15+rpi1) bookworm-staging; urgency=medium
+fpc (3.2.2+dfsg-20+rpi1) bookworm-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
@@ -7,7 +7,44 @@ fpc (3.2.2+dfsg-15+rpi1) bookworm-staging; urgency=medium
   * Apply hack to work around binutils bug https://sourceware.org/bugzilla/show_bug.cgi?id=28848
   * Fix clean target.
 
- -- Raspbian forward porter <root@raspbian.org>  Sun, 28 Aug 2022 03:48:25 +0000
+ -- Peter Michael Green <plugwash@raspbian.org>  Tue, 23 May 2023 14:48:02 +0000
+
+fpc (3.2.2+dfsg-20) unstable; urgency=medium
+
+  * Fixed compiler internal error 2003042401 on mipsel.
+    This error occurs when compiling Lazarus  on mipsel architecture.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Thu, 30 Mar 2023 21:31:30 +0200
+
+fpc (3.2.2+dfsg-19) unstable; urgency=medium
+
+  * Fixed missing crtbeginS.o on mipsel architecture.
+    Thanks to Peter Blackman<peter@pblackman.plus.com>
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Fri, 17 Mar 2023 13:45:28 +0100
+
+fpc (3.2.2+dfsg-18) unstable; urgency=medium
+
+  * Revert "Removed strict dependency on GKT2 libraries."
+    This readds dependency on libgtk2.0-dev. (Closes: Bug#1026719)
+  * Fixed lintian overrides.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 07 Jan 2023 13:07:32 +0100
+
+fpc (3.2.2+dfsg-17) unstable; urgency=medium
+
+  * Removed some lintian errors and warnings.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sun, 27 Nov 2022 20:50:54 +0100
+
+fpc (3.2.2+dfsg-16) unstable; urgency=medium
+
+  * Removed strict dependency on GKT2 libraries. (Closes: Bug#967348)
+  * Packaged new units and executable programs that were missing until now.
+    (Closes: Bug#1016914)
+  * Updated lintian overrides file to ignore debian/source/timestamps.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 19 Nov 2022 18:35:07 +0100
 
 fpc (3.2.2+dfsg-15) unstable; urgency=medium
 

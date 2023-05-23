@@ -2,3 +2,5 @@
 fpc-source${PACKAGESUFFIX}: extra-license-file
 # Spelling error in upstream license text
 spelling-error-in-copyright orignal original
+# Many source files are in national encoding.
+national-encoding

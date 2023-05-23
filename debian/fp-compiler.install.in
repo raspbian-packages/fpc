@@ -2,7 +2,7 @@
 usr/bin/fpc-depends-${VERSION}
 usr/bin/${DEB_HOST_MULTIARCH}-fpc-${VERSION}
 usr/bin/${DEB_HOST_MULTIARCH}-fpcres-${VERSION}
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/${VERSION}/msg
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/${PPCBIN}
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/samplecfg
 usr/share/doc/fp-compiler   [!freebsd-any]
-usr/share/fpcsrc/${VERSION}/compiler/msg

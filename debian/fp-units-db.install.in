@@ -3,6 +3,7 @@ usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/dblib*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/gdbm*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/ibase*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/mysql*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/odata*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/odbc*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/oracle*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/postgres*
