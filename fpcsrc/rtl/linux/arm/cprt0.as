@@ -146,3 +146,6 @@ __data_start:
 3:      .align 4
 
 .section .note.GNU-stack,"",%progbits
+
+.eabi_attribute 28, 1 @Tag_ABI_VFP_args
+.eabi_attribute 10, 2 @Tag_FP_arch
