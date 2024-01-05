@@ -1,0 +1,156 @@
+Description: Implement support for SPARC 64-bit in fpcres
+ Lazarus build fails on sparc64 due to missing support of this
+ architecture in fpcres tool. This patch backports the support to
+ version 3.2.2.
+Author: Sven/Sarah Barth <pascaldragon@gmail.com>
+Last-Update: Tue, 2 Jan 2024 22:59:51 +0100
+
+diff --git a/fpcsrc/packages/fcl-res/src/elfconsts.pp b/fpcsrc/packages/fcl-res/src/elfconsts.pp
+index 9393b5451f..49287d7b91 100644
+--- a/fpcsrc/packages/fcl-res/src/elfconsts.pp
++++ b/fpcsrc/packages/fcl-res/src/elfconsts.pp
+@@ -22,7 +22,8 @@ interface
+ type
+   TElfMachineType = (emtnone, emtsparc, emti386, emtm68k, emtppc, emtppc64,
+                      emtarm, emtarmeb, emtia64, emtx86_64, emtalpha,
+-                     emtmips, emtmipsel, emtppc64le, emtaarch64);
++                     emtmips, emtmipsel, emtppc64le, emtaarch64,
++                     emtsparc64);
+ const
+   ELFMAGIC     = chr($7f)+'ELF';
+ 
+@@ -68,6 +69,7 @@ interface
+   EM_PPC64       = 21;
+   EM_ARM         = 40;
+ //  EM_OLD_ALPHA       = 41;
++  EM_SPARCV9     = 43; // Sparc 64-bit
+   EM_IA_64       = 50;
+   EM_MIPS_X      = 51; // GNU readelf returns machine name "Stanford MIPS-X"
+   EM_X86_64      = 62;
+@@ -134,6 +136,7 @@ interface
+   R_AARCH64_ABS64 = 257;
+   R_68K_32        =   1;
+   R_SPARC_32      =   3;
++  R_SPARC_64      =   32;
+   R_ALPHA_REFQUAD =   2;
+   R_IA64_DIR64LSB = $27;
+   R_MIPS_32       =   2;
+diff --git a/fpcsrc/packages/fcl-res/src/elfdefaulttarget.inc b/fpcsrc/packages/fcl-res/src/elfdefaulttarget.inc
+index 2afd243c18..9faf8fb002 100644
+--- a/fpcsrc/packages/fcl-res/src/elfdefaulttarget.inc
++++ b/fpcsrc/packages/fcl-res/src/elfdefaulttarget.inc
+@@ -46,6 +46,9 @@
+   {$IFDEF CPUSPARC}
+   fMachineType:=emtsparc;
+   {$ENDIF}
++  {$IFDEF CPUSPARC64}
++  fMachineType:=emtsparc64;
++  {$ENDIF}
+   {$IFDEF CPUALPHA}
+   fMachineType:=emtalpha;
+   {$ENDIF}
+diff --git a/fpcsrc/packages/fcl-res/src/elfreader.pp b/fpcsrc/packages/fcl-res/src/elfreader.pp
+index c6774a6ee6..e62d4e17cb 100644
+--- a/fpcsrc/packages/fcl-res/src/elfreader.pp
++++ b/fpcsrc/packages/fcl-res/src/elfreader.pp
+@@ -274,6 +274,7 @@ procedure TElfResourceReader.Load(aResources: TResources; aStream: TStream);
+     end;
+     case subreader.MachineType of
+       EM_SPARC  : fMachineType:=emtsparc;
++      EM_SPARCV9: fMachineType:=emtsparc64;
+       EM_386    : fMachineType:=emti386;
+       EM_68K    : fMachineType:=emtm68k;
+       EM_PPC    : fMachineType:=emtppc;
+diff --git a/fpcsrc/packages/fcl-res/src/elfsubwriter.inc b/fpcsrc/packages/fcl-res/src/elfsubwriter.inc
+index 4a649b5d85..651fb49bc0 100644
+--- a/fpcsrc/packages/fcl-res/src/elfsubwriter.inc
++++ b/fpcsrc/packages/fcl-res/src/elfsubwriter.inc
+@@ -421,6 +421,7 @@ constructor _TElfSubWriter_.Create(aParent : TElfResourceWriter; const
+       EM_AARCH64: begin RelocType:=R_AARCH64_ABS64; SectionType:=SHT_RELA; end;
+       EM_68K    : begin RelocType:=R_68K_32;        SectionType:=SHT_RELA; end;
+       EM_SPARC  : begin RelocType:=R_SPARC_32;      SectionType:=SHT_RELA; end;
++      EM_SPARCV9: begin RelocType:=R_SPARC_64;      SectionType:=SHT_RELA; end;
+       EM_X86_64 : begin RelocType:=R_x86_64_64;     SectionType:=SHT_RELA; end;
+       EM_PPC64  : begin RelocType:=R_PPC64_ADDR64;  SectionType:=SHT_RELA; end;
+       EM_ALPHA  : begin RelocType:=R_ALPHA_REFQUAD; SectionType:=SHT_RELA; end;
+diff --git a/fpcsrc/packages/fcl-res/src/elfwriter.pp b/fpcsrc/packages/fcl-res/src/elfwriter.pp
+index e28e3073ac..516bbf0d3e 100644
+--- a/fpcsrc/packages/fcl-res/src/elfwriter.pp
++++ b/fpcsrc/packages/fcl-res/src/elfwriter.pp
+@@ -545,6 +545,7 @@ procedure TElfResourceWriter.SetMachineType(const aMachineType: TElfMachineType)
+ begin
+   case aMachineType of
+     emtsparc  : begin fMachineTypeInt:=EM_SPARC; fBits:=ELFCLASS32; fOrder:=ELFDATA2MSB; end;
++    emtsparc64: begin fMachineTypeInt:=EM_SPARCV9; fBits:=ELFCLASS64; fOrder:=ELFDATA2MSB; end;
+     emti386   : begin fMachineTypeInt:=EM_386; fBits:=ELFCLASS32; fOrder:=ELFDATA2LSB; end;
+     emtm68k   : begin fMachineTypeInt:=EM_68K; fBits:=ELFCLASS32; fOrder:=ELFDATA2MSB; end;
+     emtppc    : begin fMachineTypeInt:=EM_PPC; fBits:=ELFCLASS32; fOrder:=ELFDATA2MSB; end;
+diff --git a/fpcsrc/utils/fpcres/fpcres.pas b/fpcsrc/utils/fpcres/fpcres.pas
+index 1a27eb3512..8b9091bbb0 100644
+--- a/fpcsrc/utils/fpcres/fpcres.pas
++++ b/fpcsrc/utils/fpcres/fpcres.pas
+@@ -75,7 +75,7 @@ procedure ShowHelp;
+   writeln('  --arch, -a <name>    Set object file architecture. Supported architectures:');
+   writeln('                         i386, x86_64, arm (coff)');
+   writeln('                         i386, x86_64, powerpc, powerpc64, arm, armeb, m68k,');
+-  writeln('                         sparc, alpha, ia64, mips, mipsel (elf)');
++  writeln('                         sparc, sparc64, alpha, ia64, mips, mipsel (elf)');
+   writeln('                         i386, x86_64, powerpc, powerpc64, arm, aarch64 (mach-o)');
+   writeln('                         bigendian, littleendian (external)');
+   writeln('  --subarch, -s <name> Set object file sub-architecture. Supported values:');
+@@ -254,6 +254,7 @@ function SetUpElfWriter : TElfResourceWriter;
+     mtarmeb : Result.MachineType:=emtarmeb;
+     mtm68k : Result.MachineType:=emtm68k;
+     mtsparc : Result.MachineType:=emtsparc;
++    mtsparc64 : Result.MachineType:=emtsparc64;
+     mtalpha : Result.MachineType:=emtalpha;
+     mtia64 : Result.MachineType:=emtia64;
+     mtmips : Result.MachineType:=emtmips;
+diff --git a/fpcsrc/utils/fpcres/target.pas b/fpcsrc/utils/fpcres/target.pas
+index ed908e89b1..69f5999a91 100644
+--- a/fpcsrc/utils/fpcres/target.pas
++++ b/fpcsrc/utils/fpcres/target.pas
+@@ -23,6 +23,7 @@ interface
+ type
+   TMachineType = (mtnone, mti386,mtx86_64,mtppc,mtppc64,mtarm,mtarmeb,mtm68k,
+                   mtsparc,mtalpha,mtia64,mtmips,mtmipsel,mtaarch64,mtppc64le,
++                  mtsparc64,
+                   mtBigEndian,mtLittleEndian);
+   TMachineTypes = set of TMachineType;
+ 
+@@ -35,6 +36,7 @@   TSubMachineType = record
+         (subarm: TSubMachineTypeArm);
+       mtnone, mti386,mtx86_64,mtppc,mtppc64,mtm68k,
+       mtsparc,mtalpha,mtia64,mtmips,mtmipsel,mtaarch64,mtppc64le,
++      mtsparc64,
+       mtBigEndian,mtLittleEndian:
+         (subgen: TSubMachineTypeGeneric);
+   end;
+@@ -85,6 +87,7 @@ function ObjFormatToStr(const aFormat : TObjFormat) : string;
+     (name : 'mipsel';       formats : [ofElf]),                   //mtmipsel
+     (name : 'aarch64';      formats : [ofElf, ofCoff, ofMachO]),  //mtaarch64
+     (name : 'powerpc64le';  formats : [ofElf]),                   //mtppc64le
++    (name : 'sparc64';      formats : [ofElf]),                   //mtsparc64
+     (name : 'bigendian';    formats : [ofExt]),                   //mtBigEndian
+     (name : 'littleendian'; formats : [ofExt])                    //mtLittleEndian
+   );
+@@ -102,7 +105,8 @@ function ObjFormatToStr(const aFormat : TObjFormat) : string;
+                                                      mtppc64,mtarm,mtarmeb,
+                                                      mtm68k,mtsparc,mtalpha,
+                                                      mtia64,mtmips,mtmipsel,
+-                                                     mtppc64le,mtaarch64]),
++                                                     mtppc64le,mtaarch64,
++                                                     mtsparc64]),
+     (name : 'coff';     ext : '.o';      machines : [mti386,mtx86_64,mtarm,
+                                                      mtaarch64,mtppc,mtppc64]),
+     (name : 'xcoff';    ext : '.o';      machines : [mtppc{,mtppc64}]),
+@@ -144,6 +148,9 @@ function ObjFormatToStr(const aFormat : TObjFormat) : string;
+   {$elseif defined(CPUSPARC)}
+     machine : mtsparc;
+     submachine : (subgen: smtgen_all);
++  {$elseif defined(CPUSPARC64)}
++    machine : mtsparc64;
++    submachine : (subgen: smtgen_all);
+   {$elseif defined(CPUALPHA)}
+     machine : mtalpha;
+     submachine : (subgen: smtgen_all);
