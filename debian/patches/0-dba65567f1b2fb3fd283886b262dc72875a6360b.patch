@@ -1,0 +1,53 @@
+From dba65567f1b2fb3fd283886b262dc72875a6360b Mon Sep 17 00:00:00 2001
+From: svenbarth <pascaldragon@googlemail.com>
+Date: Sun, 25 Oct 2020 15:36:31 +0000
+Subject: [PATCH] * use the sizes of the floatx80 and float128 structs for
+ arrays having their size to avoid problems with padding on different
+ platforms
+
+git-svn-id: trunk@47198 -
+(cherry picked from commit 16eb670e67cc8243cf2122e992f1cebf00cf4904)
+---
+ rtl/inc/ufloat128.pp | 4 ++--
+ rtl/inc/ufloatx80.pp | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/fpcsrc/rtl/inc/ufloat128.pp b/fpcsrc/rtl/inc/ufloat128.pp
+index 59388cc1e3..14c4339479 100644
+--- a/fpcsrc/rtl/inc/ufloat128.pp
++++ b/fpcsrc/rtl/inc/ufloat128.pp
+@@ -39,11 +39,11 @@
+ 
+     procedure DumpFloat128(const f : float128);
+       type
+-        ta = packed array[0..15] of byte;
++        ta = packed array[0..SizeOf(float128)-1] of byte;
+       var
+         i : longint;
+       begin
+-        for i:=15 downto 0 do
++        for i:=SizeOf(float128)-1 downto 0 do
+           begin
+             write(hexstr(ta(f)[i],2));
+             if i<15 then
+diff --git a/fpcsrc/rtl/inc/ufloatx80.pp b/fpcsrc/rtl/inc/ufloatx80.pp
+index 17bd822d40..7927bca19d 100644
+--- a/fpcsrc/rtl/inc/ufloatx80.pp
++++ b/fpcsrc/rtl/inc/ufloatx80.pp
+@@ -39,11 +39,11 @@
+ 
+     procedure DumpFloatx80(const f : floatx80);
+       type
+-        ta = packed array[0..15] of byte;
++        ta = packed array[0..SizeOf(floatx80)-1] of byte;
+       var
+         i : longint;
+       begin
+-        for i:=15 downto 0 do
++        for i:=SizeOf(floatx80)-1 downto 0 do
+           begin
+             write(hexstr(ta(f)[i],2));
+             if i<15 then
+-- 
+GitLab
+
