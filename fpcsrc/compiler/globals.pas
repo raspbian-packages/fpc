@@ -559,6 +559,7 @@ interface
       startsystime : TSystemTime;
 
     function getdatestr:string;
+    Function UnixToDateTime(const AValue: Int64): TDateTime;
     function gettimestr:string;
     function filetimestring( t : longint) : string;
     function getrealtime(const st: TSystemTime) : real;
@@ -816,12 +817,34 @@ implementation
      get the current date in a string YY/MM/DD
    }
       var
+        Year,Month,Day: Word;
         st: TSystemTime;
+        SourceDateEpoch: string;
       begin
+        SourceDateEpoch := GetEnvironmentVariable('SOURCE_DATE_EPOCH');
+        if Length(SourceDateEpoch)>0 then
+           begin
+             DecodeDate(UnixToDateTime(StrToInt64(SourceDateEpoch)),Year,Month,Day);
+             getdatestr:=L0(Year)+'/'+L0(Month)+'/'+L0(Day);
+           end
+        else
+           begin
         GetLocalTime(st);
         getdatestr:=L0(st.Year)+'/'+L0(st.Month)+'/'+L0(st.Day);
+           end;
       end;
 
+   Function UnixToDateTime(const AValue: Int64): TDateTime;
+   { Code copied from fpcsrc/packages/rtl-objpas/src/inc/dateutil.inc and
+   fpcsrc/rtl/objpas/sysutils/datih.inc }
+   const
+      TDateTimeEpsilon = 2.2204460493e-16 ;
+      UnixEpoch = TDateTime(-2415018.5) + TDateTime(2440587.5) ;
+   begin
+      Result:=UnixEpoch + AValue/SecsPerDay;
+      if (UnixEpoch>=0) and (Result<-TDateTimeEpsilon) then
+         Result:=int(Result-1.0+TDateTimeEpsilon)-frac(1.0+frac(Result));
+   end;
 
    function  filetimestring( t : longint) : string;
    {
