@@ -41,8 +41,10 @@ __entry:
 
         pea      (%sp)         /* highest available stack address */
         pea      (%a1)         /* termination function provided by kernel */
-        pea      __libc_csu_fini
-        pea      __libc_csu_init
+
+        clr.l    -(%sp)
+        clr.l    -(%sp)
+
         pea      (%a0)         /* argv */
         move.l   %d0,-(%sp)    /* argc */
         pea      PASCALMAIN
