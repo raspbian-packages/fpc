@@ -44,6 +44,11 @@ fpcsrc/ide/weditor.pas 2021-10-30T12:48+00:00
 fpcsrc/ide/windebug.pas 2021-10-30T12:48+00:00
 fpcsrc/ide/wresourc.pas 2021-10-30T12:48+00:00
 fpcsrc/packages/fcl-js/fpmake.pp 2020-05-14T13:54+00:00
+fpcsrc/packages/fcl-res/src/elfconsts.pp 2024-01-03T15:17+00:00
+fpcsrc/packages/fcl-res/src/elfdefaulttarget.inc 2024-01-03T15:17+00:00
+fpcsrc/packages/fcl-res/src/elfreader.pp 2024-01-03T15:17+00:00
+fpcsrc/packages/fcl-res/src/elfsubwriter.inc 2024-01-03T15:17+00:00
+fpcsrc/packages/fcl-res/src/elfwriter.pp 2024-01-03T15:17+00:00
 fpcsrc/packages/fpmake_add.inc 2020-05-14T13:54+00:00
 fpcsrc/packages/fpmake_proc.inc 2020-05-14T13:54+00:00
 fpcsrc/packages/fpmkunit/src/fpmkunit.pp 2020-05-14T13:54+00:00
@@ -66,6 +71,8 @@ fpcsrc/tests/webtbs/tw36934b.pp 2022-05-26T16:24+00:00
 fpcsrc/tests/webtbs/tw40252.pp 2023-05-26T18:39+00:00
 fpcsrc/utils/fpcm/fpcmmain.pp 2020-05-14T13:54+00:00
 fpcsrc/utils/fpcm/fpmake.pp 2020-05-14T13:54+00:00
+fpcsrc/utils/fpcres/fpcres.pas 2024-01-03T15:17+00:00
+fpcsrc/utils/fpcres/target.pas 2024-01-03T15:17+00:00
 fpcsrc/utils/fpdoc/dglobals.pp 2020-05-14T13:54+00:00
 fpcsrc/utils/fpdoc/fpclasschart.pp 2020-05-14T13:54+00:00
 fpcsrc/utils/fpdoc/fpdoc.pp 2020-05-14T13:54+00:00

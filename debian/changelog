@@ -1,4 +1,4 @@
-fpc (3.2.2+dfsg-23+rpi1) trixie-staging; urgency=medium
+fpc (3.2.2+dfsg-32+rpi1) trixie-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
@@ -7,7 +7,76 @@ fpc (3.2.2+dfsg-23+rpi1) trixie-staging; urgency=medium
   * Apply hack to work around binutils bug https://sourceware.org/bugzilla/show_bug.cgi?id=28848
   * Fix clean target.
 
- -- Raspbian forward porter <root@raspbian.org>  Sun, 24 Dec 2023 10:36:38 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Wed, 10 Jan 2024 00:00:06 +0000
+
+fpc (3.2.2+dfsg-32) unstable; urgency=medium
+
+  * Fixed typo in man file name.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Fri, 05 Jan 2024 08:40:08 +0100
+
+fpc (3.2.2+dfsg-31) unstable; urgency=medium
+
+  * Removed fpcmkcfg man page from fp-utils as it is already shipped by fp-units-rtl.
+    (Closes: Bug#1059950)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Thu, 04 Jan 2024 15:54:25 +0100
+
+fpc (3.2.2+dfsg-30) unstable; urgency=medium
+
+  * Updated timestamps file.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Wed, 03 Jan 2024 16:38:42 +0100
+
+fpc (3.2.2+dfsg-29) unstable; urgency=medium
+
+  * Fixed lintian warning about missing man pages.
+  * Implement support for SPARC 64-bit in fpcres.
+    Lazarus build fails on sparc64 due to missing support of this
+    architecture in fpcres tool. This patch backports the support to
+    version 3.2.2.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Wed, 03 Jan 2024 16:16:21 +0100
+
+fpc (3.2.2+dfsg-28) unstable; urgency=medium
+
+  * Reverted changes in fp-utils causing upgrade problems. (Closes: Bug#1059772)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Mon, 01 Jan 2024 15:28:49 +0100
+
+fpc (3.2.2+dfsg-27) unstable; urgency=medium
+
+  * Source upload after fixing build issue on sid.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 30 Dec 2023 18:35:30 +0100
+
+fpc (3.2.2+dfsg-26) unstable; urgency=medium
+
+  * Binary upload to fix build issue on sid.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 30 Dec 2023 18:26:09 +0100
+
+fpc (3.2.2+dfsg-25) unstable; urgency=medium
+
+  * Fixed build issue of arch:all packages.
+    Manual pages are not needed to be built for arch:all packages.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Fri, 29 Dec 2023 21:36:10 +0100
+
+fpc (3.2.2+dfsg-24) unstable; urgency=medium
+
+  * Fixed lintian warning about dependency on legacy package.
+    Packages libgl-dev superseded libgl1-measa-dev package.
+  * Fixed lintian warning about missing manual pages.
+    Used help2man to create missing manual pages.
+  * Fixed lintian warning about dh-exec script not using any dh-exec featre.
+    The script `fp-utils.install` does not need to be executable.
+  * Fixed lintian warning about outdated debhelper version.
+  * Fixed lintian warning about missing manual page.
+    Used `hlep2man` to produce manual page for the tool named
+    `${arch}-fpcmkcfg-${version}` distributed in `fp-units-rtl` package.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Fri, 29 Dec 2023 19:18:37 +0100
 
 fpc (3.2.2+dfsg-23) unstable; urgency=medium
 

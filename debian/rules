@@ -392,21 +392,15 @@ arrange-arch-stamp:
 	# Expected here:
 	# usr/lib/fpc/lexyacc/yyparse.cod
 	# usr/lib/fpc/lexyacc/yylex.cod
-	# usr/bin/unihelper-<version>
 	# usr/bin/ptop.rsj-<version>
-	# usr/bin/mkx86ins-<version>
-	# usr/bin/mkinsad-<version>
-	# usr/bin/mkarmins-<version>
-	# usr/bin/mka64ins-<version>
 	# usr/bin/makeskel.rsj-<version>
-	# usr/bin/cldrparser-<version>
 	dh_install -s --list-missing
 	touch arrange-arch-stamp
 
 # This is a policy required target, for our purpose, it needs to trigger
 # debian-files and install-source at least if that didn't happen yet.
 build-indep: debian-files install-source build-doc
-install-indep: install-doc install-man
+install-indep: install-doc
 
 install-man: install-man-stamp
 install-man-stamp:
@@ -420,6 +414,18 @@ install-man-stamp:
 	# Install man pages
 	$(MAKE) -C install/man installman $(INSTALLOPTS)
 	for s in ${INSTALL_DIR}/usr/man/man[1-9] ; do cd $${s} && ( gzip -d *.gz || true ) && for f in *.[1-9] ; do ${MV} $${f} $${f%%.*}-${DEB_UPSTREAM_MAIN_VERSION}."$${f#*.}" ; done ; done || true
+	# Create missing man pages
+	help2man ${INSTALL_DIR}/usr/bin/${DEB_HOST_MULTIARCH}-fpcmkcfg-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'Configuration generator for Free Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/${DEB_HOST_MULTIARCH}-fpcmkcfg-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stder
+	help2man ${INSTALL_DIR}/usr/bin/cldrparser-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'CLDR to pascal translator for Free Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/cldrparser-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
+	help2man ${INSTALL_DIR}/usr/bin/compileserver-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'Helper tool for Free Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/compileserver-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
+	help2man ${INSTALL_DIR}/usr/bin/json2pas-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'JSON to Pascal to translator for Free Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/json2pas-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
+	help2man ${INSTALL_DIR}/usr/bin/mka64ins-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'Helper tool for Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/mka64ins-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
+	help2man ${INSTALL_DIR}/usr/bin/mkarmins-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'Helper tool for Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/mkarmins-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
+	help2man ${INSTALL_DIR}/usr/bin/mkinsadd-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'Helper tool for Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/mkinsadd-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
+	help2man ${INSTALL_DIR}/usr/bin/mkx86ins-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'Helper tool for Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/mkx86ins-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
+	help2man ${INSTALL_DIR}/usr/bin/pas2js-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'Pascal to JavaScript translator based on Free Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/pas2js-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
+	help2man ${INSTALL_DIR}/usr/bin/unihelper-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'Helper tool for Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/unihelper-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
+	help2man ${INSTALL_DIR}/usr/bin/webidl2pas-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'WEB IDL to Pascal translator for Free Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/webidl2pas-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
 	pod2man -c 'Free pascal for Debian GNU/Linux' -d ${DEB_DATE} debian/fpc-depends > \
 		debian/fpc-depends-${DEB_UPSTREAM_MAIN_VERSION}.1
 	txt2man -s1 debian/fp-fix-timestamps.txt > debian/fp-fix-timestamps.1

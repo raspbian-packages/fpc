@@ -8,13 +8,14 @@ Uploaders:
  Peter Michael Green <plugwash@debian.org>,
 Standards-Version: 4.6.0
 Build-Depends:
- debhelper (>= 10~),
+ debhelper (>= 12),
  dh-exec (>=0.22),
  fp-compiler,
  fp-units-base,
  fp-units-fcl,
  fp-utils,
  ghostscript,
+ help2man,
  libncurses-dev,
  mawk | awk,
  po-debconf,
@@ -233,10 +234,10 @@ Provides:
  fpc-abi${PACKAGESUFFIX}
 Breaks:
  fpc (<= ${UPSTREAM_VERSION}-0),
- fp-compiler${PACKAGESUFFIX} (<= 3.2.2+dfsg-10)
+ fp-compiler${PACKAGESUFFIX} (<= 3.2.2+dfsg-23)
 Replaces:
  fpc (<= ${UPSTREAM_VERSION}-0),
- fp-compiler${PACKAGESUFFIX} (<= 3.2.2+dfsg-10)
+ fp-compiler${PACKAGESUFFIX} (<= 3.2.2+dfsg-23)
 Description: Free Pascal - runtime libraries
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
  and Turbo Pascal 7.0 dialects, as well as Mac Pascal dialects. It provides a
@@ -395,7 +396,7 @@ Recommends:
  libcairo2-dev,
  libforms-dev,
  libgd-dev,
- libgl1-mesa-dev,
+ libgl-dev,
  libgraphviz-dev,
  libpng-dev,
  libxxf86dga-dev,

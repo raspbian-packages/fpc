@@ -36,5 +36,6 @@ change_fpmake_to_install_missing_package_examples.patch
 Fix-missing-crtbeginS.o-on-mipsel.patch
 5-85c7368759f5fb53aa23e03c8cc27c2deb424b62.patch
 6-3bb2586269c876856a834fb0d72a09928ff9d16b.patch
+7-060f24600bb559f62b6350899864f3ac4155c207.patch
 raspbian.diff
 force-abi-tags-in-cprt0.patch
