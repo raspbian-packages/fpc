@@ -89,6 +89,7 @@ begin
     P.Targets.AddProgram('mkinsadd.pp');
     P.Targets.AddProgram('postw32.pp');
     P.Targets.AddProgram('rmcvsdir.pp');
+    P.Targets.AddProgram('relpath.pas');
     P.Targets.AddProgram('grab_vcsa.pp',[linux]);
     T:=P.Targets.AddProgram('fpcsubst.pp');
     T.Dependencies.AddUnit('usubst');
