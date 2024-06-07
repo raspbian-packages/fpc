@@ -1,0 +1,16 @@
+Description: some more Lintian detection spelling misstakes
+Author: Paul Gevers <elbrus@debian.org>
+
+Index: fpc/fpcsrc/utils/fpcm/fpcmake.ini
+===================================================================
+--- fpc.orig/fpcsrc/utils/fpcm/fpcmake.ini
++++ fpc/fpcsrc/utils/fpcm/fpcmake.ini
+@@ -109,7 +109,7 @@ ifdef inUnix
+ PATHSEP=/
+ else
+ PATHSEP:=$(subst /,\,/)
+-# cygwin bash or sh can not handle backslashs
++# cygwin bash or sh can not handle backslashes
+ ifdef inCygWin
+ PATHSEP=/
+ endif
