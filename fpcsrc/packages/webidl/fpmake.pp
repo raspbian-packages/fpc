@@ -48,6 +48,8 @@ begin
       AddUnit('webidlscanner');
       AddUnit('webidlparser');
       end;
+    P.ExamplePath.Add('examples');
+    T:=P.Targets.AddExampleProgram('parsewebidl.pas');
 {$ifndef ALLPACKAGES}
     Run;
     end;
