@@ -1,4 +1,4 @@
-fpc (3.2.2+dfsg-32+rpi1) trixie-staging; urgency=medium
+fpc (3.2.2+dfsg-33+rpi1) trixie-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
@@ -7,7 +7,26 @@ fpc (3.2.2+dfsg-32+rpi1) trixie-staging; urgency=medium
   * Apply hack to work around binutils bug https://sourceware.org/bugzilla/show_bug.cgi?id=28848
   * Fix clean target.
 
- -- Raspbian forward porter <root@raspbian.org>  Wed, 10 Jan 2024 00:00:06 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Mon, 10 Jun 2024 11:11:55 +0000
+
+fpc (3.2.2+dfsg-33) unstable; urgency=medium
+
+  * Fixed typo in package description and updated debhelper version.
+    (Closes: Bug#1069157)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 08 Jun 2024 00:47:33 +0200
+
+fpc (3.2.2+dfsg-32~bpo11+1) bullseye-backports; urgency=medium
+
+  * Rebuild for bullseye-backports.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Fri, 05 Jan 2024 09:45:26 +0100
+
+fpc (3.2.2+dfsg-32~bpo12+1) bookworm-backports; urgency=medium
+
+  * Rebuild for bookworm-backports.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Fri, 05 Jan 2024 09:36:17 +0100
 
 fpc (3.2.2+dfsg-32) unstable; urgency=medium
 
@@ -17,8 +36,8 @@ fpc (3.2.2+dfsg-32) unstable; urgency=medium
 
 fpc (3.2.2+dfsg-31) unstable; urgency=medium
 
-  * Removed fpcmkcfg man page from fp-utils as it is already shipped by fp-units-rtl.
-    (Closes: Bug#1059950)
+  * Removed fpcmkcfg man page from fp-utils as it is already shipped by
+    fp-units-rtl. (Closes: Bug#1059950)
 
  -- Abou Al Montacir <abou.almontacir@sfr.fr>  Thu, 04 Jan 2024 15:54:25 +0100
 

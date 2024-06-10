@@ -8,7 +8,7 @@ Uploaders:
  Peter Michael Green <plugwash@debian.org>,
 Standards-Version: 4.6.0
 Build-Depends:
- debhelper (>= 12),
+ debhelper (>= 13),
  dh-exec (>=0.22),
  fp-compiler,
  fp-units-base,
@@ -939,7 +939,7 @@ Multi-Arch: same
 Depends:
  fp-units-wasm${PACKAGESUFFIX} (= ${binary:Version}),
  ${misc:Depends}
-Description: Free Pascal - Web assmebly support units dependency package
+Description: Free Pascal - Web assembly support units dependency package
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
  and Turbo Pascal 7.0 dialects, as well as Mac Pascal dialects. It provides a
  completely portable RunTime Library (RTL) available on many platforms and
