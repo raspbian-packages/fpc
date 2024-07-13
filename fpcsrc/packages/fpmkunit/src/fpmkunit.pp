@@ -2813,6 +2813,7 @@ begin
       powerpc:  result := GetGccDirArch('cpupowerpc','-m32');
       powerpc64:result := GetGccDirArch('cpupowerpc64','-m64');
       aarch64:  result := GetGccDirArch('cpuaarch64','');
+      mipsel:   result := GetGccDirArch('cpumipsel','');
     end {case}
   else if OS = darwin then
     case CPU of
