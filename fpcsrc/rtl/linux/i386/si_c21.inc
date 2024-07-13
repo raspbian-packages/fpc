@@ -35,8 +35,6 @@
 
 {$asmmode att}
 
-procedure __libc_csu_init; cdecl; external;
-procedure __libc_csu_fini; cdecl; external;
 procedure libc_start_main; external name '__libc_start_main';
 procedure libc_exit(code: longint); cdecl; external name 'exit';
 
@@ -93,8 +91,8 @@ asm
         pushl %esp   			{ stack_end }
         pushl %edx   			{ function to be registered with
                       			  atexit(), passed by loader }
-        pushl $__libc_csu_fini
-        pushl $__libc_csu_init
+        pushl $0
+        pushl $0
         pushl %esi                      { Push second argument: argv.  }
         pushl %ecx                      { Push first argument: argc.  }
 
