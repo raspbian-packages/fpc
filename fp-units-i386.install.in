@@ -1,0 +1,4 @@
+#! /usr/bin/dh-exec
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/libc
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/fpmkinst/*/libc.fpm
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/unixutil*
