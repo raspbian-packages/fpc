@@ -1,4 +1,4 @@
-fpc (3.2.2+dfsg-33+rpi1) trixie-staging; urgency=medium
+fpc (3.2.2+dfsg-34+rpi1) trixie-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
@@ -7,7 +7,14 @@ fpc (3.2.2+dfsg-33+rpi1) trixie-staging; urgency=medium
   * Apply hack to work around binutils bug https://sourceware.org/bugzilla/show_bug.cgi?id=28848
   * Fix clean target.
 
- -- Raspbian forward porter <root@raspbian.org>  Mon, 10 Jun 2024 11:11:55 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Wed, 24 Jul 2024 16:38:15 +0000
+
+fpc (3.2.2+dfsg-34) unstable; urgency=medium
+
+  * Added Content-Type to prevent msgfmt crash.
+    Thanks to Peter Blackman <peter@pblackman.plus.com> (Closes: Bug#1074706)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 13 Jul 2024 17:35:36 +0200
 
 fpc (3.2.2+dfsg-33) unstable; urgency=medium
 
