@@ -1,4 +1,4 @@
-fpc (3.2.2+dfsg-34+rpi1) trixie-staging; urgency=medium
+fpc (3.2.2+dfsg-35+rpi1) trixie-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
@@ -7,7 +7,22 @@ fpc (3.2.2+dfsg-34+rpi1) trixie-staging; urgency=medium
   * Apply hack to work around binutils bug https://sourceware.org/bugzilla/show_bug.cgi?id=28848
   * Fix clean target.
 
- -- Raspbian forward porter <root@raspbian.org>  Wed, 24 Jul 2024 16:38:15 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Thu, 16 Jan 2025 10:02:05 +0000
+
+fpc (3.2.2+dfsg-35) unstable; urgency=medium
+
+  * Fixed location of third party fp-units packages configuration file.
+    Generally, the configuration file is identical for all architectures.
+    It does not make sense to have a different file per architecture
+    especially that the configuration file supports conditional sections.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sun, 05 Jan 2025 19:25:14 +0100
+
+fpc (3.2.2+dfsg-34~bpo12+1) bookworm-backports; urgency=medium
+
+  * Rebuild for bookworm-backports.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sun, 17 Nov 2024 21:23:45 +0100
 
 fpc (3.2.2+dfsg-34) unstable; urgency=medium
 

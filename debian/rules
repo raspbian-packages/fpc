@@ -6,6 +6,9 @@ export DEB_BUILD_MAINT_OPTIONS := hardening=+bindnow
 export DH_ALWAYS_EXCLUDE := COPYING:LICENSE
 export LANG:=C
 
+# for Salsa CI
+undefine RELEASE
+
 # Documentation type to use pdf/html
 ifeq (${DEBDOCTYPE},)
 DOCTYPE=html

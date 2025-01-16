@@ -32,10 +32,16 @@ echo '# multiarch library search path' >> ${PKG_CFG_PATH}
 echo '-Fl/usr/lib/$fpctarget-*' >> ${PKG_CFG_PATH}
 # Define a default location, multi-arch compatible, for third party units.
 cat >> ${PKG_CFG_PATH} <<EOF
-# Third party units should be installe in a, multi-arch compatible location.
-# Units should be installed in /usr/lib/\$fpctarget-gnu/fp-units-2.6.2/\$pkg/.
-# Ech fp-units package should install a configuration file called \$pkg.cfg in
-#CFGDIR /etc/fpc-\$fpcversion.cfg.d/\$fpctarget
+
+# Third party units should be installe into a multi-arch compatible location.
+# A recommended location is /usr/lib/\$fpctarget-gnu/\$pkg/fp-units/${VERSION}/.
+# Ech fp-units-\$pkg package should install a configuration file called \$pkg in
+# /etc/fpc-\$fpcversion.cfg.d so that it can be used for compilation as follows:
+#     fpc [@\$pkg1 [@\$pkg2 [@$\$pkg3]]] <fpc options> progname
+#
+# The directive CFGDIR allows looking for @\$pkg in the specified location.
+
+#CFGDIR /etc/fpc-\$fpcversion.cfg.d
 EOF
 
 case "$1" in
