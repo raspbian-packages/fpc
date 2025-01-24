@@ -47,6 +47,9 @@ init ();
 foreach my $package (@{$dh{DOPACKAGES}}) {
   delsubstvar($package, "fpc-abi:Depends");
   addsubstvar($package, "fpc-abi:Depends", "fpc-abi-${VERSION}");
+
+  delsubstvar($package, "fpc:Static-Built-Using");
+  addsubstvar($package, "fpc:Static-Built-Using", "fpc (= ${PACKAGEVERSION})");
 }
 
 =head1 SEE ALSO

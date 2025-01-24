@@ -6,3 +6,4 @@ usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/rtl-extra*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/rtl-generics*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/rtl-objpas*
 usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/rtl-unicode*
+usr/share/doc/fp-units-rtl     [!freebsd-any]

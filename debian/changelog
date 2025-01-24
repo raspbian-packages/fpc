@@ -1,4 +1,4 @@
-fpc (3.2.2+dfsg-35+rpi1) trixie-staging; urgency=medium
+fpc (3.2.2+dfsg-40+rpi1) trixie-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
@@ -7,7 +7,51 @@ fpc (3.2.2+dfsg-35+rpi1) trixie-staging; urgency=medium
   * Apply hack to work around binutils bug https://sourceware.org/bugzilla/show_bug.cgi?id=28848
   * Fix clean target.
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 16 Jan 2025 10:02:05 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Fri, 24 Jan 2025 04:21:10 +0000
+
+fpc (3.2.2+dfsg-40) unstable; urgency=medium
+
+  * Fixed build on i386 architecture.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sun, 19 Jan 2025 14:47:51 +0100
+
+fpc (3.2.2+dfsg-39) unstable; urgency=medium
+
+  * Allow installing libffi interfacing units on all architectures.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sun, 19 Jan 2025 13:54:20 +0100
+
+fpc (3.2.2+dfsg-38) unstable; urgency=medium
+
+  * Fixed warning about depreciated feature --list-missing in dh_install.
+  * Removed dependency of fp-utils on fpc-source as it does not make sense.
+  * Fixed variable name in fpc-depends.
+  * Installed fp-units-rtl package examples.
+  * Remove files that are not to be installed.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sun, 19 Jan 2025 13:02:34 +0100
+
+fpc (3.2.2+dfsg-37) unstable; urgency=medium
+
+  * Fixed build of architecture independent packages on sid.
+  * Added support for ${fpc:Static-Built-using} in fpc-depnds.
+    (Closes: Bug#997948)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sun, 19 Jan 2025 00:05:12 +0100
+
+fpc (3.2.2+dfsg-36) unstable; urgency=medium
+
+  * Fixed default value of FPCDIR for ppc64el.
+    This should fix build issues of Castle Game Engine on that target.
+  * Bumped standard version to 4.7.0.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 18 Jan 2025 13:58:26 +0100
+
+fpc (3.2.2+dfsg-35~bpo12+1) bookworm-backports; urgency=medium
+
+  * Rebuild for bookworm-backports.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sun, 05 Jan 2025 19:34:18 +0100
 
 fpc (3.2.2+dfsg-35) unstable; urgency=medium
 

@@ -392,18 +392,22 @@ arrange-arch: install-arch arrange-arch-stamp install-man
 arrange-arch-stamp:
 	dh_testdir
 	dh_testroot
-	# Expected here:
-	# usr/lib/fpc/lexyacc/yyparse.cod
-	# usr/lib/fpc/lexyacc/yylex.cod
-	# usr/bin/ptop.rsj-<version>
-	# usr/bin/makeskel.rsj-<version>
-	dh_install -s --list-missing
+	# These files are already installed in fp-utils:
+	rm debian/tmp/usr/lib/fpc/lexyacc/yylex.cod
+	rm debian/tmp/usr/lib/fpc/lexyacc/yyparse.cod
+	# These files are located inthe wrong folder and we are wating for upstream
+	# to tell us where they should be relocated
+	rm debian/tmp/usr/bin/*.rsj-*
+	rm debian/tmp/usr/lib/libpas2jslib.so
+	# Install files and fail if we are missing anyone
+	dh_install -s
+	dh_missing --fail-missing
 	touch arrange-arch-stamp
 
 # This is a policy required target, for our purpose, it needs to trigger
 # debian-files and install-source at least if that didn't happen yet.
 build-indep: debian-files install-source build-doc
-install-indep: install-doc
+install-indep: build-indep install-doc
 
 install-man: install-man-stamp
 install-man-stamp:
@@ -488,7 +492,9 @@ binary-indep: install-indep
 	dh_testroot
 	dh_installdocs -i -X.in
 	dh_installchangelogs -i
-	dh_install -i --list-missing
+	# Install files and fail if we are missing anyone
+	dh_install -i
+	dh_missing --fail-missing
 	find debian/fpc-source${PACKAGESUFFIX}/usr/share/fpcsrc/ -type f \
 	  -not -regex '.*\.\(fpc\|inc\|pas\|pp\)' -delete
 	find debian/fpc-source${PACKAGESUFFIX}/usr/share/fpcsrc/ -type d \
@@ -528,7 +534,7 @@ binary-arch: arrange-arch
 	prepare-source gen-control run-tests
 
 # Generate debian.control file
-gen-control: debian/control.in
+gen-control: debian/control
 
 # Run upstream test suite
 run-tests:

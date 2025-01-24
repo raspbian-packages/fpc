@@ -6,7 +6,7 @@ Uploaders:
  Abou Al Montacir <abou.almontacir@sfr.fr>,
  Paul Gevers <elbrus@debian.org>,
  Peter Michael Green <plugwash@debian.org>,
-Standards-Version: 4.6.0
+Standards-Version: 4.7.0
 Build-Depends:
  debhelper (>= 13),
  dh-exec (>=0.22),
@@ -164,7 +164,6 @@ Package: fp-utils-3.2.2
 Architecture: any
 Multi-Arch: foreign
 Depends:
- fpc-source-3.2.2,
  ${misc:Depends},
  ${shlibs:Depends}
 Recommends:

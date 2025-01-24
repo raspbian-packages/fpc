@@ -1,8 +1,10 @@
 From: Abou Al Montacir <abou.almontacir@sfr.fr>
-Date: Sun, 12 Nov 2017 22:24:15 +0100
 Description: Change path of unit files to make it support MA co-installation.
  (Closes: Bug#73368)
+ This patch was modified to fix default value of FPCDIR on ppc64el causing test
+ suite of Castle Game Engine to break on that target.
 Bug-Debian: http://bugs.debian.org/73368
+Last-Update: Wed, 15 Jan 2025 00:05:11 +0100
 
 Index: fpc/fpcsrc/utils/fpcm/fpcmake.ini
 ===================================================================
@@ -70,7 +72,7 @@ Index: fpc/fpcsrc/packages/fpmkunit/src/fpmkunit.pp
  end;
  
  
-@@ -4884,6 +4887,17 @@ end;
+@@ -4884,6 +4887,21 @@ end;
  ****************************************************************************}
  
  procedure TFPCDefaults.CompilerDefaults;
@@ -84,7 +86,11 @@ Index: fpc/fpcsrc/packages/fpmkunit/src/fpmkunit.pp
 +{$ifndef CPUARM}
 +  gnu = 'gnu';
 +{$endif CPUARM}
++{$if defined(CPUPOWERPC) and defined(ENDIAN_LITTLE)}
++  FullTarget = {$I %FPCTARGETCPU%} + 'le-' + {$I %FPCTARGETOS%} + '-' + gnu;
++{$ELSE}
 +  FullTarget = {$I %FPCTARGETCPU%} + '-' + {$I %FPCTARGETOS%} + '-' + gnu;
++{$endif defined(CPUPOWERPC) and defined(ENDIAN_LITTLE)}
  var
    BD : String;
  begin

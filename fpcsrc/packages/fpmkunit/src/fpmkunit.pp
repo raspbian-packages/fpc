@@ -4925,7 +4925,11 @@ const
 {$ifndef CPUARM}
   gnu = 'gnu';
 {$endif CPUARM}
+{$if defined(CPUPOWERPC) and defined(ENDIAN_LITTLE)}
+  FullTarget = {$I %FPCTARGETCPU%} + 'le-' + {$I %FPCTARGETOS%} + '-' + gnu;
+{$ELSE}
   FullTarget = {$I %FPCTARGETCPU%} + '-' + {$I %FPCTARGETOS%} + '-' + gnu;
+{$endif defined(CPUPOWERPC) and defined(ENDIAN_LITTLE)}
 var
   BD : String;
 begin
