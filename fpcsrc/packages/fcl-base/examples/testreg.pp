@@ -1,5 +1,5 @@
 {=================================================================
- TestReg.pp versión 1.2 12/02/2002
+ TestReg.pp versiÃ³n 1.2 12/02/2002
  Copyright (C) 2000-2002 by Luis Digital (luis@luis-digital.8m.com)
 
  TestReg pone en prueba y sirve de ejemplo para TRegistry.
@@ -7,7 +7,7 @@
  Este es software libre bajo la licencia GNU/GPL.
  Ver COPYING.FPC y COPYING incluidos con este programa.
 
- Este programa es distribuido esperando que sea útil,
+ Este programa es distribuido esperando que sea Ãºtil,
  pero SIN NINGUNA GARANTIA.
  =================================================================}
 
