@@ -1392,6 +1392,8 @@ begin
      AddLongIntItem('Local ~h~eap size','h');
    end;}
   SwitchesPath:=LocateFile(SwitchesName);
+  if ExistsFile('/etc/'+SwitchesName) then
+    SwitchesPath:='/etc/'+SwitchesName;
   if SwitchesPath='' then
     SwitchesPath:=SwitchesName;
   SwitchesPath:=FExpand(SwitchesPath);
