@@ -2306,8 +2306,10 @@ implementation
                  }
                  if (not pd.forwarddef) and
                     (pd.hasforward) and
-                    (proc_get_importname(pd)<>'') then
-                   call_through_new_name(pd,proc_get_importname(pd))
+                    (proc_get_importname(pd)<>'') then begin
+                     call_through_new_name(pd,proc_get_importname(pd))
+                     include(pd.implprocoptions,pio_thunk);
+                   end
                  else
 {$endif cpuhighleveltarget}
                    begin
