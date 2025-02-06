@@ -911,6 +911,8 @@ begin
 
   MainFile:=FileName;
   SetStatus('Writing switches to file...');
+  if SwitchesPath = '/etc/'+SwitchesName then
+       SwitchesPath := SwitchesName;
   WriteSwitches(SwitchesPath);
   { leaving open browsers leads to crashes !! (PM) }
   SetStatus('Preparing symbol info...');
