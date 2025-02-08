@@ -1,6 +1,6 @@
 /*******************************************
 
-  Header fr den Ressourcecompiler
+  Header fÃ¼r den Ressourcecompiler
 
 ********************************************/
 #define ID_ClientWindow	1
