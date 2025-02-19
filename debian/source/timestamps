@@ -43,6 +43,7 @@ fpcsrc/ide/globdir.inc 2021-10-30T12:48+00:00
 fpcsrc/ide/weditor.pas 2021-10-30T12:48+00:00
 fpcsrc/ide/windebug.pas 2021-10-30T12:48+00:00
 fpcsrc/ide/wresourc.pas 2021-10-30T12:48+00:00
+fpcsrc/packages/fcl-base/examples/testreg.pp 2025-02-02T12:44+00:00
 fpcsrc/packages/fcl-js/fpmake.pp 2020-05-14T13:54+00:00
 fpcsrc/packages/fcl-res/src/elfconsts.pp 2024-01-03T15:17+00:00
 fpcsrc/packages/fcl-res/src/elfdefaulttarget.inc 2024-01-03T15:17+00:00

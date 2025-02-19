@@ -1,4 +1,4 @@
-fpc (3.2.2+dfsg-40+rpi1) trixie-staging; urgency=medium
+fpc (3.2.2+dfsg-46+rpi1) trixie-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
@@ -7,7 +7,58 @@ fpc (3.2.2+dfsg-40+rpi1) trixie-staging; urgency=medium
   * Apply hack to work around binutils bug https://sourceware.org/bugzilla/show_bug.cgi?id=28848
   * Fix clean target.
 
- -- Raspbian forward porter <root@raspbian.org>  Fri, 24 Jan 2025 04:21:10 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Wed, 19 Feb 2025 01:18:59 +0000
+
+fpc (3.2.2+dfsg-46) unstable; urgency=medium
+
+  * Removed helper programs that are useful only to build compiler.
+    These programs are not even usable outside the compiler sources folder.
+    (Closes: Bug#1095306)
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sat, 08 Feb 2025 21:45:34 +0100
+
+fpc (3.2.2+dfsg-45) unstable; urgency=medium
+
+  * Fixed hardening configuration for aarch64 architecture.
+  * Updated DEP12 upstream metadata.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Thu, 06 Feb 2025 20:02:48 +0100
+
+fpc (3.2.2+dfsg-44) unstable; urgency=medium
+
+  * Enabled hardening for armhf architectures.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Tue, 04 Feb 2025 17:29:14 +0100
+
+fpc (3.2.2+dfsg-43) unstable; urgency=medium
+
+  * Fixed path of hardening configuration file.
+  * Removed Lintian overrides that are no more used.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Mon, 03 Feb 2025 00:18:40 +0100
+
+fpc (3.2.2+dfsg-42) unstable; urgency=medium
+
+  * Fixed build of arch all packages.
+  * Fixed dependencies of fp-utils package and reduced build dependencies.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sun, 02 Feb 2025 19:31:30 +0100
+
+fpc (3.2.2+dfsg-41) unstable; urgency=medium
+
+  [ Carles Pina i Estany ]
+  * Added po-debconf Catalan translation
+
+  [ Abou Al Montacir ]
+  * Reformatted Catalan translation file.
+  * Enforce coherence between debian/control and debian/control.in files.
+  * Replaced legacy debhelper option (-s) by new one (-a).
+  * Fixed files encoding
+  * Replaced direct parsing of changelog by function for dpkg/pkf-info.mk.
+  * Added FPC configuration file to support hardening.
+    Hardened program needs to be compiled using `fpc @hardening progname`.
+
+ -- Abou Al Montacir <abou.almontacir@sfr.fr>  Sun, 02 Feb 2025 14:50:09 +0100
 
 fpc (3.2.2+dfsg-40) unstable; urgency=medium
 

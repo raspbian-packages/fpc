@@ -19,10 +19,7 @@ debian/tmp/usr/man/man1/h2paspp-${VERSION}.1
 debian/tmp/usr/man/man1/ifpc-${VERSION}.1
 debian/tmp/usr/man/man1/json2pas-${VERSION}.1
 debian/tmp/usr/man/man1/makeskel-${VERSION}.1
-debian/tmp/usr/man/man1/mka64ins-${VERSION}.1
-debian/tmp/usr/man/man1/mkarmins-${VERSION}.1
 debian/tmp/usr/man/man1/mkinsadd-${VERSION}.1
-debian/tmp/usr/man/man1/mkx86ins-${VERSION}.1
 debian/tmp/usr/man/man1/pas2fpm-${VERSION}.1
 debian/tmp/usr/man/man1/pas2jni-${VERSION}.1
 debian/tmp/usr/man/man1/pas2js-${VERSION}.1

@@ -20,10 +20,7 @@ usr/bin/h2paspp-*
 usr/bin/ifpc-*
 usr/bin/json2pas-*
 usr/bin/makeskel-*                  [!freebsd-any]
-usr/bin/mka64ins-*
-usr/bin/mkarmins-*
 usr/bin/mkinsadd-*
-usr/bin/mkx86ins-*
 usr/bin/pas2fpm-*
 usr/bin/pas2jni-*
 usr/bin/pas2js-*

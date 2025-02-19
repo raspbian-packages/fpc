@@ -20,6 +20,7 @@ CONVERTER=${DOCTYPE}
 endif
 # Include standard dpkg-buildpackage variables
 include /usr/share/dpkg/architecture.mk
+include /usr/share/dpkg/pkg-info.mk
 # Undefine FPC if it was set
 unexport FPC
 # Build new compiler name
@@ -92,16 +93,15 @@ OS_TARGET=$(subst kfreebsd,freebsd,${DEB_HOST_ARCH_OS})
 # separated by a dash.
 FPCTARGET=$(CPU_TARGET)-$(OS_TARGET)
 # Get version information from changelog file
-DEB_VERSION:=$(shell dpkg-parsechangelog --show-field Version)
-DEB_DATE:=$(shell date --utc --date="`dpkg-parsechangelog --show-field Date`" +%Y/%m/%d)
-DEB_UPSTREAM_VERSION:=$(shell echo $(DEB_VERSION) | cut -f 1 -d -)
-export DEB_UPSTREAM_MAIN_VERSION:=$(shell echo ${DEB_UPSTREAM_VERSION} | sed -e 's/^\([0-9\.]*\).*/\1/')
+DEB_DATE:=$(shell date --utc --date="@${SOURCE_DATE_EPOCH}" +%Y/%m/%d)
+export DEB_UPSTREAM_MAIN_VERSION:=$(shell echo ${DEB_VERSION_UPSTREAM} | sed -e 's/^\([0-9\.]*\).*/\1/')
 DEB_BUILD=$(lastword $(subst -, ,${DEB_VERSION}))
 ifndef PACKAGESUFFIX
 export PACKAGESUFFIX=-${DEB_UPSTREAM_MAIN_VERSION}
 endif
 # Get directories
 INSTALL_DIR=${CURDIR}/debian/tmp
+CFG_DIR=${INSTALL_DIR}/etc/fpc-${DEB_UPSTREAM_MAIN_VERSION}.cfg.d
 BIN_DIR=${INSTALL_DIR}/usr/bin
 # Debian policy is to install libraries that are multi-arch coinstallable in
 # /usr/lib/${DEB_HOST_MULTIARCH}
@@ -160,14 +160,6 @@ endif
 
 # Set default compilation options
 FPMAKE_BUILDOPTS=FPMAKE_SKIP_CONFIG='-n @${CURDIR}/${DEB_BUILD_FPC_OPT}'
-
-LDFLAGS=$(strip $(shell DEB_BUILD_MAINT_OPTIONS=$(DEB_BUILD_MAINT_OPTIONS) \
-	dpkg-buildflags --get LDFLAGS | \
-	sed -e 's/-Wl,//g' -e 's/,/ /g' -e 's1-specs=/usr/share/dpkg/.*\.specs11' -e 's/-ffat-lto-objects//'))
-
-# Until we switch to shorthand dh, we need to set this ourselves for
-# reproducible builds
-export SOURCE_DATE_EPOCH = $(shell date -d "$$(dpkg-parsechangelog -SDate)" +%s)
 
 #export DH_VERBOSE=1
 
@@ -273,16 +265,20 @@ clean-makefiles:
 #
 
 debian-files: debian-files-stamp
-debian-files-stamp:debian/fixdeb debian/*.in
+debian-files-stamp:debian/fixdeb $(wildcard debian/*.in)
+	mv debian/control debian/control.old
 	@echo "--- Creating/fixing *.install files"
 	DEB_SUBST_PACKAGESUFFIX=${PACKAGESUFFIX} \
 	DEB_SUBST_PPCBIN=${PPNEW} \
 	DEB_SUBST_TARGET=${FPCTARGET} \
 	DEB_SUBST_DEB_HOST_MULTIARCH=${DEB_HOST_MULTIARCH} \
-	$< debian/*.in
+	$< --gen-control debian/*.in
 	# Because we use dh-exec to track units that don't need to install
 	# everywhere, we need the <package>.install files to be executable
 	chmod a+x debian/*.install
+	# Ensure we fail build if contol file changed so that we update it in VCS
+	diff -u debian/control.old debian/control
+	${RM} debian/control.old
 	touch debian-files-stamp
 
 
@@ -395,6 +391,8 @@ arrange-arch-stamp:
 	# These files are already installed in fp-utils:
 	rm debian/tmp/usr/lib/fpc/lexyacc/yylex.cod
 	rm debian/tmp/usr/lib/fpc/lexyacc/yyparse.cod
+	# These are helper programs needed only when compiling the compiler.
+	rm ${BIN_DIR}/mk*ins-\${DEB_UPSTREAM_MAIN_VERSION}
 	# These files are located inthe wrong folder and we are wating for upstream
 	# to tell us where they should be relocated
 	rm debian/tmp/usr/bin/*.rsj-*
@@ -407,7 +405,7 @@ arrange-arch-stamp:
 # This is a policy required target, for our purpose, it needs to trigger
 # debian-files and install-source at least if that didn't happen yet.
 build-indep: debian-files install-source build-doc
-install-indep: build-indep install-doc
+install-indep: build-indep install-doc ${CFG_DIR}/hardening
 
 install-man: install-man-stamp
 install-man-stamp:
@@ -426,10 +424,7 @@ install-man-stamp:
 	help2man ${INSTALL_DIR}/usr/bin/cldrparser-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'CLDR to pascal translator for Free Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/cldrparser-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
 	help2man ${INSTALL_DIR}/usr/bin/compileserver-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'Helper tool for Free Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/compileserver-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
 	help2man ${INSTALL_DIR}/usr/bin/json2pas-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'JSON to Pascal to translator for Free Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/json2pas-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
-	help2man ${INSTALL_DIR}/usr/bin/mka64ins-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'Helper tool for Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/mka64ins-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
-	help2man ${INSTALL_DIR}/usr/bin/mkarmins-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'Helper tool for Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/mkarmins-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
 	help2man ${INSTALL_DIR}/usr/bin/mkinsadd-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'Helper tool for Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/mkinsadd-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
-	help2man ${INSTALL_DIR}/usr/bin/mkx86ins-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'Helper tool for Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/mkx86ins-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
 	help2man ${INSTALL_DIR}/usr/bin/pas2js-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'Pascal to JavaScript translator based on Free Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/pas2js-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
 	help2man ${INSTALL_DIR}/usr/bin/unihelper-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'Helper tool for Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/unihelper-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
 	help2man ${INSTALL_DIR}/usr/bin/webidl2pas-${DEB_UPSTREAM_MAIN_VERSION} -m 'Free Pascal Compiler' -s 1 --version-string=' ' -n 'WEB IDL to Pascal translator for Free Pascal Compiler (FPC)' -o ${INSTALL_DIR}/usr/man/man1/webidl2pas-${DEB_UPSTREAM_MAIN_VERSION}.1 --no-discard-stderr
@@ -516,16 +511,16 @@ binary-arch: arrange-arch
 	dh_installdocs -a -X.in
 	dh_installchangelogs -a
 	dh_installexamples -a
-	dh_strip -s
+	dh_strip -a
 	dh_lintian -a
 	dh_compress -a
 	dh_fixperms
 	dh_installdebconf -a
 	dh_installdeb -a
-	dh_shlibdeps -s
-	dh_gencontrol -s
-	dh_md5sums -s
-	dh_builddeb -s $(DEB_DH_BUILDDEB_ARGS)
+	dh_shlibdeps -a
+	dh_gencontrol -a
+	dh_md5sums -a
+	dh_builddeb -a $(DEB_DH_BUILDDEB_ARGS)
 
 .PHONY: arrange-arch binary binary-arch binary-indep build build-arch	\
 	build-doc build-indep check-makefiles clean clean-all-but-makefiles	\
@@ -554,15 +549,21 @@ ${FPCMAKE}:fpcsrc/utils/fpcm/Makefile.fpc fpcsrc/Makefile.fpc ${DEB_BUILD_FPC_OP
 	${MAKE} -C fpcsrc/packages/fpmkunit bootstrap OPT=@${CURDIR}/${DEB_BUILD_FPC_OPT}
 	${MAKE} -C ${<D} OPT=@${CURDIR}/${DEB_BUILD_FPC_OPT}
 
-${DEB_BUILD_FPC_OPT}:
-	echo '# FPC configuration file for build system tools' > $@
-	echo '-k${LDFLAGS}' >> $@
+${DEB_BUILD_FPC_OPT}:debian/hardening.cfg
+	cp $< $@
+	echo -e'\n# Linked libs path for build system tools' >> $@
 	echo '-Fl/usr/lib/${DEB_BUILD_MULTIARCH}' >> $@
 
-${DEB_HOST_FPC_OPT}:
-	echo '# FPC configuration file for host system applications' > $@
-	echo '-k${LDFLAGS}' >> $@
+${DEB_HOST_FPC_OPT}:debian/hardening.cfg
+	cp $< $@
+	echo -e '\n# Linked libs path for host system applications' >> $@
 	echo '-Fl/usr/lib/${DEB_HOST_MULTIARCH}' >> $@
 
+${CFG_DIR}/hardening:debian/hardening.cfg
+	# Install configration file so that we can use build hadened programs using:
+	# fpc @hardening progname
+	${MKDIR} ${@D}
+	cp $< $@
+
 lintian:
-	lintian -I -i ../fpc_${DEB_VERSION}_${DEB_HOST_ARCH}.changes
+	lintian -I -i ../${DEB_SOURCE}_${DEB_VERSION}_${DEB_HOST_ARCH}.changes

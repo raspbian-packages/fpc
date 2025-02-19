@@ -38,5 +38,6 @@ Fix-missing-crtbeginS.o-on-mipsel.patch
 6-3bb2586269c876856a834fb0d72a09928ff9d16b.patch
 7-060f24600bb559f62b6350899864f3ac4155c207.patch
 added-content-type-to-prevent-msgfmt-crash.patch
+Fixed-files-encoding.patch
 raspbian.diff
 force-abi-tags-in-cprt0.patch

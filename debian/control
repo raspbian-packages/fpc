@@ -11,7 +11,6 @@ Build-Depends:
  debhelper (>= 13),
  dh-exec (>=0.22),
  fp-compiler,
- fp-units-base,
  fp-units-fcl,
  fp-utils,
  ghostscript,
@@ -24,7 +23,7 @@ Build-Depends-Indep:
  hevea,
  rdfind,
  symlinks
-Vcs-Git: https://salsa.debian.org/pascal-team/fpc
+Vcs-Git: https://salsa.debian.org/pascal-team/fpc.git
 Vcs-Browser: https://salsa.debian.org/pascal-team/fpc
 Homepage: https://www.freepascal.org/
 
@@ -168,8 +167,6 @@ Depends:
  ${shlibs:Depends}
 Recommends:
  fp-compiler-3.2.2 (= ${binary:Version})
-Provides:
- fp-utils
 Breaks:
  fp-compiler-3.2.2 (<= 3.0.4+dfsg-11),
  fpc (<= 3.2.2+dfsg-0),
@@ -585,7 +582,7 @@ Architecture: all
 Depends:
  fpc-3.2.2 (= ${binary:Version}),
  fp-docs-3.2.2,
- fp-utils-3.2.2,
+ fp-utils,
  ${misc:Depends}
 Description: Free Pascal - SDK suite dependency package
  The Free Pascal Compiler is an Object Pascal compiler supporting both Delphi
