@@ -232,15 +232,6 @@ var
   TYPE_IPV4 : PFIELDTYPE external libform name 'TYPE_IPV4';
 {$endif darwin}
 
-(* Default objects  *)
-{$ifndef darwin}
-  _nc_Default_Form : PFORM;cvar;external;
-  _nc_Default_Field : PFIELD;cvar;external;
-{$else darwin}
-  _nc_Default_Form : PFORM external libform name '_nc_Default_Form';
-  _nc_Default_Field : PFIELD external libform name '_nc_Default_Field';
-{$endif darwin}
-
 (* FIELDTYPE routines *)
 function new_fieldtype(field_check: TFieldCheck; char_check:TCharCheck):PFIELDTYPE; cdecl;external libform;
 
