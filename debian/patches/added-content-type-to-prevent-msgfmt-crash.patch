@@ -1,0 +1,39 @@
+Subject: Fix msgfmt related build fail
+Author: Peter Blackman <peter@pblackman.plus.com>
+Bug-Debian: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1074706
+Forwarded: https://gitlab.com/freepascal.org/fpc/source/-/issues/40853
+===================================================================
+--- a/fpcsrc/utils/fpdoc/intl/dglobals.de.po
++++ b/fpcsrc/utils/fpdoc/intl/dglobals.de.po
+@@ -1,3 +1,7 @@
++msgid ""
++msgstr ""
++"Content-Type: text/plain; charset=UTF-8\n"
++
+ #: dglobals:sdocpackagetitle
+ msgid "Reference for package '%s'"
+ msgstr "Referenz für Paket '%s'"
+Index: b/fpcsrc/utils/fpdoc/intl/fpdoc.de.po
+===================================================================
+--- a/fpcsrc/utils/fpdoc/intl/fpdoc.de.po
++++ b/fpcsrc/utils/fpdoc/intl/fpdoc.de.po
+@@ -1,3 +1,7 @@
++msgid ""
++msgstr ""
++"Content-Type: text/plain; charset=UTF-8\n"
++
+ #: fpdoc:stitle
+ msgid "FPDoc - Free Pascal Documentation Tool"
+ msgstr "FPDoc - Free-Pascal-Dokumentationstool"
+Index: b/fpcsrc/utils/fpdoc/intl/makeskel.de.po
+===================================================================
+--- a/fpcsrc/utils/fpdoc/intl/makeskel.de.po
++++ b/fpcsrc/utils/fpdoc/intl/makeskel.de.po
+@@ -1,3 +1,7 @@
++msgid ""
++msgstr ""
++"Content-Type: text/plain; charset=UTF-8\n"
++
+ #: makeskel:stitle
+ msgid "MakeSkel - FPDoc skeleton XML description file generator"
+ msgstr "MakeSkel - Skelett-Generator für FPDoc-XML-Beschreibungsdateien"
