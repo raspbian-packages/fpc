@@ -35,8 +35,8 @@
 start_addresses:
     .long     _SDA_BASE_
     .long     main_stub
-    .long     __libc_csu_init
-    .long     __libc_csu_fini
+    .long     0
+    .long     0
     .size   start_adresses, .-start_addresses
 
     .section ".text"
