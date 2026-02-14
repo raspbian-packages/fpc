@@ -43,8 +43,6 @@ begin
       T.ResourceStrings:=true;
     T:=P.Targets.AddUnit('jswriter.pp');
       T.ResourceStrings:=true;
-    T:=P.Targets.AddUnit('jsminifier.pp');
-      T.ResourceStrings:=true;
 {$ifndef ALLPACKAGES}
     Run;
     end;
