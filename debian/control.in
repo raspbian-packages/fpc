@@ -325,9 +325,10 @@ Multi-Arch: same
 Depends:
  fp-units-fcl${PACKAGESUFFIX} (= ${binary:Version}),
  fp-units-rtl${PACKAGESUFFIX} (= ${binary:Version}),
- libgtk2.0-dev,
  ${misc:Depends},
  ${shlibs:Depends}
+Suggests:
+ libgtk2.0-dev
 Provides:
  fp-units-gtk2
 Breaks:

@@ -1,4 +1,4 @@
-fpc (3.2.2+dfsg-46+rpi1) trixie-staging; urgency=medium
+fpc (3.2.2+dfsg-48+rpi1) forky-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
@@ -7,7 +7,20 @@ fpc (3.2.2+dfsg-46+rpi1) trixie-staging; urgency=medium
   * Apply hack to work around binutils bug https://sourceware.org/bugzilla/show_bug.cgi?id=28848
   * Fix clean target.
 
- -- Raspbian forward porter <root@raspbian.org>  Wed, 19 Feb 2025 01:18:59 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Thu, 26 Feb 2026 19:37:59 +0000
+
+fpc (3.2.2+dfsg-48) unstable; urgency=high
+
+  * Restore depends on fp-units-gtk2 (Pts removal broke the lazarus build)
+
+ -- Peter Blackman <peterb@debian.org>  Sat, 14 Feb 2026 11:20:13 +0000
+
+fpc (3.2.2+dfsg-47) unstable; urgency=medium
+
+  * Team upload
+  * Change Depends: on Gtk2 packages to Suggests:  Closes: #967348
+
+ -- Peter Blackman <peterb@debian.org>  Thu, 12 Feb 2026 20:05:39 +0000
 
 fpc (3.2.2+dfsg-46) unstable; urgency=medium
 
