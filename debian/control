@@ -325,6 +325,10 @@ Multi-Arch: same
 Depends:
  fp-units-fcl-3.2.2 (= ${binary:Version}),
  fp-units-rtl-3.2.2 (= ${binary:Version}),
+ libatk1.0-dev,
+ libcairo2-dev,
+ libgdk-pixbuf-2.0-dev,
+ libpango1.0-dev,
  ${misc:Depends},
  ${shlibs:Depends}
 Suggests:

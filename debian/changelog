@@ -1,4 +1,4 @@
-fpc (3.2.2+dfsg-48+rpi1) forky-staging; urgency=medium
+fpc (3.2.2+dfsg-49+rpi1) forky-staging; urgency=medium
 
   [changes brought forward from 2.6.4+dfsg-4+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Mon, 20 Oct 2014 23:12:17 +0000]
   * Set compiler defaults for raspbian.
@@ -7,7 +7,14 @@ fpc (3.2.2+dfsg-48+rpi1) forky-staging; urgency=medium
   * Apply hack to work around binutils bug https://sourceware.org/bugzilla/show_bug.cgi?id=28848
   * Fix clean target.
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 26 Feb 2026 19:37:59 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Fri, 06 Mar 2026 07:45:11 +0000
+
+fpc (3.2.2+dfsg-49) unstable; urgency=high
+
+  * Team upload
+  * Add extra Depends: to fp-units-gtk2
+
+ -- Peter Blackman <peterb@debian.org>  Fri, 27 Feb 2026 16:30:28 +0000
 
 fpc (3.2.2+dfsg-48) unstable; urgency=high
 
