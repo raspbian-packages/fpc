@@ -425,7 +425,17 @@ type
     { the routine contains no code }
     pio_empty,
     { the inline body of this routine is available }
-    pio_has_inlininginfo
+    pio_has_inlininginfo,
+    { inline is not possible (has assembler block, etc) }
+    pio_inline_not_possible,
+    { a nested routine accesses a local variable from this routine }
+    pio_nested_access,
+    { a stub/thunk }
+    pio_thunk,
+    { compiled with fastmath enabled } 
+    pio_fastmath, 
+    { inline is forbidden (calls get_frame) }
+    pio_inline_forbidden
   );
   timplprocoptions = set of timplprocoption;
 
