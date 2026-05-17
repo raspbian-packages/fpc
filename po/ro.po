@@ -1,0 +1,139 @@
+# Romanian translation of debconf templates for fpc.
+# Mesajele în limba română ale șablonului debconf pentru fpc.
+# Copyright (C) 2025 THE PACKAGE'S COPYRIGHT HOLDER.
+# This file is distributed under the same license as the fpc package.
+#
+# Remus-Gabriel Chelu <remusgabriel.chelu@disroot.org>, 2025.
+#
+# Cronologia traducerii fișierului „debconf_fpc”:
+# Traducerea inițială, făcută de R-GC, pentru versiunea 3.2.2+dfsg-46, apr-2025.
+# Actualizare a traducerii pentru versiunea Y, făcută de X, Y(anul).
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: fpc 3.2.2+dfsg-46\n"
+"Report-Msgid-Bugs-To: fpc@packages.debian.org\n"
+"POT-Creation-Date: 2015-06-19 17:31+0200\n"
+"PO-Revision-Date: 2025-04-04 23:31+0200\n"
+"Last-Translator: Remus-Gabriel Chelu <remusgabriel.chelu@disroot.org>\n"
+"Language-Team: Romanian <debian-l10n-romanian@lists.debian.org>\n"
+"Language: ro\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n==0 || (n!=1 && n%100>=1 && "
+"n%100<=19) ? 1 : 2);\n"
+"\"\"PO-Revision-Date: 2025-04-01 13:47+0200\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"X-Generator: Poedit 3.5\n"
+
+#. Type: boolean
+#. Description
+#: ../fp-compiler.templates.in:2001
+msgid "Rename \"/etc/fpc.cfg\" to \"/etc/fpc.cfg.bak\"?"
+msgstr "Doriți să redenumiți „/etc/fpc.cfg” în „/etc/fpc.cfg.bak”?"
+
+#. Type: boolean
+#. Description
+#: ../fp-compiler.templates.in:2001
+msgid ""
+"FPC now supports having multiple versions installed on the same system. The "
+"update-alternatives command can be used to set a default version for\n"
+" * fpc (the compiler);\n"
+" * fpc.cfg (the configuration file);\n"
+" * fp-utils (the helper tools)."
+msgstr ""
+"FPC acceptă acum instalarea mai multor versiuni în același sistem. Comanda "
+"update-alternatives poate fi utilizată pentru a defini versiunea implicită "
+"pentru\n"
+" * fpc (compilatorul);\n"
+" * fpc.cfg (fișierul de configurare);\n"
+" * fp-utils (instrumentele ajutătoare)."
+
+#. Type: boolean
+#. Description
+#: ../fp-compiler.templates.in:2001
+msgid ""
+"Whatever version you may choose as default, the configuration files are "
+"always backward compatible, so it should always be safe to use the latest "
+"version."
+msgstr ""
+"Indiferent de versiunea implicită aleasă, fișierele de configurare sunt "
+"întotdeauna compatibile cu versiunile anterioare, astfel încât ar trebui să "
+"fie întotdeauna sigur să utilizați cea mai recentă versiune."
+
+#. Type: boolean
+#. Description
+#: ../fp-compiler.templates.in:2001
+msgid ""
+"In order to use the alternatives system on the system wide FPC configuration "
+"file you must accept renaming \"/etc/fpc.cfg\"; otherwise you will need to "
+"manage this manually by yourself."
+msgstr ""
+"Pentru a utiliza sistemul alternativ în fișierul de configurare FPC la nivel "
+"de sistem, trebuie să acceptați redenumirea „/etc/fpc.cfg”; în caz contrar, "
+"va trebui să gestionați manual acest lucru."
+
+#. Type: select
+#. Choices
+#. This string should be in sync with the translation in the description
+#: ../fp-compiler.templates.in:3001
+msgid "Select manually"
+msgstr "Selectare manuală"
+
+#. Type: select
+#. Description
+#. Type: string
+#. Description
+#: ../fp-compiler.templates.in:3002 ../fp-compiler.templates.in:4001
+msgid "Default MS Windows .rc resource compiler:"
+msgstr "Compilator de resurse MS Windows .rc implicit:"
+
+#. Type: select
+#. Description
+#. Type: string
+#. Description
+#: ../fp-compiler.templates.in:3002 ../fp-compiler.templates.in:4001
+msgid ""
+"FPC supports compiling programs that embed resources as MS Windows .rc-"
+"format files on all platforms where the MinGW windres tool is available."
+msgstr ""
+"FPC acceptă compilarea programelor care încorporează resurse ca fișiere MS "
+"Windows în format .rc pe toate platformele pe care este disponibil "
+"instrumentul MinGW windres."
+
+#. Type: select
+#. Description
+#. Type: string
+#. Description
+#: ../fp-compiler.templates.in:3002 ../fp-compiler.templates.in:4001
+msgid ""
+"In order to be able to compile projects using .rc files, you need first to "
+"manually install the package mingw32-binutils. mingw32-binutils is suggested "
+"by fp-compiler but not pulled in automatically."
+msgstr ""
+"Pentru a putea compila proiecte folosind fișiere .rc, trebuie mai întâi să "
+"instalați manual pachetul mingw32-binutils. mingw32-binutils este sugerat de "
+"fp-compiler, dar nu este instalat automat."
+
+#. Type: select
+#. Description
+#. "Select manually" should be in sync with the text elsewhere in the
+#. translation
+#: ../fp-compiler.templates.in:3002
+msgid ""
+"If you want to enter a custom .rc file compiler that does not appear in this "
+"list or if you simply want to disable this feature, please select \"Select "
+"manually\"."
+msgstr ""
+"Dacă doriți să introduceți un compilator de fișiere .rc personalizat care nu "
+"apare în această listă sau dacă doriți pur și simplu să dezactivați această "
+"caracteristică, vă rugăm să selectați opțiunea «Selectare manuală»."
+
+#. Type: string
+#. Description
+#: ../fp-compiler.templates.in:4001
+msgid "If you don't want to use a default .rc file compiler, leave this blank."
+msgstr ""
+"Dacă nu doriți să utilizați un compilator implicit de fișiere .rc, lăsați "
+"acest câmp gol."
