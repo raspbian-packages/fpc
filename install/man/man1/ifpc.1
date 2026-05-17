@@ -1,0 +1,54 @@
+.TH ifpc 1 "18 May 2013" "Free Pascal" "Instant pascal code interpreter"
+.SH NAME
+ifpc \- The Free Pascal Interpreter.
+
+.SH SYNOPSIS
+
+.B ifpc
+[\fI\-h\fR] [\fI\-v\fR] [\fIcompiler options\fR] <\fIsource file\fR>
+[\fIprogram parameters\fR]
+
+.SH DESCRIPTION
+
+.B ifpc
+This is a pascal code interpreter program. It compiles source and runs the
+ generated program.
+
+Source is compared with the cache. If cache is not valid then then source is
+copied to cache with the shebang line commented and cached source is compiled.
+If compilation fails the fpc output is written to stdout and and exit code 1
+is returned
+If compilation was successful the program is executed.
+If the compiler options contains \-B the program is always recompiled.
+If the environment option INSTANTFPCOPTIONS is set it is passed to compiler as
+the first parameters.
+
+.SH USAGE
+
+.B ifpc
+takes the following arguments:
+.TP
+.B \-h
+Prints this help message and exit.
+.TP
+.B \-v
+Prints version and exit.
+.TP
+.B \-\-get\-cache
+Prints current cache directory and exit.
+.TP
+.B \-\-set\-cache=<path to cache>
+Set the cache to be used. Otherwise using environment variable INSTANTFPCCACHE.
+.TP
+.B \-\-compiler=<path to compiler>
+Normally fpc is searched in PATH and used as compiler.
+.TP
+.B \-\-skip\-run
+Do not execute the program. Useful to test if script compiles
+.TP
+.B \-B
+Always recompile.
+
+.SH SEE ALSO
+.IP
+.BR  fpc (1)
