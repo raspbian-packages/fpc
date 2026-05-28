@@ -6,7 +6,7 @@ Uploaders:
  Abou Al Montacir <abou.almontacir@sfr.fr>,
  Paul Gevers <elbrus@debian.org>,
  Peter Michael Green <plugwash@debian.org>,
-Standards-Version: 4.7.0
+Standards-Version: 4.7.4
 Build-Depends:
  debhelper (>= 13),
  dh-exec (>=0.22),
@@ -510,7 +510,6 @@ Depends:
  ${shlibs:Depends}
 Recommends:
  a52dec-dev,
- libdts-dev,
  libmad0-dev,
  libmodplug-dev,
  libogg-dev,

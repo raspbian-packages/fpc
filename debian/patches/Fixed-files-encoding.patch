@@ -2,12 +2,12 @@ Description: Fixed files encoding
  Some files are distributed by upstream in national encoding. This patch
  converts them to unicode.
  .
- The convertion was doen using the follwong commands:
+ The conversion was done using the following commands:
  recode latin1..UTF-8 fpcsrc/packages/fcl-base/examples/testreg.pp
  recode latin1..UTF-8 fpcsrc/rtl/os2/tests/pmdemo1.h
  recode latin1..UTF-8 demo/os2/pmdemo1.h
  .
- The two last files requiered additional manual fix.
+ The two last files required an additional manual fix.
 Author: Abou Al Montacir <abou.almontacir@sfr.fr>
 Forwarded: Yes
 Bug: https://gitlab.com/freepascal.org/fpc/source/-/issues/41130
