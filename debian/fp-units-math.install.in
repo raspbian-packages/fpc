@@ -1,0 +1,6 @@
+#! /usr/bin/dh-exec
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/gmp*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/numlib*
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/proj4*        [!freebsd-math]
+usr/lib/${DEB_HOST_MULTIARCH}/fpc/*/*/*/symbolic*
+usr/share/doc/fp-units-math     [!freebsd-any]
