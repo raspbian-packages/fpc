@@ -82,10 +82,10 @@ _start:
 
         /* Set up the other arguments in registers */
         ldr a1, =PASCALMAIN
-        ldr a4, =_init
+        ldr a4, = #0
 
         /* Push fini */
-        str ip, [sp, #-4]!
+        str a4, [sp, #-4]!
 
         /* __libc_start_main (main, argc, argv, init, fini, rtld_fini, stack_end) */
 

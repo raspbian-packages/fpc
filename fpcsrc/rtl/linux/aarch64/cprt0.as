@@ -41,10 +41,8 @@ _start:
 	                     init, fini, rtld_fini, stack_end) */
 	adrp	x0,:got:PASCALMAIN
 	ldr	x0,[x0,#:got_lo12:PASCALMAIN]
-	adrp	x3,:got:__libc_csu_init
-	ldr	x3,[x3,#:got_lo12:__libc_csu_init]
-	adrp	x4,:got:__libc_csu_fini
-	ldr	x4,[x4,#:got_lo12:__libc_csu_fini]
+	mov	x3, #0
+	mov	x4, #0
 	bl	__libc_start_main
 
 	/* This should never happen */
